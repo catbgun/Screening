@@ -1,0 +1,633 @@
+"Provenr","Medium_id","Enhet_id","Site_Category","Site_Comment","compound","lodcount","n","lod_frac","value"
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","ABT",0,6,0,21.9
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","ABT",0,6,0,12.2
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","ABT",0,6,0,16.9
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","ABT",0,6,0,37.1
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","ABT",0,6,0,58.8
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","ABT",0,6,0,58.7
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","ABT",0,3,0,21.1
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","ABT",0,3,0,31.5
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","ABT",0,3,0,29.5
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","ABT",0,3,0,21.3
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","ABT",0,3,0,1.6
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","ABT",0,3,0,21.5
+"NR-2022-06909","Water","ng/L","Artificial grass pitch","Outdoor","BTSA",0,3,0,34.5
+"NR-2022-06910","Water","ng/L","Artificial grass pitch","Outdoor","BTSA",0,3,0,171
+"NR-2022-06911","Water","ng/L","Artificial grass pitch","Outdoor","BTSA",0,3,0,1340
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","BTSA",0,6,0,162
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","BTSA",0,6,0,275
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","BTSA",0,6,0,60.2
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","BTSA",0,6,0,517
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","BTSA",0,6,0,759
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","BTSA",0,6,0,1310
+"NR-2022-06876","Water","ng/L","Wastewater treatment plant_High","Summer","BTSA",0,7,0,165
+"NR-2022-06877","Water","ng/L","Wastewater treatment plant_High","Summer","BTSA",0,7,0,142
+"NR-2022-06878","Water","ng/L","Wastewater treatment plant_High","Summer","BTSA",0,7,0,130
+"NR-2022-06899","Water","ng/L","Wastewater treatment plant_High","Autumn","BTSA",0,7,0,175
+"NR-2022-06900","Water","ng/L","Wastewater treatment plant_High","Autumn","BTSA",0,7,0,131
+"NR-2022-06901","Water","ng/L","Wastewater treatment plant_High","Autumn","BTSA",0,7,0,132
+"NR-2022-06879","Water","ng/L","Wastewater treatment plant_High","Summer","BTSA",0,7,0,99.5
+"NR-2022-06880","Water","ng/L","Wastewater treatment plant_Low","Summer","BTSA",0,5,0,68
+"NR-2022-06881","Water","ng/L","Wastewater treatment plant_Low","Summer","BTSA",0,5,0,46.5
+"NR-2022-06902","Water","ng/L","Wastewater treatment plant_Low","Autumn","BTSA",0,5,0,37.5
+"NR-2022-06903","Water","ng/L","Wastewater treatment plant_Low","Autumn","BTSA",0,5,0,52.5
+"NR-2022-06904","Water","ng/L","Wastewater treatment plant_Low","Autumn","BTSA",0,5,0,43.3
+"NR-2022-06905","Water","ng/L","Urban river_Alna","Dry","BTSA",0,8,0,23.5
+"NR-2022-06872","Water","ng/L","Urban river_Alna","?","BTSA",0,8,0,121
+"NR-2022-06906","Water","ng/L","Urban river_Alna","Dry","BTSA",0,8,0,29.5
+"NR-2022-06873","Water","ng/L","Urban river_Alna","?","BTSA",0,8,0,213
+"NR-2022-06907","Water","ng/L","Urban river_Alna","Dry","BTSA",0,8,0,44.5
+"NR-2022-06874","Water","ng/L","Urban river_Alna","?","BTSA",0,8,0,130
+"NR-2022-06908","Water","ng/L","Urban river_Alna","Dry","BTSA",0,8,0,52.9
+"NR-2022-06875","Water","ng/L","Urban river_Alna","?","BTSA",0,8,0,74.6
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","BTSA",0,3,0,16350
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","BTSA",0,3,0,23800
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","BTSA",0,3,0,31650
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","BTSA",0,3,0,276
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","BTSA",0,3,0,45.6
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","BTSA",0,3,0,427
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","BTSA",0,14,0,6660
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","BTSA",0,14,0,5500
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","BTSA",0,14,0,64080
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","BTSA",0,14,0,27040
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","BTSA",0,14,0,36480
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","BTSA",0,14,0,34960
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","BTSA",0,14,0,84000
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","BTSA",0,14,0,86400
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","BTSA",0,14,0,89600
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","BTSA",0,14,0,85600
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","BTSA",0,14,0,49760
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","BTSA",0,14,0,92800
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","BTSA",1,8,12.5,0.5
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","BTSA",1,8,12.5,42.1
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","BTSA",1,8,12.5,29.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","BTSA",1,8,12.5,28.3
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","BTSA",1,8,12.5,158
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","BTSA",1,8,12.5,179
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","BTSA",1,8,12.5,16
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","BTSA",1,8,12.5,14.2
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","BTSA",0,14,0,285
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","BTSA",0,14,0,192
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","BTSA",0,3,0,4089
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","BTSA",0,3,0,713
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","BTSA",0,3,0,160
+"NR-2022-07004","Dust","ng","Private home","Bolig1","BTSA",0,6,0,390
+"NR-2022-07006","Dust","ng","Private home","Bolig3","BTSA",0,6,0,126
+"NR-2022-07007","Dust","ng","Private home","Bolig4","BTSA",0,6,0,77
+"NR-2022-07008","Dust","ng","Private home","Bolig5","BTSA",0,6,0,102
+"NR-2022-07009","Dust","ng","Private home","Bolig6","BTSA",0,6,0,563
+"NR-2022-07010","Dust","ng","Private home","Bolig7","BTSA",0,6,0,620
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","MTBT",0,6,0,23.9
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","MTBT",0,6,0,17.9
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","MTBT",0,6,0,17.9
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","MTBT",0,6,0,55.3
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","MTBT",0,6,0,59.3
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","MTBT",0,6,0,21.9
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","MTBT",0,3,0,70.5
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","MTBT",0,3,0,66.5
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","MTBT",0,3,0,82.8
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","MTBT",0,3,0,10.6
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","MTBT",0,3,0,1.9
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","MTBT",0,3,0,29.2
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","PhBT",0,6,0,521
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","PhBT",0,6,0,328
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","PhBT",0,6,0,385
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","PhBT",0,6,0,1090
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","PhBT",0,6,0,1210
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","PhBT",0,6,0,1400
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,15.5
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,13.5
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,6.5
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,5.5
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,6.5
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","PhBT",0,3,0,14
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","PhBT",0,3,0,299
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","PhBT",0,3,0,29.4
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","PhBT",0,3,0,558
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","PhBT",1,8,12.5,0.5
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","PhBT",1,8,12.5,9.5
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","PhBT",1,8,12.5,6.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","PhBT",1,8,12.5,9.7
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","PhBT",1,8,12.5,37.8
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","PhBT",1,8,12.5,43.3
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","PhBT",1,8,12.5,2.8
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","PhBT",1,8,12.5,1.9
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","PhBT",0,3,0,349
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","PhBT",0,3,0,46.8
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","PhBT",0,3,0,13
+"NR-2022-06909","Water","ng/L","Artificial grass pitch","Outdoor","OHBT",0,3,0,12.8
+"NR-2022-06910","Water","ng/L","Artificial grass pitch","Outdoor","OHBT",0,3,0,175
+"NR-2022-06911","Water","ng/L","Artificial grass pitch","Outdoor","OHBT",0,3,0,1415
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","OHBT",0,6,0,158
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","OHBT",0,6,0,84.1
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","OHBT",0,6,0,111
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","OHBT",0,6,0,2770
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","OHBT",0,6,0,3280
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","OHBT",0,6,0,3930
+"NR-2022-06807","Sludge","ng/g","Wastewater treatment plant_High","Summer","OHBT",0,2,0,16.4
+"NR-2022-06814","Sludge","ng/g","Wastewater treatment plant_High","Autumn","OHBT",0,2,0,17.1
+"NR-2022-06876","Water","ng/L","Wastewater treatment plant_High","Summer","OHBT",0,7,0,23.5
+"NR-2022-06877","Water","ng/L","Wastewater treatment plant_High","Summer","OHBT",0,7,0,15.8
+"NR-2022-06878","Water","ng/L","Wastewater treatment plant_High","Summer","OHBT",0,7,0,12.4
+"NR-2022-06899","Water","ng/L","Wastewater treatment plant_High","Autumn","OHBT",0,7,0,27.9
+"NR-2022-06900","Water","ng/L","Wastewater treatment plant_High","Autumn","OHBT",0,7,0,15.5
+"NR-2022-06901","Water","ng/L","Wastewater treatment plant_High","Autumn","OHBT",0,7,0,14.2
+"NR-2022-06879","Water","ng/L","Wastewater treatment plant_High","Summer","OHBT",0,7,0,24.8
+"NR-2022-06880","Water","ng/L","Wastewater treatment plant_Low","Summer","OHBT",0,5,0,18.5
+"NR-2022-06881","Water","ng/L","Wastewater treatment plant_Low","Summer","OHBT",0,5,0,12.7
+"NR-2022-06902","Water","ng/L","Wastewater treatment plant_Low","Autumn","OHBT",0,5,0,10.5
+"NR-2022-06903","Water","ng/L","Wastewater treatment plant_Low","Autumn","OHBT",0,5,0,15.8
+"NR-2022-06904","Water","ng/L","Wastewater treatment plant_Low","Autumn","OHBT",0,5,0,13.8
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,2535
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,3905
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,4490
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,29.5
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,55.9
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","OHBT",0,3,0,84.5
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","OHBT",0,3,0,1181
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","OHBT",0,3,0,46.6
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","OHBT",0,3,0,1031
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","OHBT",0,14,0,3520
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","OHBT",0,14,0,4820
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","OHBT",0,14,0,8640
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","OHBT",0,14,0,6160
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","OHBT",0,14,0,7360
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","OHBT",0,14,0,6320
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","OHBT",0,14,0,34320
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","OHBT",0,14,0,34480
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","OHBT",0,14,0,28400
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","OHBT",0,14,0,35040
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","OHBT",0,14,0,30560
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","OHBT",0,14,0,35840
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","OHBT",1,8,12.5,0.5
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","OHBT",1,8,12.5,26.7
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","OHBT",1,8,12.5,46.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","OHBT",1,8,12.5,58
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","OHBT",1,8,12.5,584
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","OHBT",1,8,12.5,633
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","OHBT",1,8,12.5,1.8
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","OHBT",1,8,12.5,2.2
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","OHBT",0,14,0,12.7
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","OHBT",0,14,0,18.8
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","OHBT",0,3,0,477
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","OHBT",0,3,0,102
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","OHBT",0,3,0,41.9
+"NR-2022-07004","Dust","ng","Private home","Bolig1","OHBT",0,6,0,30.6
+"NR-2022-07006","Dust","ng","Private home","Bolig3","OHBT",0,6,0,17.4
+"NR-2022-07007","Dust","ng","Private home","Bolig4","OHBT",0,6,0,14.3
+"NR-2022-07008","Dust","ng","Private home","Bolig5","OHBT",0,6,0,55.1
+"NR-2022-07009","Dust","ng","Private home","Bolig6","OHBT",0,6,0,34.6
+"NR-2022-07010","Dust","ng","Private home","Bolig7","OHBT",0,6,0,18.4
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","MBT",0,6,0,45.3
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","MBT",0,6,0,47.9
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","MBT",0,6,0,46.2
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","MBT",0,6,0,242
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","MBT",0,6,0,318
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","MBT",0,6,0,252
+"NR-2022-06824","Sludge","ng/g","Wastewater treatment plant_Low","Summer","MBT",0,2,0,3.7
+"NR-2022-06825","Sludge","ng/g","Wastewater treatment plant_Low","Autumn","MBT",0,2,0,2.3
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,21.5
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,17.5
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,16.9
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,8.3
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,10.5
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","MBT",0,3,0,9.5
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","MBT",0,3,0,60.3
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","MBT",0,3,0,60.3
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","MBT",0,3,0,171
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,6,0,1420
+"NR-2022-06802","Sediment","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,3,0,118.5
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,6,0,782
+"NR-2022-06816","Sediment","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,3,0,95.5
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,6,0,1410
+"NR-2022-06817","Sediment","ng/g","Artificial grass pitch","Outdoor","X6PPDq",0,3,0,1935
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","X6PPDq",0,6,0,4540
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","X6PPDq",0,6,0,4270
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","X6PPDq",0,6,0,4320
+"NR-2022-06795","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,2.7
+"NR-2022-06805","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,2
+"NR-2022-06794","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,12.6
+"NR-2022-06804","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,12.4
+"NR-2022-06801","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,3.1
+"NR-2022-06806","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,17.6
+"NR-2022-06820","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,0.5
+"NR-2022-06815","sediment","ng/g","Urban river_Alna",NA,"X6PPDq",2,8,25,0.5
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,476
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,363
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,229
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,107
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,191
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPDq",0,3,0,580
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","X6PPDq",0,3,0,2003
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","X6PPDq",0,3,0,282
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","X6PPDq",0,3,0,2215
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","X6PPDq",2,14,14.2857142857143,990
+"NR-2022-06923","Water","ng/L","Tunnel environment","Pumpesump under vask - START","X6PPDq",4,16,25,490
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","X6PPDq",2,14,14.2857142857143,1360
+"NR-2022-06924","Water","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","X6PPDq",4,16,25,530
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","X6PPDq",2,14,14.2857142857143,470
+"NR-2022-06925","Water","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","X6PPDq",4,16,25,2320
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","X6PPDq",2,14,14.2857142857143,2720
+"NR-2022-06926","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","X6PPDq",4,16,25,390
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPDq",2,14,14.2857142857143,1680
+"NR-2022-06927","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPDq",4,16,25,2080
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPDq",2,14,14.2857142857143,2880
+"NR-2022-06889","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPDq",4,16,25,1200
+"NR-2022-06912","Water","ng/L","Tunnel environment","Basseng under rensing dag 14-1","X6PPDq",4,16,25,25
+"NR-2022-06913","Water","ng/L","Tunnel environment","Basseng under rensing dag 14-2","X6PPDq",4,16,25,650
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","X6PPDq",2,14,14.2857142857143,3360
+"NR-2022-06930","Water","ng/L","Tunnel environment","Utslipp renset vann - START des1","X6PPDq",4,16,25,104
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","X6PPDq",2,14,14.2857142857143,3150
+"NR-2022-06931","Water","ng/L","Tunnel environment","Utslipp renset vann - START des2","X6PPDq",4,16,25,96
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","X6PPDq",2,14,14.2857142857143,480
+"NR-2022-06932","Water","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","X6PPDq",4,16,25,25
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","X6PPDq",2,14,14.2857142857143,3980
+"NR-2022-06933","Water","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","X6PPDq",4,16,25,260
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","X6PPDq",2,14,14.2857142857143,4120
+"NR-2022-00523","Water","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","X6PPDq",4,16,25,390
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","X6PPDq",2,14,14.2857142857143,4380
+"NR-2022-00524","Water","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","X6PPDq",4,16,25,255
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","X6PPDq",0,8,0,36.2
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","X6PPDq",0,8,0,40
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","X6PPDq",0,8,0,48.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","X6PPDq",0,8,0,46.3
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","X6PPDq",0,8,0,55
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","X6PPDq",0,8,0,73.6
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","X6PPDq",0,8,0,19.5
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","X6PPDq",0,8,0,15.8
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","X6PPDq",2,14,14.2857142857143,0.5
+"NR-2022-06868","Water","ng/L","Tunnel environment","?vre","X6PPDq",4,16,25,0.5
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","X6PPDq",2,14,14.2857142857143,0.5
+"NR-2022-06869","Water","ng/L","Tunnel environment","nedre","X6PPDq",4,16,25,0.5
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","X6PPDq",0,3,0,1263
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","X6PPDq",0,3,0,536
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","X6PPDq",0,3,0,192
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","DPPD",0,6,0,41.3
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","DPPD",0,6,0,16.9
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","DPPD",0,6,0,67
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","DPPD",0,6,0,2200
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","DPPD",0,6,0,2230
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","DPPD",0,6,0,2130
+"NR-2022-06795","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06805","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06794","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,31.8
+"NR-2022-06804","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,26.8
+"NR-2022-06801","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06806","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06820","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06815","sediment","ng/g","Urban river_Alna",NA,"DPPD",0,8,0,0
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,119
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,65.5
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,48.9
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,82.8
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,126
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPPD",0,3,0,264
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","DPPD",0,3,0,1635
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","DPPD",0,3,0,290
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","DPPD",0,3,0,2527
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","DPPD",0,8,0,33.8
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","DPPD",0,8,0,31
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","DPPD",0,8,0,61
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","DPPD",0,8,0,62.6
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","DPPD",0,8,0,239
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","DPPD",0,8,0,255
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","DPPD",0,8,0,17.8
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","DPPD",0,8,0,9.7
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","DPPD",0,3,0,1177
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","DPPD",0,3,0,476
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","DPPD",0,3,0,140
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,129
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,123
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,48.8
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,12.3
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,20.5
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","IPPD",0,3,0,59.6
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","IPPD",0,3,0,1777
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","IPPD",0,3,0,29.1
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","IPPD",0,3,0,1031
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","IPPD",0,8,0,33.5
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","IPPD",0,8,0,25.4
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","IPPD",0,8,0,36.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","IPPD",0,8,0,52
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","IPPD",0,8,0,53.4
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","IPPD",0,8,0,61.2
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","IPPD",0,8,0,4.8
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","IPPD",0,8,0,3.6
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","IPPD",0,3,0,29
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","IPPD",0,3,0,28
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","IPPD",0,3,0,12
+"NR-2022-06909","Water","ng/L","Artificial grass pitch","Outdoor","X6PPD",0,3,0,5.5
+"NR-2022-06910","Water","ng/L","Artificial grass pitch","Outdoor","X6PPD",0,3,0,4
+"NR-2022-06911","Water","ng/L","Artificial grass pitch","Outdoor","X6PPD",0,3,0,17
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPD",0,6,0,40.8
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPD",0,6,0,128
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","X6PPD",0,6,0,181
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","X6PPD",0,6,0,8050
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","X6PPD",0,6,0,8290
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","X6PPD",0,6,0,7410
+"NR-2022-06807","Sludge","ng/g","Wastewater treatment plant_High","Summer","X6PPD",0,2,0,37.5
+"NR-2022-06814","Sludge","ng/g","Wastewater treatment plant_High","Autumn","X6PPD",0,2,0,63.3
+"NR-2022-06795","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,40
+"NR-2022-06805","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,13.4
+"NR-2022-06794","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,365
+"NR-2022-06804","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,324
+"NR-2022-06801","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,56
+"NR-2022-06806","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,294
+"NR-2022-06820","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,3.8
+"NR-2022-06815","sediment","ng/g","Urban river_Alna",NA,"X6PPD",0,8,0,3.4
+"NR-2022-06905","Water","ng/L","Urban river_Alna","Dry","X6PPD",2,8,25,8.1
+"NR-2022-06872","Water","ng/L","Urban river_Alna","?","X6PPD",2,8,25,52.9
+"NR-2022-06906","Water","ng/L","Urban river_Alna","Dry","X6PPD",2,8,25,7.5
+"NR-2022-06873","Water","ng/L","Urban river_Alna","?","X6PPD",2,8,25,20.5
+"NR-2022-06907","Water","ng/L","Urban river_Alna","Dry","X6PPD",2,8,25,14.5
+"NR-2022-06874","Water","ng/L","Urban river_Alna","?","X6PPD",2,8,25,22.5
+"NR-2022-06908","Water","ng/L","Urban river_Alna","Dry","X6PPD",2,8,25,0.5
+"NR-2022-06875","Water","ng/L","Urban river_Alna","?","X6PPD",2,8,25,0.5
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,2675
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,2115
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,980
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,1825
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,2515
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","X6PPD",0,3,0,4600
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","X6PPD",0,3,0,5306
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","X6PPD",0,3,0,2431
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","X6PPD",0,3,0,7812
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","X6PPD",2,14,14.2857142857143,14760
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","X6PPD",2,14,14.2857142857143,9540
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","X6PPD",2,14,14.2857142857143,95200
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","X6PPD",2,14,14.2857142857143,62480
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPD",2,14,14.2857142857143,65760
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","X6PPD",2,14,14.2857142857143,59520
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","X6PPD",2,14,14.2857142857143,21680
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","X6PPD",2,14,14.2857142857143,17440
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","X6PPD",2,14,14.2857142857143,12240
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","X6PPD",2,14,14.2857142857143,19280
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","X6PPD",2,14,14.2857142857143,19840
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","X6PPD",2,14,14.2857142857143,16880
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","X6PPD",0,8,0,635
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","X6PPD",0,8,0,577
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","X6PPD",0,8,0,955
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","X6PPD",0,8,0,1134
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","X6PPD",0,8,0,1997
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","X6PPD",0,8,0,1903
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","X6PPD",0,8,0,308
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","X6PPD",0,8,0,212
+"NR-2022-06797","sediment","ng/g","Tunnel environment","?vre","X6PPD",0,2,0,93.7
+"NR-2022-06796","sediment","ng/g","Tunnel environment","nedre","X6PPD",0,2,0,49.3
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","X6PPD",2,14,14.2857142857143,0.5
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","X6PPD",2,14,14.2857142857143,0.5
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","X6PPD",0,3,0,8309
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","X6PPD",0,3,0,3384
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","X6PPD",0,3,0,1066
+"NR-2022-06967","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag sommer","X6PPD",1,10,10,82
+"NR-2022-06968","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg sommer","X6PPD",1,10,10,5
+"NR-2022-06976","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag vinter","X6PPD",1,10,10,226
+"NR-2022-06977","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg vinter","X6PPD",1,10,10,148
+"NR-2022-06973","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad ukedag sommer","X6PPD",1,10,10,428
+"NR-2022-06971","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna ukedag sommer","X6PPD",1,10,10,400
+"NR-2022-06970","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes ukedag sommer","X6PPD",1,10,10,269
+"NR-2022-06974","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad helg sommer","X6PPD",1,10,10,129
+"NR-2022-06972","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna helg sommer","X6PPD",1,10,10,173
+"NR-2022-06969","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes helg sommer","X6PPD",1,10,10,142
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","BOPA",0,3,0,37.1
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","BOPA",0,3,0,20
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","BOPA",0,3,0,49.6
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","TMMAT",1,6,16.6666666666667,0.5
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","TMMAT",1,6,16.6666666666667,157
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","TMMAT",1,6,16.6666666666667,139
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","TMMAT",1,6,16.6666666666667,4390
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","TMMAT",1,6,16.6666666666667,5100
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","TMMAT",1,6,16.6666666666667,4460
+"NR-2022-06876","Water","ng/L","Wastewater treatment plant_High","Summer","TMMAT",0,7,0,187
+"NR-2022-06877","Water","ng/L","Wastewater treatment plant_High","Summer","TMMAT",0,7,0,192
+"NR-2022-06878","Water","ng/L","Wastewater treatment plant_High","Summer","TMMAT",0,7,0,129
+"NR-2022-06899","Water","ng/L","Wastewater treatment plant_High","Autumn","TMMAT",0,7,0,106
+"NR-2022-06900","Water","ng/L","Wastewater treatment plant_High","Autumn","TMMAT",0,7,0,84.5
+"NR-2022-06901","Water","ng/L","Wastewater treatment plant_High","Autumn","TMMAT",0,7,0,60.8
+"NR-2022-06879","Water","ng/L","Wastewater treatment plant_High","Summer","TMMAT",0,7,0,81.2
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,5060
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,5275
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,4845
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,439
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,560
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMMAT",0,3,0,575
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","TMMAT",0,3,0,1277
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","TMMAT",0,3,0,185
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","TMMAT",0,3,0,2215
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","TMMAT",2,14,14.2857142857143,15640
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","TMMAT",2,14,14.2857142857143,11280
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","TMMAT",2,14,14.2857142857143,36080
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","TMMAT",2,14,14.2857142857143,32450
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","TMMAT",2,14,14.2857142857143,28320
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","TMMAT",2,14,14.2857142857143,26480
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","TMMAT",2,14,14.2857142857143,71600
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","TMMAT",2,14,14.2857142857143,75200
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","TMMAT",2,14,14.2857142857143,51000
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","TMMAT",2,14,14.2857142857143,78000
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","TMMAT",2,14,14.2857142857143,69600
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","TMMAT",2,14,14.2857142857143,72000
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","TMMAT",2,14,14.2857142857143,0.5
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","TMMAT",2,14,14.2857142857143,0.5
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","TMMAT",0,3,0,317
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","TMMAT",0,3,0,569
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","TMMAT",0,3,0,308
+"NR-2022-06909","Water","ng/L","Artificial grass pitch","Outdoor","DPG",0,3,0,392
+"NR-2022-06910","Water","ng/L","Artificial grass pitch","Outdoor","DPG",0,3,0,111
+"NR-2022-06911","Water","ng/L","Artificial grass pitch","Outdoor","DPG",0,3,0,3365
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","DPG",0,6,0,6300
+"NR-2022-06802","Sediment","ng/g","Artificial grass pitch","Outdoor","DPG",0,3,0,760
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","DPG",0,6,0,6880
+"NR-2022-06816","Sediment","ng/g","Artificial grass pitch","Outdoor","DPG",0,3,0,655
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","DPG",0,6,0,8860
+"NR-2022-06817","Sediment","ng/g","Artificial grass pitch","Outdoor","DPG",0,3,0,3325
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","DPG",0,6,0,8060
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","DPG",0,6,0,10450
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","DPG",0,6,0,9100
+"NR-2022-06807","Sludge","ng/g","Wastewater treatment plant_High","Summer","DPG",0,2,0,29.3
+"NR-2022-06814","Sludge","ng/g","Wastewater treatment plant_High","Autumn","DPG",0,2,0,29
+"NR-2022-06876","Water","ng/L","Wastewater treatment plant_High","Summer","DPG",0,7,0,231
+"NR-2022-06877","Water","ng/L","Wastewater treatment plant_High","Summer","DPG",0,7,0,231
+"NR-2022-06878","Water","ng/L","Wastewater treatment plant_High","Summer","DPG",0,7,0,179
+"NR-2022-06899","Water","ng/L","Wastewater treatment plant_High","Autumn","DPG",0,7,0,167
+"NR-2022-06900","Water","ng/L","Wastewater treatment plant_High","Autumn","DPG",0,7,0,149
+"NR-2022-06901","Water","ng/L","Wastewater treatment plant_High","Autumn","DPG",0,7,0,95.5
+"NR-2022-06879","Water","ng/L","Wastewater treatment plant_High","Summer","DPG",0,7,0,148
+"NR-2022-06880","Water","ng/L","Wastewater treatment plant_Low","Summer","DPG",0,5,0,43.8
+"NR-2022-06881","Water","ng/L","Wastewater treatment plant_Low","Summer","DPG",0,5,0,38.5
+"NR-2022-06902","Water","ng/L","Wastewater treatment plant_Low","Autumn","DPG",0,5,0,23.5
+"NR-2022-06903","Water","ng/L","Wastewater treatment plant_Low","Autumn","DPG",0,5,0,20.5
+"NR-2022-06904","Water","ng/L","Wastewater treatment plant_Low","Autumn","DPG",0,5,0,16.5
+"NR-2022-06795","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,41.5
+"NR-2022-06805","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,19.7
+"NR-2022-06794","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,173
+"NR-2022-06804","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,168
+"NR-2022-06801","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,84.3
+"NR-2022-06806","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,403
+"NR-2022-06820","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,13.4
+"NR-2022-06815","sediment","ng/g","Urban river_Alna",NA,"DPG",0,8,0,21.3
+"NR-2022-06905","Water","ng/L","Urban river_Alna","Dry","DPG",0,8,0,21.3
+"NR-2022-06872","Water","ng/L","Urban river_Alna","?","DPG",0,8,0,186
+"NR-2022-06906","Water","ng/L","Urban river_Alna","Dry","DPG",0,8,0,29.5
+"NR-2022-06873","Water","ng/L","Urban river_Alna","?","DPG",0,8,0,268
+"NR-2022-06907","Water","ng/L","Urban river_Alna","Dry","DPG",0,8,0,42.8
+"NR-2022-06874","Water","ng/L","Urban river_Alna","?","DPG",0,8,0,141
+"NR-2022-06908","Water","ng/L","Urban river_Alna","Dry","DPG",0,8,0,28.1
+"NR-2022-06875","Water","ng/L","Urban river_Alna","?","DPG",0,8,0,31.5
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,3655
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,3955
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,6275
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,341
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,530
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","DPG",0,3,0,960
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","DPG",0,3,0,5652
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","DPG",0,3,0,378
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","DPG",0,3,0,5496
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","DPG",0,14,0,21400
+"NR-2022-06923","Water","ng/L","Tunnel environment","Pumpesump under vask - START","DPG",2,16,12.5,2640
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","DPG",0,14,0,15120
+"NR-2022-06924","Water","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","DPG",2,16,12.5,2880
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","DPG",0,14,0,62900
+"NR-2022-06925","Water","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","DPG",2,16,12.5,20240
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","DPG",0,14,0,36800
+"NR-2022-06926","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","DPG",2,16,12.5,6880
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","DPG",0,14,0,46250
+"NR-2022-06927","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","DPG",2,16,12.5,17040
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","DPG",0,14,0,41530
+"NR-2022-06889","Water","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","DPG",2,16,12.5,9200
+"NR-2022-06912","Water","ng/L","Tunnel environment","Basseng under rensing dag 14-1","DPG",2,16,12.5,8550
+"NR-2022-06913","Water","ng/L","Tunnel environment","Basseng under rensing dag 14-2","DPG",2,16,12.5,12100
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","DPG",0,14,0,63980
+"NR-2022-06930","Water","ng/L","Tunnel environment","Utslipp renset vann - START des1","DPG",2,16,12.5,255
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","DPG",0,14,0,66950
+"NR-2022-06931","Water","ng/L","Tunnel environment","Utslipp renset vann - START des2","DPG",2,16,12.5,310
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","DPG",0,14,0,37160
+"NR-2022-06932","Water","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","DPG",2,16,12.5,890
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","DPG",0,14,0,122400
+"NR-2022-06933","Water","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","DPG",2,16,12.5,460
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","DPG",0,14,0,98560
+"NR-2022-00523","Water","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","DPG",2,16,12.5,155
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","DPG",0,14,0,65120
+"NR-2022-00524","Water","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","DPG",2,16,12.5,330
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","DPG",0,8,0,1576
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","DPG",0,8,0,1362
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","DPG",0,8,0,1770
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","DPG",0,8,0,1543
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","DPG",0,8,0,3503
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","DPG",0,8,0,3691
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","DPG",0,8,0,585
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","DPG",0,8,0,497
+"NR-2022-06797","sediment","ng/g","Tunnel environment","?vre","DPG",0,2,0,95
+"NR-2022-06796","sediment","ng/g","Tunnel environment","nedre","DPG",0,2,0,66.6
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","DPG",0,14,0,15.7
+"NR-2022-06868","Water","ng/L","Tunnel environment","?vre","DPG",2,16,12.5,0.5
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","DPG",0,14,0,11.1
+"NR-2022-06869","Water","ng/L","Tunnel environment","nedre","DPG",2,16,12.5,0.5
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","DPG",0,3,0,7025
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","DPG",0,3,0,8556
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","DPG",0,3,0,2442
+"NR-2022-07004","Dust","ng","Private home","Bolig1","DPG",0,6,0,6233
+"NR-2022-07006","Dust","ng","Private home","Bolig3","DPG",0,6,0,11052
+"NR-2022-07007","Dust","ng","Private home","Bolig4","DPG",0,6,0,652
+"NR-2022-07008","Dust","ng","Private home","Bolig5","DPG",0,6,0,658
+"NR-2022-07009","Dust","ng","Private home","Bolig6","DPG",0,6,0,1426
+"NR-2022-07010","Dust","ng","Private home","Bolig7","DPG",0,6,0,2755
+"NR-2022-07013","Dust","ng","Printing 3D","3D-print1","DPG",0,3,0,375
+"NR-2022-07014","Dust","ng","Printing 3D","3D-print2","DPG",0,3,0,377
+"NR-2022-07015","Dust","ng","Printing 3D","3D-print3","DPG",0,3,0,1100
+"NR-2022-07016","Dust","ng","Furniture store","M?belvarehus1","DPG",0,3,0,18334
+"NR-2022-07017","Dust","ng","Furniture store","M?belvarehus2","DPG",0,3,0,7792
+"NR-2022-07018","Dust","ng","Furniture store","M?belvarehus3","DPG",0,3,0,1928
+"NR-2022-06967","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag sommer","DPG",1,10,10,1840
+"NR-2022-06968","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg sommer","DPG",1,10,10,1261
+"NR-2022-06976","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag vinter","DPG",1,10,10,5
+"NR-2022-06977","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg vinter","DPG",1,10,10,413
+"NR-2022-06973","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad ukedag sommer","DPG",1,10,10,10480
+"NR-2022-06971","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna ukedag sommer","DPG",1,10,10,7291
+"NR-2022-06970","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes ukedag sommer","DPG",1,10,10,1362
+"NR-2022-06974","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad helg sommer","DPG",1,10,10,2950
+"NR-2022-06972","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna helg sommer","DPG",1,10,10,2766
+"NR-2022-06969","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes helg sommer","DPG",1,10,10,2599
+"NR-2022-06803","Granule","ng/g","Artificial grass pitch","Outdoor","TMQ",0,6,0,1610
+"NR-2022-06802","Sediment","ng/g","Artificial grass pitch","Outdoor","TMQ",0,3,0,720
+"NR-2022-06818","Granule","ng/g","Artificial grass pitch","Outdoor","TMQ",0,6,0,223
+"NR-2022-06816","Sediment","ng/g","Artificial grass pitch","Outdoor","TMQ",0,3,0,4.5
+"NR-2022-06819","Granule","ng/g","Artificial grass pitch","Outdoor","TMQ",0,6,0,1120
+"NR-2022-06817","Sediment","ng/g","Artificial grass pitch","Outdoor","TMQ",0,3,0,13000
+"NR-2022-06821","Granule","ng/g","Artificial grass pitch","Indoor","TMQ",0,6,0,50100
+"NR-2022-06822","Granule","ng/g","Artificial grass pitch","Indoor","TMQ",0,6,0,52600
+"NR-2022-06823","Granule","ng/g","Artificial grass pitch","Indoor","TMQ",0,6,0,55350
+"NR-2022-06807","Sludge","ng/g","Wastewater treatment plant_High","Summer","TMQ",0,2,0,37.9
+"NR-2022-06814","Sludge","ng/g","Wastewater treatment plant_High","Autumn","TMQ",0,2,0,37.1
+"NR-2022-06824","Sludge","ng/g","Wastewater treatment plant_Low","Summer","TMQ",0,2,0,4.7
+"NR-2022-06825","Sludge","ng/g","Wastewater treatment plant_Low","Autumn","TMQ",0,2,0,4
+"NR-2022-06870","Water","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,1840
+"NR-2022-06871","Water","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,1255
+"NR-2022-06882","Water","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,322.5
+"NR-2022-06920","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,920
+"NR-2022-06921","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,1375
+"NR-2022-00807","Particle?","ng/L","Tire collection site","Dirty runoff from the area","TMQ",0,3,0,2735
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","TMQ",0,3,0,13226
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","TMQ",0,3,0,3238
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","TMQ",0,3,0,22308
+"NR-2022-06884","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - START","TMQ",2,14,14.2857142857143,4540
+"NR-2022-06885","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 1","TMQ",2,14,14.2857142857143,3100
+"NR-2022-06886","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - UNDERVEIS 2","TMQ",2,14,14.2857142857143,24160
+"NR-2022-06887","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 1","TMQ",2,14,14.2857142857143,16080
+"NR-2022-06888","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","TMQ",2,14,14.2857142857143,8720
+"NR-2022-06889","Water_filtered","ng/L","Tunnel environment","Pumpesump under vask - SLUTT 2","TMQ",2,14,14.2857142857143,6960
+"NR-2022-06914","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des1","TMQ",2,14,14.2857142857143,16480
+"NR-2022-06915","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - START des2","TMQ",2,14,14.2857142857143,14880
+"NR-2022-06916","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 1","TMQ",2,14,14.2857142857143,13840
+"NR-2022-06917","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - UNDERVEIS 2","TMQ",2,14,14.2857142857143,18320
+"NR-2022-06918","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 1","TMQ",2,14,14.2857142857143,20080
+"NR-2022-06919","Water_filtered","ng/L","Tunnel environment","Utslipp renset vann - SLUTT 2","TMQ",2,14,14.2857142857143,20480
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","TMQ",0,8,0,321
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","TMQ",0,8,0,369
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","TMQ",0,8,0,595
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","TMQ",0,8,0,2449
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","TMQ",0,8,0,3053
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","TMQ",0,8,0,2273
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","TMQ",0,8,0,176
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","TMQ",0,8,0,81.4
+"NR-2022-06797","sediment","ng/g","Tunnel environment","?vre","TMQ",0,2,0,7.7
+"NR-2022-06796","sediment","ng/g","Tunnel environment","nedre","TMQ",0,2,0,4.5
+"NR-2022-06866","Water_filtered","ng/L","Tunnel environment","?vre","TMQ",2,14,14.2857142857143,0.5
+"NR-2022-06867","Water_filtered","ng/L","Tunnel environment","nedre","TMQ",2,14,14.2857142857143,0.5
+"NR-2022-07019","Dust","ng","Tire collection site","Hus n?r skredder","TMQ",0,3,0,16540
+"NR-2022-07020","Dust","ng","Tire collection site","Utenfor verksted","TMQ",0,3,0,2889
+"NR-2022-07021","Dust","ng","Tire collection site","Ved grabbene","TMQ",0,3,0,335
+"NR-2022-06876","Water","ng/L","Wastewater treatment plant_High","Summer","Amitryptyline",0,7,0,281
+"NR-2022-06877","Water","ng/L","Wastewater treatment plant_High","Summer","Amitryptyline",0,7,0,308
+"NR-2022-06878","Water","ng/L","Wastewater treatment plant_High","Summer","Amitryptyline",0,7,0,307
+"NR-2022-06899","Water","ng/L","Wastewater treatment plant_High","Autumn","Amitryptyline",0,7,0,278
+"NR-2022-06900","Water","ng/L","Wastewater treatment plant_High","Autumn","Amitryptyline",0,7,0,323
+"NR-2022-06901","Water","ng/L","Wastewater treatment plant_High","Autumn","Amitryptyline",0,7,0,263
+"NR-2022-06879","Water","ng/L","Wastewater treatment plant_High","Summer","Amitryptyline",0,7,0,58.5
+"NR-2022-06880","Water","ng/L","Wastewater treatment plant_Low","Summer","Amitryptyline",0,5,0,50.5
+"NR-2022-06881","Water","ng/L","Wastewater treatment plant_Low","Summer","Amitryptyline",0,5,0,69.5
+"NR-2022-06902","Water","ng/L","Wastewater treatment plant_Low","Autumn","Amitryptyline",0,5,0,60.5
+"NR-2022-06903","Water","ng/L","Wastewater treatment plant_Low","Autumn","Amitryptyline",0,5,0,49.5
+"NR-2022-06904","Water","ng/L","Wastewater treatment plant_Low","Autumn","Amitryptyline",0,5,0,58.5
+"NR-2022-06807","Sludge","ng/g","Wastewater treatment plant_High","Summer","Fexofenadine",0,2,0,5
+"NR-2022-06814","Sludge","ng/g","Wastewater treatment plant_High","Autumn","Fexofenadine",0,2,0,4.3
+"NR-2022-06798","sludge","ng/g","Tire collection site","kum","OP",0,3,0,497
+"NR-2022-06799","sludge","ng/g","Tire collection site","kum","OP",0,3,0,5.6
+"NR-2022-06800","sludge","ng/g","Tire collection site","kum","OP",0,3,0,612
+"NR-2022-06808","sludge","ng/g","Tunnel environment","Sandfang innl?p","OP",0,8,0,12.6
+"NR-2022-06809","sludge","ng/g","Tunnel environment","Sandfang innl?p","OP",0,8,0,10.5
+"NR-2022-06810","sludge","ng/g","Tunnel environment","Sandfang utl?p","OP",0,8,0,13.5
+"NR-2022-06811","sludge","ng/g","Tunnel environment","Sandfang utl?p","OP",0,8,0,17.7
+"NR-2022-06826","sludge","ng/g","Tunnel environment","Rensebasseng","OP",0,8,0,34.1
+"NR-2022-06827","sludge","ng/g","Tunnel environment","Rensebasseng","OP",0,8,0,38.5
+"NR-2022-06812","sludge","ng/g","Tunnel environment","Smestad feiebil","OP",0,8,0,6
+"NR-2022-06813","sludge","ng/g","Tunnel environment","Smestad feiebil","OP",0,8,0,6.4
+"NR-2022-06967","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag sommer","OP",0,10,0,50.9
+"NR-2022-06968","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg sommer","OP",0,10,0,312
+"NR-2022-06976","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken ukedag vinter","OP",0,10,0,226
+"NR-2022-06977","Luft-Kleinfilter","ng","Hotspot_outdoors","Sofienbergparken helg vinter","OP",0,10,0,286
+"NR-2022-06973","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad ukedag sommer","OP",0,10,0,690
+"NR-2022-06971","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna ukedag sommer","OP",0,10,0,616
+"NR-2022-06970","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes ukedag sommer","OP",0,10,0,497
+"NR-2022-06974","Luft-Kleinfilter","ng","Hotspot_outdoors","Smestad helg sommer","OP",0,10,0,162
+"NR-2022-06972","Luft-Kleinfilter","ng","Hotspot_outdoors","E6 Alna helg sommer","OP",0,10,0,341
+"NR-2022-06969","Luft-Kleinfilter","ng","Hotspot_outdoors","Hjortnes helg sommer","OP",0,10,0,116
