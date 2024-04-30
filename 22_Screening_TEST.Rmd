@@ -32,8 +32,11 @@ Make sure that the short name of the molecules is at the bottom
 Should be no zero values
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
-df <- read.table("V02_CLEAN_Results with format_Screening2022.txt", skip=5, header=TRUE, sep="\t", na.string=c(""))
+df <- read.table("V02_CLEAN_Results with format_Screening2022_231005_3.txt", skip=6, header=TRUE, sep="\t", na.string=c(""))
 
+#df <- read.table("V02_CLEAN_Results with format_Screening2022_231005_2.txt", skip=6, header=TRUE, sep="\t", #na.string=c(""))
+
+#df <- read.table("V02_CLEAN_Results with format_Screening2022_231003.txt", skip=5, header=TRUE, sep="\t", na.string=c(""))
 #df <- read.table("V02_FINAL_Results_Screening2022_V04.txt", header=TRUE, sep="\t", na.string=c(""))
 ```
 
@@ -42,11 +45,7 @@ df_long <- gather(df, compound, value, ABT:LCCP, factor_key=TRUE)
 unique(df_long$value)
 
 df_long[complete.cases(df_long$value),]
-
 df_longg <- subset(df_long, !is.na(value))
-
-df_longg$Site_Category <- revalue(df_longg$Site_Category, c("Dental clinic"="Commercial building"))
-df_longg$Site_Category <- revalue(df_longg$Site_Category, c("Tire collection site"="Tyre collection site"))
 
 #the length of unique compounds equals to the length of unique compounds in excel file
 #length(unique(df_long$compound))
@@ -59,14 +58,26 @@ Rather calculate mean later, after LOD has been replaced
 #by using mutate insytead of summarise we add the new columns to the old. consider un_group() at the end?
 #df_longg$Medium_id <- revalue(df_longg$Medium_id, c("Particle"="Water_particle"))
 
+print(unique(df_longg))
+
 df_longgg = df_longg%>%
-  mutate(Medium_id2 = case_when(Medium_id %in% c("Water", "Water_filtered", "Water_particle", "Particle") ~ "Water",
+  mutate(Medium_id2 = case_when(Medium_id %in% c("Water, total", "Water, filtered", "Water, particles") ~ "Water",
                                 Medium_id %in% c("Sediment","Sludge", "Granule") ~ "Solids",
                                 Medium_id %in%c("Air", "Air_particles", "Dust") ~ "Air",
                                 Medium_id %in%c("Biota") ~ "Biota"))
 
+
+
+#df_longgg = df_longg%>%
+#  mutate(Medium_id2 = case_when(Medium_id %in% c("Water", "Water_filtered", "Water_particle") ~ "Water",
+#                                Medium_id %in% c("Sediment","Sludge", "Granule") ~ "Solids",
+#                                Medium_id %in%c("Air", "Air_particles", "Dust") ~ "Air",
+#                                Medium_id %in%c("Biota") ~ "Biota"))
+
 unique(df_longg$Medium_id)
 unique(df_longgg$Medium_id2)
+
+length(unique(df_longgg$value))
 #if we want to categorise the types of sites additionally
 #df_longggg = df_longgg%>%
 #  mutate(Site_Category2 = case_when(Site_Category %in% c("Artificial grass pitch") ~ "Artificial grass pitch",
@@ -132,10 +143,10 @@ tosty <- df_long_freq %>%
 
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-df_long_X <- cbind(tosty[,c(1:3,8:11, 15:20)], apply(tosty[,21, drop=F],2, dLimity))
+df_long_X <- cbind(tosty[,c(1:3,9:14,18:23)], apply(tosty[,24, drop=F],2, dLimity))
+#df_long_X <- cbind(tosty[,c(1:3,8:14,17:22)], apply(tosty[,23, drop=F],2, dLimity))
 
 ```
-
 
 Calculate mean
 - sjekk at ble riktig! ta ut excel f eks
@@ -148,17 +159,6 @@ df_finalx = df_long_X %>%
 
 ```
 
-Suspect screening. Pawel Rostkowski: siloksan L9 og L10 er suspekt, 1112 og 11112PFECA også men PFAS var under LOD
-
-```{r}
-#df_finalC <- within(df_final, mean[compound == 'L9'] <- 'S')
-#df_finalC <- within(df_final, mean[compound == 'L10'] <- 'S')
-#df_finalC <- within(df_final, mean[compound == 'X1112_PFECA'] <- 'S')
-#df_finalC <- within(df_final, mean[compound == 'X11112_PFECA'] <- 'S')
-```
-
-
-
 ```{r fix names}
 df_finalx$compound <- revalue(df_finalx$compound, c("X6PPD"="6PPD"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X6PPDq"="6PPD-q"))
@@ -168,7 +168,7 @@ df_finalx$compound <- revalue(df_finalx$compound, c("X77PD"="77PD"))
 df_finalx$compound <- revalue(df_finalx$compound, c("CTC_CTA"="CTC/CTA"))
 df_finalx$compound <- revalue(df_finalx$compound, c("OH_BPA"="OH-BPA"))
 df_finalx$compound <- revalue(df_finalx$compound, c("BP_8"="BP-8"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X4_4_ADP"="4_4-ADP"))
+df_finalx$compound <- revalue(df_finalx$compound, c("X4_4_ADP"="4,4-ADP"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X44_BPS2"="44-BPS2"))
 df_finalx$compound <- revalue(df_finalx$compound, c("BIS_TMC"="BIS TMC"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X12_PFECA"="12-PFECA"))
@@ -177,39 +177,38 @@ df_finalx$compound <- revalue(df_finalx$compound, c("X1112_PFECA"="1112-PFECA"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X11112_PFECA"="11112-PFECA"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X13_PFECA"="13-PFECA"))
 df_finalx$compound <- revalue(df_finalx$compound, c("X4_HBP"="4-HBP"))
+df_finalx$compound <- revalue(df_finalx$compound, c("Amitryptyline"="Amitriptyline"))
+
 
 df_finalx$Site_Category <- revalue(df_finalx$Site_Category, c("Urban river_Alna"="Urban river"))
 
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water"="Water (ng/L)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water_filtered"="Water, filtered (ng/L)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Granule"="Granule (g/g)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sediment"="Sediment (g/g)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sludge"="Sludge (g/g)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, total"="Water, total (ng/L)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, filtered"="Water, filtered (ng/L)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, particles"="Water, particles (ng/L)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Granule"="Granule (ng/g, w.w.)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sediment"="Sediment (ng/g, d.w.)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sludge"="Sludge (ng/g, d.w.)"))
 df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Air_particles"="Air, particles (ng/m^3)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Dust"="Dust (ng)"))
+df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Dust"="Dust (ng/g, w.w.)"))
 df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Air"="Air (ng/m^3)"))
 df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Biota"="Biota (ng/g, w.w.)"))
 ```
 
 NEW groupings, 29/9
 ```{r Groupings}
-#length(unique(df_final$compound))
 
-df_finalz = df_finalx%>%
-  mutate(m_group = case_when(compound %in%c("LCCP") ~ "Long-chain chlorparaffins",
-                             compound %in%c("BPSE", "BPAE", "BCPS", "4_4-ADP", "TMBP", "OH-BPA", "44-BPS2", "BIS TMC") ~ "Bisphenols",
-                             compound %in%c("TCM", "DCM", "TCE", "PCE", "CCl4", "DBM") ~ "Disinfectants",
-                             compound %in%c("Amitryptyline", "Fexofenadine", "Indoxacarb", "Fipronil", "Cyhalothrin", "CTC/CTA") ~ "Pesticides and Pharmaceuticals",
+df_finalz1 = df_finalx%>%
+  mutate(m_group = case_when(compound %in%c("LCCP") ~ "Long-chain chlorinated paraffins",
+                             compound %in%c("BPSE", "BPAE", "BCPS", "4,4-ADP", "TMBP", "OH-BPA", "44-BPS2", "BIS TMC") ~ "Bisphenols",
+                             compound %in%c("TCM", "DCM", "TCE", "PCE", "CCl4", "DBM") ~ "Disinfectants and solvents",
+                             compound %in%c("Amitriptyline", "Fexofenadine", "Indoxacarb", "Fipronil", "Cyhalothrin", "CTC/CTA") ~ "Pesticides and Pharmaceuticals",
+
                              compound %in%c("ABT", "BTSA", "MTBT", "PhBT", "OHBT", "MBT", "CPPD", "6PPD-q", "DPPD", "DNPD", "IPPD", "77PD", "6PPD", "7PPD", "44-PD", "MTDID", "NDPD", "MPAMS", "PPPA", "BOPA", "TMMAT", "DPG","TMQ", "TAI", "TAOT", "isoTAC", "TAC") ~ "Rubber related",
                              compound %in%c("L6", "L7", "L8", "L9", "L10") ~ "Siloxanes",
                              compound %in%c("OP", "12-PFECA", "112-PFECA", "1112-PFECA", "11112-PFECA", "13-PFECA") ~ "Surfactants incl. PFAS",
                              compound %in%c("BP-8", "4-HBP") ~ "UV-additives"))
 
 ```
-
-
-
-
 
 add molecule grouping
 ```{r}
@@ -218,7 +217,7 @@ add molecule grouping
 #  mutate(m_group = case_when(compound %in%c("LCCP") ~ "Chlorparaffins",
 #                             compound %in%c("CTC/CTA", "BCPS", "isoTAC", "TAC") ~ "Semi-volatiles",
 #                             compound %in% c("ABT", "BTSA", "MTBT", "PhBT","OHBT", "MBT", "CPPD", "6PPDq", "DPPD", "DNPD", "IPPD", "77PD", "6PPD", "X7PPD", "44PD", #"MTDID", "NDPD", "MPAMS", "PPPA", "BOPA","TMMAT","DPG","TMQ","TAI","TAOT") ~ "Rubber",
-#                             compound %in% c("BPSE", "BPAE",  "4_4_ADP", "TMBP", "OH-BPA",	"44_BPS2",	"BIS", "TMC") ~ "Bisphenols",
+#                             compound %in% c("BPSE", "BPAE",  "4,4_ADP", "TMBP", "OH-BPA",	"44_BPS2",	"BIS", "TMC") ~ "Bisphenols",
 #                             compound %in%c("TCM",	"DCM",	"TCE",	"PCE",	"CCl4",	"DBM") ~ "Volatiles",
 #                             compound %in%c("L6",	"L7",	"L8",	"L9",	"L10") ~ "Siloxanes",
 #                          compound %in% c("Fipronil","Cyhalothrin", "Amitryptyline", "Fexofenadine","Indoxacarb") ~ "Pesticides_Pharmaceuticals",
@@ -230,39 +229,261 @@ length(unique(df_finalz$compound))
 #is.na(df_finalx$m_group)
 ```
 
-Could it be possible to have those <LOD 30% marked as < LOD and being green? 
 Below we have the plot in ggplot
 ```{r}
-print(unique(df_finalz$compound))
-
-df_finalzz <- df_finalz %>% 
-  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4_4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitryptyline", "BCPS", "BIS TC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalthrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC", "L10", "L6", "L7", "L8", "L9", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
+df_finalzz <- df_finalz1 %>% 
+  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TMC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalothrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC",  "L6", "L7", "L8", "L9", "L10","LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
 
 #replace certain mean values with S to indicate suspect screening
-df_finalzzz <- df_finalzz %>% 
-  mutate(meanxy = ifelse(is.na(meanx), 
-                           "<LOD", 
-                           " "))
+#df_finalzzz <- df_finalzz %>% 
+#  mutate(meanxy = ifelse(is.na(meanx), 
+#                           "<LOD", 
+#                           " "))
 
-df_finalzzzz <- df_finalzzz %>% 
+df_finalzzzz <- df_finalzz %>% 
   mutate(meanxyz = ifelse(compound == "112-PFECA" |compound == "1112-PFECA" | compound =="11112-PFECA" |compound =="L10" |compound =="L9", 
                            "S", 
                            " "))
 
 #library(scales) # for muted function
-chl <- subset(df_finalzzzz, m_group == "Long chain chlorinated paraffins")
+chl <- subset(df_finalzzzz, m_group == "Long-chain chlorinated paraffins")
 bis <- subset(df_finalzzzz, m_group == "Bisphenols")
-dis <- subset(df_finalzzzz, m_group == "Disinfectants")
-pest <- subset(df_finalzzzz, m_group == "Pharmaceuticals and Pesticides")
+dis <- subset(df_finalzzzz, m_group == "Disinfectants and solvents")
+pest <- subset(df_finalzzzz, m_group == "Pesticides and Pharmaceuticals")
 rub <- subset(df_finalzzzz, m_group == "Rubber related")
 sil <- subset(df_finalzzzz, m_group == "Siloxanes")
 surf <- subset(df_finalzzzz, m_group == "Surfactants incl. PFAS")
 UV <- subset(df_finalzzzz, m_group == "UV-additives")
 
+unique(sil$Medium_id)
 #unique(chl$Medium_id)
+#sigfig <- function(vec, digits){return(gsub(\\.$, "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
+#  }
+
+
 ```
 
-1) Group Chlorparaffins
+```{r Test to set desired number of digits}
+
+sigfig <- function(vec, digits){
+  return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
+}
+#geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
+#geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 3))), color = "white", size = 5)
+#geom_text(aes(label=ifelse(is.na(meanx), "", round(meanx, digits=3))), color = "white", size = 5)
+
+```
+
+
+1) Bisphenols
+```{r BISPHENOLS}
+unique(bis$compound)
+
+ #AIR AND SOLIDS
+bis1 <-ggplot(subset(bis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Water") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+ #AIR
+bis2 <- ggplot(subset(bis, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+     scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Air") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+ 
+bis3 <- ggplot(subset(bis, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+  scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Solids including Biota") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+
+bissx <- egg::ggarrange(bis1, bis2)
+
+
+ggsave("bissx.png", bissx, width = 10, height = 12)
+ggsave("bissy.png", bis3, width = 10, height = 6)
+
+```
+
+
+2) Disinfectants (?)
+- solids
+- water
+- biota
+- air
+
+#HERE IS THE UPDATED. why not setting total no of digits
+```{r disinfectants}
+unique(dis$Medium_id)
+unique(dis$Medium_id2)
+
+class(dis$meanx)
+#  geom_text(aes(label=scales::number(meanx, accuracy = .1)), color = "white", size = 5)+
+#  #geom_text(aes(label = meanxyz), color = "white", size = 5)+# write the values
+
+#Water
+#dis1 <- ggplot(subset(dis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+#  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+#  geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5)+
+##  scale_fill_gradient2(low = "green", 
+#                       mid = "orange", 
+#                       high = "red",
+#                       midpoint = 50,
+#                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+#  theme(panel.grid.major.x=element_blank(), #no gridlines
+#        panel.grid.minor.x=element_blank(), 
+#        panel.grid.major.y=element_blank(), 
+#        panel.grid.minor.y=element_blank(),
+#        panel.background=element_rect(fill="white"), # background=white
+#        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+#        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+#        axis.text.y = element_text(size = 17, colour="black"),
+#        legend.text=element_text(size=13),
+#        axis.line.x = element_line(color="black", linewidth = 1),
+#        axis.line.y = element_line(color="black", linewidth = 1),
+#        axis.ticks = element_line(color="black", linewidth=1),
+##        legend.position =c(0.75, 1.11),
+#        legend.direction = "horizontal",
+##        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+#        legend.margin=margin(0,0,0,0),
+#        legend.box.margin=margin(10,10,150,10),
+#        strip.text.x = element_text(size = 15),
+#        panel.spacing.x = unit(0.2, "lines")) +
+#  ggtitle("Water") + 
+#  theme(legend.title=element_text(size=12)) + 
+#  scale_x_discrete(name="") +
+#  scale_y_discrete(name="") +
+#  labs(fill="Detection frequency (%)")+
+#  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+#Air
+dis2 <- ggplot(subset(dis, Medium_id2%in% c("Water", "Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
+  scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+  theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,130,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Water and Air") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+#diss <- egg::ggarrange(dis1, dis2)
+
+ggsave("dis.png", dis2, width = 8, height = 5.5)
+```
+
+3) Long-chain Chlorparaffins
 - since there are few, can we have water, air aand soluds
 - NOT SURE HOW TO
 NEED to have the tables looking nice, also when of different sizes. checkin out different margins options. 
@@ -278,7 +499,7 @@ unique(chl$Site_Category)
 #WATER
 chl1 <- ggplot(subset(chl, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(meanx, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -307,13 +528,15 @@ chl1 <- ggplot(subset(chl, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compou
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")
+  labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+#  geom_text(aes(label = round(meanx, 2)), color = "white", size = 5)+ # write the values
 
 #AIR
 chl2 <- ggplot(subset(chl, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 2)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -345,10 +568,11 @@ chl2 <- ggplot(subset(chl, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
  
+#  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
 #SOLIDS  
 chl3 <- ggplot(subset(chl, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=compound, fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -386,33 +610,20 @@ chls <- egg::ggarrange(chl1, chl2, chl3)
 ggsave("chls.png", chls, width = 10, height = 13)
 ```
 
-2) Disinfectants (?)
-- solids
-- water
-- biota
-- air
+4) Pesticides and Pharmaceuticals
+```{r pest}
+unique(pest$Medium_id2)
 
-
-#HERE IS THE UPDATED. why not setting total no of digits
-```{r Semi-volatiles}
-unique(dis$Medium_id)
-unique(dis$Medium_id2)
-
-class(dis$meanx)
-#  geom_text(aes(label=scales::number(meanx, accuracy = .1)), color = "white", size = 5)+
-
-#Water
-ggplot(subset(dis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+#WATER and SOLIDS
+pest1 <- ggplot(subset(pest, Medium_id2%in% c("Water", "Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5)
-  geom_text(aes(label = meanxy), color = "white", size = 5)+
-  geom_text(aes(label = meanxyz), color = "white", size = 5)+# write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
+   theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
@@ -424,30 +635,29 @@ ggplot(subset(dis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compou
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.65, 1.11),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,150,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
+  ggtitle("Water and Solids") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-#Air
-dis2 <- ggplot(subset(dis, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+pest2 <- ggplot(subset(pest, Medium_id2%in% c("Air", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
+   theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
@@ -459,33 +669,31 @@ dis2 <- ggplot(subset(dis, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.65, 1.11),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,150,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
+  ggtitle("Air and Biota") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-#Solids and biota
+pests <- egg::ggarrange(pest1, pest2)
 
+ggsave("pests.png", pests, width = 10, height = 13)
 
-diss <- egg::ggarrange(dis1, dis2)
-
-ggsave("dis.png", diss, width = 10, height = 15)
 ```
 
-HOW to make the heatmap table sizes the same
+OW to make the heatmap table sizes the same
 
 https://stackoverflow.com/questions/58830318/setting-specific-tile-size-for-geom-tile-between-two-graphs
 
-2) Group RUBBER
+4) Group RUBBER
   - water
   - solids
   - air
@@ -493,9 +701,15 @@ https://stackoverflow.com/questions/58830318/setting-specific-tile-size-for-geom
 unique(rub$Medium_id)
 unique(rub$Medium_id2)
 
-rub1 <- ggplot(subset(rub, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+#  geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5)+ 
+
+
+ruby <- rub[!(rub$compound %in% "TAI"),]
+ruby1 <- ruby[!(ruby$compound %in% "TAOT"),]
+
+rub2 <- ggplot(subset(ruby1, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -529,10 +743,9 @@ rub1 <- ggplot(subset(rub, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compou
   scale_fill_continuous()
 
  #SOLIDS
- rub2 <- ggplot(subset(rub, Medium_id2%in% c("Solids")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+rub2 <- ggplot(subset(ruby1, Medium_id2%in% c("Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
+geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+ scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
@@ -564,10 +777,9 @@ rub1 <- ggplot(subset(rub, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compou
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
  
  #AIR
-rub3 <- ggplot(subset(rub, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+rub3 <- ggplot(subset(ruby1, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
+geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+  scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
@@ -600,181 +812,34 @@ rub3 <- ggplot(subset(rub, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound
 
 
 #rubs <- egg::ggarrange(rub1, rub2, rub3)
-ggsave("rub1.png", rub1, width = 10, height = 11)
-ggsave("rub2.png", rub2, width = 10, height = 11)
-ggsave("rub3.png", rub3, width = 10, height = 11)
-```
-
-3) Bisphenols
-```{r BISPHENOLS}
-unique(bis$Medium_id2)
-
- #AIR AND SOLIDS
-bis1 <- ggplot(subset(bis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
- #AIR
-bis2 <-  ggplot(subset(bis, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
- 
-bis3 <-  ggplot(subset(bis, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids including Biota") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-biss <- egg::ggarrange(bis1, bis2, bis3)
-
-ggsave("biss.png", biss, width = 10, height = 15)
-```
-
-4) VOlatile substances
-```{r Disinfectants}
-unique(dis$Medium_id2)
-#WHY IS sludge categorised as AIR??!
-#Water
-diss <- ggplot(subset(dis, Medium_id2%in% c("Water", "Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.65, 1.08),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-ggsave("dis.png", diss, width = 6, height = 5.5)
+ggsave("rub1.png", rub1, width = 10, height = 13)
+ggsave("rub2.png", rub2, width = 10, height = 13)
+ggsave("rub3.png", rub3, width = 12, height = 14)
 ```
 
 5) SIloxanes
+her er det problem med at NAs kommer opp. Vet ikke hvorfor. funker ikke med na.omit
 ```{r SILOXANES}
 unique(sil$Medium_id2)
+unique(sil$Site_Category)
+
+write.csv(sil, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST.csv", row.names=FALSE)
+
 #gg1 <- melt(subset(sil, Medium_id2%in% c("Water", "Solids"))) %>% 
+#geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5) 
+#geom_text(aes(label=ifelse(meanxyz == " ", " ", meanxyz)), color = "white", size = 5) 
+#  geom_text(aes(label=ifelse(meanxyz=="S", "S", na.omit(round(meanx, 0)))), color = "white", size = 5) +
+#geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5) 
 
 #WATER
-ggplot(subset(sil, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+sil1 <- ggplot(subset(sil, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
+  geom_text(aes(label=ifelse(meanxyz=="S", meanxyz, na.omit(sigfig(meanx, 2)))), color = "white", size = 5) +
+    scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")  +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
@@ -801,15 +866,14 @@ ggplot(subset(sil, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-#WATER
-sil2 <- ggplot(subset(sil, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+ggplot(subset(sil, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91") +  # determine the colour
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")  +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
@@ -835,13 +899,12 @@ sil2 <- ggplot(subset(sil, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
- 
+
  #Solids AND BIOTA
  #something wrong with the categories, sludge in commercial building??
-#gg2 <- melt(subset(sil, Medium_id2%in% c("Air", "Biota"))) %>% 
-sil3 <- ggplot(subset(sil, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+sil3 <- ggplot(subset(sil, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean,1)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(round(meanx, 1))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -878,63 +941,23 @@ sil3 <- ggplot(subset(sil, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id
 ## Save plots into variables
 ## Let ggarrange line up the panels
 
-silss <- egg::ggarrange(sil1, sil2, sil3)
+silssx <- egg::ggarrange(sil1, sil2)
 
-ggsave("silss.png", silss, width = 10, height = 15)
-
-```
-
-6) Pesticides and Pharmaceuticals
-```{r pest}
-unique(pest$Medium_id)
-
-#WATER and SOLIDS
-pests <- ggplot(subset(pest, Medium_id2%in% c("Water", "Solids")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.65, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-ggsave("pests.png", pests, width = 7, height = 5)
+ggsave("silssx.png", silssx, width = 11, height = 11)
+ggsave("silss.png", sil3, width = 11, height = 6)
 
 ```
+
 
 7) Surfactants including PFAS
 ```{r Surfactants including PFAS}
 unique(surf$Medium_id2)
+#    
 
 #WATER
-surf1 <- ggplot(subset(surf, Medium_id2%in% c("Water", "Solids")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+surf1 <- ggplot(subset(surf, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -959,22 +982,61 @@ surf1 <- ggplot(subset(surf, Medium_id2%in% c("Water", "Solids")), aes(x=Medium_
         legend.box.margin=margin(10,10,150,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water and Solids") + 
+  ggtitle("Water") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-surf2 <- ggplot(subset(surf, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+
+
+#SOLIDS
+surf2 <- ggplot(subset(surf, Medium_id2%in% c("Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,150,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Solids") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+
+#AIR
+surf3 <- ggplot(subset(surf, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
+  scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
@@ -1000,18 +1062,25 @@ surf2 <- ggplot(subset(surf, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compou
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-surfs <- egg::ggarrange(surf1, surf2)
 
-ggsave("surfs.png", surfs, width = 10, height = 12)
+
+
+surfsx <- egg::ggarrange(surf1, surf2)
+
+ggsave("surfsx.png", surfsx, width = 10, height = 11)
+ggsave("surfsy.png", surf3, width = 10, height = 6)
+
 ```
 
 9) UV-additives
 ```{r}
 unique(UV$Medium_id2)
 
-UV1 <- ggplot(subset(UV, Medium_id2%in% c("Water", "Solids", "Biota")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) 
+
+uv1 <- ggplot(subset(UV, Medium_id2%in% c("Water", "Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
+    geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -1043,9 +1112,9 @@ UV1 <- ggplot(subset(UV, Medium_id2%in% c("Water", "Solids", "Biota")), aes(x=Me
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-UV2 <- ggplot(subset(UV, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
+uv2 <- ggplot(subset(UV, Medium_id2%in% c("Air")), aes(x=Medium_id,y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 1)), color = "white", size = 5)+ # write the values
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5) +
   scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
@@ -1077,7 +1146,7 @@ UV2 <- ggplot(subset(UV, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, 
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-uvs <- egg::ggarrange(UV1, UV2)
+uvs <- egg::ggarrange(uv1, uv2)
 
 ggsave("uvs.png", uvs, width = 10, height = 9)
 ```
@@ -1085,22 +1154,18 @@ ggsave("uvs.png", uvs, width = 10, height = 9)
 
 PNEC FIGUE
 The following compounds: LCCP, CTC_CTA, BCPS, isoTAC, TAC, BTSA, OHBT, 6PPD,6PPDq,DPPD,IPPD,TMQ,TMMAT,DPG,44_BPS2,BIS_TMC,TCM,DCM,TCE,PCE,CCl4,DBM,L6,L7,L8,BP_8,4_HBP
-
 ```{r Making the PNEC Figure}
-#Based on the ifnormation provied, the following compounds are of interest. Perhaps excluding L9 and L10 due to suspect screening. Others from NIVA? Check
+#Based on the information provied, the following compounds are of interest. Perhaps excluding L9 and L10 due to suspect screening. Others from NIVA? Check
 
 #tar ut "DBM",  for under LOD, eventuelt sjekk
+df_finalzzc <- df_finalzz %>% 
+  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalthrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC", "L10", "L6", "L7", "L8", "L9", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
 
-df_finalzz <- df_finalz %>% 
-  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4_4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitryptyline", "BCPS", "BIS TC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalthrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC", "L10", "L6", "L7", "L8", "L9", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
-
-pnec <- subset(df_finalzzzz, compound%in% c("LCCP", "CTC/CTA", "BCPS", "isoTAC", "TAC", "BTSA", "OHBT", "6PPD", "6PPD-q", "DPPD", "IPPD", "TMQ", "TMMAT", "DPG", "44-BPS2", "BIS-TMC", "TCM", "DCM", "TCE", "PCE", "CCl4", "L6", "L7", "L8",  "BP-8", "4-HBP"))
+pnec <- subset(df_finalzzc, compound%in% c("LCCP", "CTC/CTA", "BCPS", "isoTAC", "BTSA", "OHBT", "6PPD", "6PPD-q", "DPPD", "IPPD", "TMQ", "TMMAT", "DPG", "44-BPS2", "BIS-TMC", "TAOT", "DCM", "TCE", "PCE", "CCl4", "L6", "L7", "L8",  "BP-8", "4-HBP", "OP", "Amitriptyline", "Fexofenadine"))
 #unique(pnec$compound)  #sjekk at alle er med. Noen endrer navn i R ved lesing
 
 #følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
 pnec$value2 <- as.numeric(pnec$value)
-nrow(pnec)
-class(pnec$value2)
 pnec2 <- pnec %>% drop_na(value2)
 
 #filter out max an min values for each category. Wich categories to choose? 
@@ -1108,8 +1173,6 @@ pnec_max_minx <- pnec2 %>%
   group_by(compound, Medium_id2) %>%
   mutate(Min = min(value2), Max = max(value2))
 unique(pnec2$Medium_id2)
-
-unique(pnec_max_miny$Medium_id2)
 
 #Make new categories to match the PNEC categories of freswater, sediment og biota
 #not using air values here
@@ -1126,11 +1189,11 @@ unique(pnec_max_min2$sample_category)
 #Laste opp fil med PNEC verdier. Laget fra info i word
 #condition and sample category
 # short and compound
-dx <- read.table("pnec.txt", header=TRUE, sep="\t", na.string=c(""))
+dx <- read.table("PNEC3.txt", header=TRUE, sep="\t", na.string=c(""))
 #Calculate to the correct abbreviations
-dx$Freshwater2 <- dx$Freshwater *1000
-dx$Sediment2 <- dx$Sediment *1000000000
-dx$Biota2 <- dx$Biota
+dx$Freshwater2 <- dx$Freshwater *1
+dx$Sediment2 <- dx$Sediment *1
+dx$Biota2 <- dx$Biota*1
 
 dx_long <- gather(dx, sample_category, limit, Freshwater2:Biota2, factor_key=TRUE)
 
@@ -1140,6 +1203,7 @@ dx_long$compound <- revalue(dx_long$compound, c("BP_8"="BP-8"))
 dx_long$compound <- revalue(dx_long$compound, c("44_BPS2"="44-BPS2"))
 dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
 dx_long$compound <- revalue(dx_long$compound, c("4_HBP"="4-HBP"))
+#dx_long$compound <- revalue(dx_long$compound, c("Amitryptyline"="Amitriptyline"))
 
 #one may have wrong class
 pnec_max_min4 <- as.data.frame(pnec_max_min2)
@@ -1156,8 +1220,6 @@ dx2 <- merge(x=pnec_max_min5,y=dx_long, by=c(as.character("compound"), as.charac
 #ARE THRER wrong abbreviations for pnec??
 
 write.csv(dx2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST_pnec.csv", row.names=FALSE)
-
-
 ```
 
 Må rydde opp i følgende:
@@ -1168,95 +1230,473 @@ Må rydde opp i følgende:
 - i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
 
 ```{r Cleaning up before plotting}
-
 #remove duplicate rows before plotting
 dx3 <-dx2 %>% 
   distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
 
-
 #sett rekkefølgen til molekylgruppene
-
 dx4 <- dx3 %>% 
-  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "CTC/CTA",
-                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAC", "TMMAT", "TMQ", "L6", "L7", "L8", "4-HBP", "BP-8")))
+  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "Amitriptyline", "CTC/CTA","Fexofenadine",
+                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAOT", "TMMAT", "TMQ", "L6", "L7", "L8", "OP", "4-HBP", "BP-8")))
 
-nrow(dx3)
 ```
 
-
 ```{r PNEC plot}
-
-ggplot(dx4, aes(y=compound, x=value2, xmin = Min, xmax=Max, colour = sample_category))+ 
-  geom_linerange(size=2, aes(colour = sample_category), position = position_dodge2(width = 0.6))+
-  geom_point(aes(x=limit, fill = sample_category),  size=3, shape=15, position = position_dodge2(width = 0.6))+
+pnec <- ggplot(dx4, aes(y=fct_rev(compound), x=value2, xmin = Min, xmax=Max, colour = sample_category))+ 
+  geom_linerange(size=2, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
+  geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
   scale_x_continuous(trans='log10') +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
         axis.text.y = element_text(size = 15,colour="black"),
         axis.title.y = element_blank(),
-        axis.title.x = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
         panel.spacing = unit(0, "lines"), 
         strip.background = element_blank(),
         strip.placement = "outside",
         strip.text.y = element_text(size = 14, angle = 0, hjust=0),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=12),
+        legend.title = element_blank(),
+        legend.text = element_text(size=15),
+        plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
         legend.position = "top")+
-    facet_grid(m_group~., scales="free_y", space='free')
+  facet_grid(m_group~., scales="free_y", space='free')+
+  xlab("log10(concentration)")+
+  scale_alpha(guide = 'none')+
+  guides(color=guide_legend("sample_category"), fill = "none")+
+  scale_color_manual(values = c("#C77CFF", "#00BFC4", "#7CAE00"),
+  labels = c('Biota', 'Freshwater', 'Sediment'))
 
+ggsave("pnec.png", pnec, width = 7, height = 9.3)
+
+#, values = c("red", "blue", "grey"))
+#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
   
+  #scale_fill_manual(values = c("red", "blue", "grey"))
+  #scale_colour_manual(values = c("red", "blue", "grey"))
 
 
 ```
 
 
+# Exploring site specific contamination patterns
 
-
-
-
-
+1) Waste water treatment
+- are thre differences between high and low treatment? water and solids
+- are there differences between time points of sampling?
 
 Illustrating differebces between e.g. low and high purification wastewater
+- if using average values, need to make sure that the averages are calculated correctly based on grouping
 
-```{r differences in wastewater treatment}
+```{r}
+df_finalzzzz$Comment_location <- revalue(df_finalzzzz$Comment_location, c("Recipient pond_upper"="Recipient pond"))
+df_finalzzzz$Comment_location <- revalue(df_finalzzzz$Comment_location, c("Recipient pond_lower"="Recipient pond"))
 
-class(rub$detect_frac)
-rub <- subset(df_finalx, m_group == "Rubber")
-pest <- subset(df_finalx, m_group == "Pesticide_Pharmaceutical")
-bis <- subset(df_finalx, m_group == "Bisphenols")
-surf <- subset(df_finalx, m_group == "Surfactants")
+#remove susbtances suspect screening
+df_finalzzzzx<-df_finalzzzz[!(df_finalzzzz$compound == "112-PFECA" | df_finalzzzz$compound == "1112-PFECA"| df_finalzzzz$compound =="11112-PFECA" | df_finalzzzz$compound =="L10" | df_finalzzzz$compound =="L9"),]
 
-ggplot(subset(df_finalx, Site_Category2%in% c("Wastewater treatment plant")), aes(y=mean, x=compound))+
-  geom_col()+
-  facet_grid(Medium_id~Site_Comment)
-
-  
-facet_grid(Medium_id~.)
-  geom_tile(aes(fill = det_frac), colour="gray")+  # background colours are mapped according to the value column
-  geom_text(aes(label = round(mean, 0)), color = "white", size = 4)+ # write the values
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50)+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 12,face = "bold"),
-        plot.title = element_text(size=20,face="bold"),
-        axis.text.y = element_text(size = 12,face = "bold")) +
-  ggtitle("Rubber in water") + 
-  theme(legend.title=element_text(face="bold", size=14)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency")
-  facet_grid(Medium_id2~.)
 ```
 
+Calculate mean
+- sjekk at ble riktig! ta ut excel f eks
+
+```{r}
+#df_long_Y <- df_long_X[!is.na(df_long_X$value),]
+#Site_Comment indicate seasonality
+#Site_Comment22 indicate conditional differences like high and low purification
+
+#write.csv(df_long_X, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/2310054_TEST_barcharts.csv", row.names=FALSE)
+
+envixx1 = df_finalzzzzx %>%
+  group_by(Site_Category, compound, Medium_id, Comment_season, Site_name) %>%
+  mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx2 = envixx1 %>%
+  group_by(Site_Category, compound, Medium_id, Comment_condition) %>%
+  mutate(meanx_cond = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx3 = envixx2 %>%
+  group_by(Site_Category, compound, Medium_id, Site_name) %>%
+  mutate(meanx_name = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx4 = envixx3 %>%
+  group_by(Site_Category, compound, Medium_id, Site_Comment) %>%
+  mutate(meanx_sc = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx5d = envixx4 %>%
+  group_by(Site_Category, compound, Comment_location, Medium_id, Comment_condition) %>%
+  mutate(meanx_sc2 = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx5 = envixx5d %>%
+  group_by(Site_Category, compound, Medium_id) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+#for the tunnel we want to separate by Medium_id and by tunnel versus recipient pond
+envixx6 <- envixx5 %>%
+  mutate(tunnel_site = ifelse(Site_name == "Smestaddammen", "Receiving pond", "Tunnel"))
+
+envixx7 = envixx6 %>%
+  group_by(Site_Category, compound, Medium_id2, Comment_location) %>%
+  mutate(meanx_tun = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+#for road traffick and park, also for wastewater
+envixx8 = envixx7 %>%
+  group_by(Site_Category, compound, Medium_id, Comment_season) %>%
+  mutate(meanx_air = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+#tuyre recycling to combine filtered and total water
+envixx9 = envixx8 %>%
+  group_by(Site_Category, compound, Medium_id2) %>%
+  mutate(meanx_tyr = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+#Alns
+envixx10 = envixx9 %>%
+  group_by(Site_Category, compound, Medium_id, Site_name) %>%
+  mutate(meanx_riv = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx11 = envixx10 %>%
+  group_by(Site_Category, compound, Medium_id, Site_name, Comment_condition) %>%
+  mutate(meanx_ri2v = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx12x = envixx11 %>%
+  group_by(Site_Category, compound, Medium_id, Comment_location) %>%
+  mutate(meanx_indo = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixx12y = envixx12x %>%
+  group_by(Site_Category, compound, Medium_id) %>%
+  mutate(meanx_indo2 = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+envixxc = envixx12y %>%
+  group_by(Site_Category, compound, Medium_id, Comment_location) %>%
+  mutate(meanx_loc = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+```
+
+Below we have the plot in ggplot
+```{r}
+print(unique(df_finalz$compound))
+
+envixx2x <- envixxc %>% 
+  mutate(compound = factor(compound, levels = c("12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TMC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalothrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC",  "L6", "L7", "L8", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
+
+#envixx2 <- envixx2x %>% 
+#  mutate(Site_name = factor(Site_name, levels = c("Kalbakken", "Brubak", "Breivoll", "Kværner")))
+
+```
+
+1) Artificial grass pitch
+- fix order of facets and size of text, grouping of molecules
+```{r}
+envixx4 <- subset(envixx2x, !is.na(meanx))
+
+envixx4$m_group <- revalue(envixx4$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+print(unique(envixx4$Medium_id))
+
+#set order of facets
+envixx4$Medium_id <- factor(envixx4$Medium_id, levels=c("Water, total (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)","Granule (ng/g, w.w.)", "Sediment (ng/g, d.w.)", "Dust (ng/g, w.w.)","Water, filtered (ng/L)", "Water, particles (ng/L)", "Biota (ng/g, w.w.)", "Air (ng/m^3)" )) 
+
+#testing grouping below x axis
+foot <- ggplot(subset(envixx4, Site_Category%in% c("Artificial grass pitch")), aes(y=meanx, x=compound, fill=Medium_id))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue3", "dodgerblue3", "dodgerblue3", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = "none")+
+  facet_grid(Medium_id~m_group, scales="free", space='free_x')
+ 
+ggsave("Football.png", foot)
 
 
+  
+```
 
+2) Tunnel environment
+- what ends up in the pond?
+- difference between filtered and total water?
+- differences during the washing?
+```{r}
+envixx4 <- subset(envixx2x, !is.na(meanx_tun))
+
+envixx4$m_group <- revalue(envixx4$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+#the most interesting is what reaches the pond. Figure with discharge and pond
+
+#envixx4x <- subset(envixx4, Medium_id  %in% c("Water (ng/L)", "Water, filtered (ng/L)"))
+#envixx4x1 <- subset(envixx4x, Medium_id  %in% c("Sediment (g/g)", "Sludge (g/g)"))
+#envixx4x1 <- subset(envixx4x, Medium_id  %in% c("Water (ng/L)"))
+
+envixx4$Comment_location <- revalue(envixx4$Comment_location, c("Sedimentation pool"="Sedimentation basin"))
+envixx4x1 <- subset(envixx4, Comment_location  %in% c("Recipient pond", "Sedimentation basin"))
+
+envixx4x2 <- subset(envixx4x1, Medium_id2  %in% c("Solids"))
+
+unique(envixx4x1$Comment_location)
+
+tunn <- ggplot(subset(envixx4x1, Site_Category%in% c("Tunnel environment")), aes(y=meanx_tun, x=compound, fill= Comment_location))+
+  geom_col(position="dodge")+
+  facet_grid(Comment_location~., scales="free")+
+  scale_fill_manual(values=c("dodgerblue3", "#E69F00"))+
+  theme_bw()+
+    theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=11, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = "none")+
+  facet_grid(Comment_location~m_group, scales="free", space='free_x')
+  
+
+
+ggsave("Tunnel.png", tunn, width = 7.86, height = 6)
+```
+3) Trafficked road and urban park
+- difference between park and road
+- difference between seasons
+- difference between weekend and weekday
+```{r}
+envixx4 <- subset(envixx2x, !is.na(meanx_air))
+
+envixx4x2 <- subset(envixx4, Medium_id  %in% c("Air, particles (ng/m^3)"))
+
+#remove duplicate rows before plotting
+envixx4x3 <-envixx4x2 %>% 
+  distinct(meanx_air, compound, Site_Category, Comment_season, .keep_all = TRUE)
+
+envixx4x3$m_group <- revalue(envixx4x3$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+
+road <- ggplot(subset(envixx4x3, Site_Category%in% c("Trafficked road", "Urban park")), aes(y=meanx_air, x=compound, fill=Site_Category))+
+  geom_col(position = position_dodge2(preserve = "single"))+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=11, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = )+
+  labs(fill = "Site category")+
+facet_grid(Comment_season~m_group, scales="free", space='free_x')
+
+ggsave("Road.png", road, width = 7.86, height = 6)
+
+```
+
+4) Wastewater treatment
+- only focus on difference between high and low quality treatment
+- seasonality ont so interesting, and espesially not with only two observations
+To DO: rekkefølge medium, gruppering stoffene, etc. 
+```{r differences in wastewater treatment}
+#remove nas
+
+envixx4cs <- subset(envixx2x, !is.na(meanx_cond))
+
+envixx4cs$Comment_condition <- factor(envixx4cs$Comment_condition, levels=c("Low", "High" )) 
+envixx4cs$Medium_id <- factor(envixx4cs$Medium_id, levels=c("Water, total (ng/L)", "Sludge (ng/g, d.w.)")) 
+
+#pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
+envixx4css <- subset(envixx4cs, !Medium_id == c("Air (ng/^3)")) 
+
+unique(envixx4$Medium_id)
+
+envixx4css$m_group <- revalue(envixx4css$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+
+wwater <- ggplot(subset(envixx4css, Site_Category%in% c("Wastewater treatment plant")), aes(y=meanx_cond, x=compound, fill=Comment_condition))+
+  geom_col(position="dodge")+
+  facet_grid(Medium_id~., scales="free")+
+  theme_bw()+
+   theme(axis.text.x = element_text(angle = 90))+
+  scale_fill_manual(values=c("dodgerblue2", "dodgerblue4"))+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = )+
+  labs(fill = "Site category")+
+facet_grid(Medium_id~m_group, scales="free", space='free_x')
+
+ggsave("Wwater.png", wwater, width = 7.86, height = 6.8)
+
+```
+
+5) Tyre collection site
+- what goes into the environment?
+- similar pattern as the rest?
+```{r}
+envixx4 <- subset(envixx2x, !is.na(meanx_tyr))
+
+#envixx4x2 <- subset(envixx4, !Medium_id  %in% c("Sludge (ng/g)"))
+envixx4x3 <- subset(envixx4, Medium_id  %in% c("Water, particles (ng/L)", "Water, filtered (ng/L)", "Dust (ng/g, w.w.)"))
+
+nrow(envixx4x3)
+nrow(envixx4)
+
+labx <- c("Air" = "Dust (ng/g)",
+          "Water" = "Water (ng/L)")
+
+envixx4x3$m_group <- revalue(envixx4x3$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+
+tyre <- ggplot(subset(envixx4x3, Site_Category%in% c("Tyre collection site")), aes(y=meanx_tyr, x=compound))+
+  geom_col(position="dodge", fill="dodgerblue3")+
+   theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=12, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = "none")+
+  labs(fill = "Site category")+
+facet_grid(Medium_id2~m_group, scales="free", space='free_x', labeller = labeller(Medium_id2 =labx))
+
+ggsave("Tyre.png", tyre, width = 7.86, height = 6.8)
+```
+
+6) Urban river Alna
+- difference along the river
+- difference between low and high flow
+```{r}
+envixx4c <- subset(envixx2x, !is.na(meanx_riv))
+
+envixx4c$Site_name <- revalue(envixx4c$Site_name, c("Apall?kka"="Kalbakken"))
+print(unique(envixx4c$Site_name))
+ 
+envixx5c <- envixx4c %>% 
+  mutate(Site_name = factor(Site_name, levels = c("Kalbakken", "Brubak", "Breivoll", "Kv'rner")))
+
+envixx5c$Site_name <- revalue(envixx5c$Site_name, c("Kv'rner"="Kværner"))
+envixx_AlnaS <- subset(envixx5c, Medium_id == "Sediment (ng/g, d.w.)")
+envixx_AlnaW <- subset(envixx5c, Medium_id == "Water, total (ng/L)")
+
+Alna <- ggplot(subset(envixx_AlnaW, Site_Category%in% c("Urban river")), aes(y=meanx_riv, x=compound, fill=Site_name))+
+  geom_col(position="dodge")+
+  facet_grid(Medium_id~Site_name, scales="free_y")+
+   theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = "none")+
+  scale_fill_manual(values=c("dodgerblue", "dodgerblue3", "dodgerblue4",  "darkblue"))+
+  labs(fill = "Site category")+
+facet_grid(Site_name~m_group, scales="free_x", space='free_x')
+
+ggsave("Alna.png", Alna,  width= 6.86, height= 7.32)
+
+```
+
+7) Indoor air
+- Difference between private and commercial?
+- different between the commercial?
+```{r}
+envixx4c <- subset(envixx2x, !is.na(meanx_indo))
+envixx4c2 <- subset(envixx2x, !is.na(meanx_indo2))
+
+envixx_IndoA <- subset(envixx4c, Medium_id == "Air (ng/m^3)")
+envixx_IndoD <- subset(envixx4c, Medium_id == "Dust (ng/g)")
+
+envixx4c2$m_group <- revalue(envixx4c2$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+air <- ggplot(subset(envixx4c2, Site_Category%in% c("Private home", "Commercial building")), 
+       aes(y=meanx_indo2, x=compound, fill=Site_Category))+
+  geom_col(position="dodge")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = )+
+  labs(fill = "Site category")+
+facet_grid(Medium_id~m_group, scales="free", space='free_x')+
+  scale_fill_manual(values=c("dodgerblue2", "dodgerblue4"))
+
+
+ggsave("Air.png", air, width = 7.86, height = 6.8)
+
+```
+
+7) Biota
+```{r}
+envixx4c <- subset(envixx2x, !is.na(meanx_sc2))
+length(envixx3)
+
+#  facet_grid(Medium_id~Site_Comment, scales="free_y")+
+#envixx4x <- subset(envixx4, Medium_id  %in% c("Granule (g/g)"))
+
+envixx5cs <- envixx4c %>% 
+  mutate(Comment_condition = factor(Comment_condition, levels = c("Duck mussel", "Perch liver and filet", "Cod liver", "Seagull egg", "Seal blubber")))
+
+envixx5cs$m_group <- revalue(envixx5cs$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
+
+biota <- ggplot(subset(envixx5cs, Site_Category%in% c("Recipient")), aes(y=meanx_sc2, x=compound, fill=Comment_condition))+
+  geom_col(position="dodge")+
+   theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=11, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position = )+
+  labs(fill = "Specie and tissue")+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "dodgerblue",  "dodgerblue3", "dodgerblue4"))+
+  facet_grid(Comment_location~m_group, scales="free_x", space='free_x')
+
+ggsave("Biota.png", biota, width = 7.86, height = 6.8)
+```
 
 
 
