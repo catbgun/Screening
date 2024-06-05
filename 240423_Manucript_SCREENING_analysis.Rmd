@@ -38,7 +38,6 @@ df <- read.table("240110_MS_Screening.txt", header=TRUE, sep="\t", na.string=c("
 ```
 
 
-
 FOR THE MANUSCRIPT. 
 - do we want to change the 30% detection frequency criteria?
 - do we want to treat obs < LOD differently?
@@ -99,10 +98,49 @@ sigfig <- function(vec, digits){
 ```
 
 HEATMAP TABLE PLOT
-```{r BISPHENOLS}
+```{r heatmap table}
 #unique(bis$compound)
 #class(df_finalzz$meanx)
 df_finalzz$meanx <- as.numeric(df_finalzz$meanx)
+
+#Table for tyre collectoin site with all sample types
+ggplot(subset(df_finalzz, Site_Category%in% c("Tyre collection site")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black") + # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+
+
+
+
 
 #WATER
 ggplot(subset(df_finalzz, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
@@ -344,6 +382,7 @@ For the different aspects, the mean must be calculated in slightly different way
 class(df_finalzz$plotting)
 
 df_finalzz$plotting <- as.numeric(df_finalzz$plotting)
+
 enviA = df_finalzz %>%
   group_by(Site_Category, compound, Medium_id2) %>%
   mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
@@ -353,6 +392,13 @@ enviW = df_finalzz %>%
   group_by(Site_Category, compound, Medium_id2) %>%
   mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
+
+
+#kilde = df_finalzz %>%
+#  group_by(Site_Category, compound, Medium_id) %>%
+#  mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
+#  ungroup()
+
 ```
 
 1) Substances in air
@@ -405,6 +451,46 @@ ggplot(subset(enviA2, Medium_id2%in% c("Water")), aes(y=meanx, x=compound, fill=
 ```
 
 
+## Road versus football field
+```{r road versus soccer field}
+#tidy up the medium-categories prior to calcualtions and plotting
+
+kilde <- subset(df_finalzz, Site_Category == c("Tunnel environment", "Artificial grass pitch", "Trafficked road"))
+
+#Take Smestaddammen out from the road traffic
+kildex <- subset(kilde, Site_name != c("Smestaddammen"))
+
+unique(kildex$Site_name)
+
+kilde2 <- subset(kildex, kildex$Medium_id %in%c("Water, total (ng/L)", "Sludge (ng/g, d.w.)", "Water, particles (ng/L)", "Water, filtered (ng/L)", "Air, particles (ng/m^3)"))
+
+kilde2$Site_Category <- revalue(kilde2$Site_Category, c("Tunnel environment"="Road environment"))
+kilde2$Site_Category <- revalue(kilde2$Site_Category, c("Trafficked road"="Road environment"))
+
+kilde2$meanxx <- as.numeric(kilde2$meanx)
+
+kilde3 <- subset(kilde2, !is.na(meanxx))
+
+kilde4 = kilde3 %>%
+  group_by(Site_Category, compound, Medium_id2) %>%
+  mutate(meanx_season = mean(meanxx, na.rm = TRUE))%>% 
+  ungroup()
+
+ggplot(subset(kilde4, Site_Category %in% c("Road environment", "Artificial grass pitch")), aes(y=as.numeric(meanx_season), x=compound, fill=Site_Category))+
+  geom_col(position="dodge")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Medium_id2~m_group, scales="free", space='free_x')
+
+```
 
 
 
