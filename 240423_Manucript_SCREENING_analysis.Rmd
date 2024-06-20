@@ -37,6 +37,138 @@ Sys.setlocale(locale="no_NO")
 df <- read.table("240110_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
 ```
 
+To decide on % detection frequency of not
+make necessary corrections
+
+```{r create figure looking into the tunnel environment}
+#Smestaddammen should not be in site_category tunnel environment, rather e.g. recipient. sorted this out manually..
+
+tunnel <- subset(df, Site_Category == "Tunnel environment")
+tunnel_water <- subset(tunnel, Medium_id2 == "Water")
+#geom_col(position="dodge")
+
+ggplot(tunnel_water, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Comment_location~ ., scales="free", space='free_x')
+
+
+head(tunnel)
+unique(df$Medium_id)
+unique(df$Site_Category)
+```
+
+## Artificial grass pitch
+```{r looking into the artificial grass pitch samples}
+footb <- subset(df, Site_Category == "Artificial grass pitch")
+footb1 <- !subset(footb, Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)")
+
+#remove the following sample which was not a true man hole sediment sample
+footb1 <- footb %>% 
+  filter(!(Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)"))
+
+
+
+ggplot(footb1, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Medium_id ~ ., scales="free", space='free_x')+
+
+```
+
+###Heatmap plot for articifial grass pitch
+- average value must be recalculated, without 0.5x LOD (?)
+- we need the number of observations somewhere
+
+
+THE DATA WE HAVE DOES NOT CONTAIN <LOD AND THIS IS NEEDED! WE NEED A NEW DATAFILE
+
+```{r Calculating average}
+footb2 = footb1 %>%
+  group_by(compound, Medium_id) %>%
+  mutate(meanx2 = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+
+footb2 <- footb1  %>%
+  group_by(compound, Medium_id) %>%
+  mutate(lodcountx = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            nx = (length(value)),
+            det_fracx = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+```
+
+
+
+
+```{r HEATMAP PLOT}
+
+#NEEDS TO BE EDITED
+df_finalzz$meanx <- as.numeric(df_finalzz$meanx)
+
+#Table for tyre collectoin site with all sample types
+ggplot(subset(df_finalzz, Site_Category%in% c("Tyre collection site")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black") + # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 17, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+```
+
+
+
+
+
+```{r}
+
+```
+
 
 FOR THE MANUSCRIPT. 
 - do we want to change the 30% detection frequency criteria?
@@ -53,7 +185,6 @@ df_finalz1 = df%>%
                              compound %in%c("ABT", "BTSA", "MTBT", "PhBT", "OHBT", "MBT", "CPPD", "6PPD-q", "DPPD", "IPPD",  "6PPD", "7PPD", "BOPA", "TMMAT", "DPG","TMQ", "isoTAC", "TAC") ~ "Rubber related"))
 
 ```
-
 
 Below we have the plot in ggplot
 ```{r}
@@ -87,14 +218,12 @@ unique(df_finalzx$Site_Category)
 ```
 
 ```{r Test to set desired number of digits}
-
 sigfig <- function(vec, digits){
   return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
 }
 #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
 #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 3))), color = "white", size = 5)
 #geom_text(aes(label=ifelse(is.na(meanx), "", round(meanx, digits=3))), color = "white", size = 5)
-
 ```
 
 HEATMAP TABLE PLOT
@@ -137,10 +266,6 @@ ggplot(subset(df_finalzz, Site_Category%in% c("Tyre collection site")), aes(x=Me
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-
-
 
 #WATER
 ggplot(subset(df_finalzz, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
@@ -246,14 +371,11 @@ ggplot(subset(df_finalzz, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id,
   labs(fill="Detection frequency (%)")+
   facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
 
-
 bissx <- egg::ggarrange(bis1, bis2)
-
 
 ggsave("water.png", w, width = 10, height = 8)
 ggsave("airc.png", a, width = 10, height = 8)
 ggsave("solidbiota.png", sb, width = 10, height = 8)
-
 ```
 
 
@@ -393,7 +515,6 @@ enviW = df_finalzz %>%
   mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-
 #kilde = df_finalzz %>%
 #  group_by(Site_Category, compound, Medium_id) %>%
 #  mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
@@ -428,10 +549,9 @@ ggplot(subset(enviA3, Medium_id2%in% c("Air")), aes(y=meanx, x=compound, fill=Si
   facet_grid(Site_Category~m_group, scales="free", space='free_x')
 ```
 
-
 2) Substances in water
 Compare substances measured in tunnel, artificial grass pitch, urban river and wastewater treatment
-
+- make smestaddammen an independent category
 ```{r}
 ggplot(subset(enviA2, Medium_id2%in% c("Water")), aes(y=meanx, x=compound, fill=Site_Category))+
   geom_col(position="dodge")+
@@ -450,11 +570,9 @@ ggplot(subset(enviA2, Medium_id2%in% c("Water")), aes(y=meanx, x=compound, fill=
 
 ```
 
-
 ## Road versus football field
 ```{r road versus soccer field}
 #tidy up the medium-categories prior to calcualtions and plotting
-
 kilde <- subset(df_finalzz, Site_Category == c("Tunnel environment", "Artificial grass pitch", "Trafficked road"))
 
 #Take Smestaddammen out from the road traffic
@@ -492,6 +610,12 @@ ggplot(subset(kilde4, Site_Category %in% c("Road environment", "Artificial grass
 
 ```
 
+## Environmental sites
+```{r}
+unique(df_finalzz$Site_Category)
+
+kilde <- subset(df_finalzz, Site_Category == c("Tunnel environment", "Artificial grass pitch", "Trafficked road", "Urban park", "Recipient"))
+```
 
 
 
