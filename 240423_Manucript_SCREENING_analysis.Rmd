@@ -22,6 +22,22 @@ dLimity <- function(v){
 }
 ```
 
+```{r}
+get_box_stats <- function(y, upper_limit = max(df$mpg) * 1.15) {
+  return(data.frame(
+    y = 0.95 * upper_limit,
+    label = paste(
+      "n =", length(y), "\n"
+      
+    )
+  ))
+}
+
+#"Mean =", round(mean(y), 2), "\n",
+#      "Median =", round(median(y), 2), "\n"
+```
+
+
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 #install.packages(c("dplyr", "ggplot2", "plyr", "Rmisc", "tidyverse", "lubridate", "stringr"))
 Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats")
@@ -29,25 +45,92 @@ lapply(Packages, library, character.only = TRUE)
 #trengs disse? "Rmisc", "tidyverse", "lubridate", "stringr",
 ```
 
-Make sure that the short name of the molecules is at the bottom
-Should be no zero values
+
+The file that is now uploaded has no mean or frequency of detection calculated. But only the sompounds of interest are included. 
+
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
+#df <- read.table("240110_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
+#remember to resave from csv to txt
+df <- read.table("240621_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
 
-df <- read.table("240110_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
+length(unique(df$compound)) #should be 22
+#ft <- subset(df, Site_Category=="Artificial grass pitch")
+#ft1 <- subset(ft, Medium_id == "Water, total")
+#ft2 <- subset(ft1, Site_name == "Valle Hovin East")
+
 ```
 
 To decide on % detection frequency of not
-make necessary corrections
+- is it possible to have the same criteria for the different sites? Perhaps start with the sources
+- Site_Category, compound, and Medium_id
+
+- What do we want for the tables/figures? When only e.g. n=3 it might be best with average of those observed and number of observations?
+```{r Fix}
+#replace tunnel environment with trafficked road
+df$Site_Category <- revalue(df$Site_Category, c("Tunnel environment" = "Trafficked road"))
+unique(df$Site_Category)
+
+#Smestaddammen should not be trafficked road category, but instead recipient
+df1 <- df %>% mutate(Site_Category = replace(Site_Category, which(Site_Category == "Trafficked road" & Site_name == "Smestaddammen"), "Urban pond"))
+
+#remove the following sample which was not a true man hole sediment sample
+df2 <- df1 %>% 
+  filter(!(Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)"))
+
+```
+
+
+```{r hot spots}
+#hs <- subset(df, Site_Category == c("Trafficked road", "Artificial grass pitch"))
+
+#here calculates detection frequency and n for all, but might not be the correct criteria for all sites
+df_freq = df2 %>%
+  group_by(Site_Category, compound, Medium_id) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+write.csv(df_freq, "240621_MS_TEST.csv", row.names=FALSE)
+```
+
+## Trafficked road
+- lag en boksplot for hver medium_id
+https://www.appsilon.com/post/ggplot2-boxplots
 
 ```{r create figure looking into the tunnel environment}
-#Smestaddammen should not be in site_category tunnel environment, rather e.g. recipient. sorted this out manually..
+unique(road$Medium_id)
+# unique(road$Medium_id) [1] "Water, filtered (ng/L)"  "Water, particles (ng/L)" "Sludge (ng/g, d.w.)"     "Air, particles (ng/m^3)"
 
-tunnel <- subset(df, Site_Category == "Tunnel environment")
-tunnel_water <- subset(tunnel, Medium_id2 == "Water")
+road <- subset(df_freq, Site_Category == "Trafficked road")
+road_water <- subset(road, Medium_id == c("Water, filtered (ng/L)", "Water, particles (ng/L)"))
+road_air <- subset(road, Medium_id == c("Air, particles (ng/m^3)"))
+road_slud <- subset(road, Medium_id == c("Sludge (ng/g, d.w.)"))
+
 #geom_col(position="dodge")
 
-ggplot(tunnel_water, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
+#WATER
+road_water_dis <- subset(road_water, Comment_location == c("Treated discharge"))
+ggplot(road_water_dis, aes(y=as.numeric(value), x=compound, fill=Site_Comment))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")
+  facet_grid(Site_Comment~ ., scales="free", space='free_x')+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
+    
+geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+
+#SLUDGE
+ggplot(road_slud, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
   geom_boxplot()+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -59,26 +142,51 @@ ggplot(tunnel_water, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(Comment_location~ ., scales="free", space='free_x')
+  facet_grid(Comment_location~ ., scales="free", space='free_x')+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
+    
+geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
 
+#AIR
+ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)
+    geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+  
+    #facet_grid(Site_name~ ., scales="free", space='free_x')
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=0, hjust=0.5)
 
+#hjust = 0.5, vjust = 0.9
 head(tunnel)
 unique(df$Medium_id)
 unique(df$Site_Category)
 ```
 
 ## Artificial grass pitch
+- granulate different between indoor and outood? separate: Site_Comment
+
 ```{r looking into the artificial grass pitch samples}
-footb <- subset(df, Site_Category == "Artificial grass pitch")
-footb1 <- !subset(footb, Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)")
+footb <- subset(df_freq, Site_Category == "Artificial grass pitch")
+unique(footb$Medium_id)
+# "Water, total (ng/L)"     "Granule (ng/g, w.w.)"    "Sludge (ng/g, d.w.)"    
+# "Air, particles (ng/m^3)"
 
-#remove the following sample which was not a true man hole sediment sample
-footb1 <- footb %>% 
-  filter(!(Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)"))
+#GRANULATE
+gran <- subset(footb, Medium_id == "Granule (ng/g, w.w.)")
+air <- subset(footb, Medium_id == "Air, particles (ng/m^3)")
+wat <- subset(footb, Medium_id == "Water, total (ng/L)")
 
-
-
-ggplot(footb1, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
+ggplot(gran, aes(y=as.numeric(value), x=compound, fill=Comment_location))+
   geom_boxplot()+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -90,9 +198,198 @@ ggplot(footb1, aes(y=as.numeric(plotting), x=compound, fill=Medium_id))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(Medium_id ~ ., scales="free", space='free_x')+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)+
+  facet_grid(Site_name ~ ., scales="free", space='free_x')
+    
+#AIR
+ggplot(air, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)+
+  facet_grid(Site_name ~ ., scales="free", space='free_x')
+    
+#WATER
+ggplot(wat, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)+
+  facet_grid(Site_name ~ ., scales="free", space='free_x')
 
 ```
+
+### Look into patterns across sites
+Air: samples from trafficked road, indoor football field and urban park. Are they the same type? Particle or air?
+```{r Air}
+unique(df_freq$Medium_id)
+#"Water, total (ng/L)"     "Granule (ng/g, w.w.)"    "Sludge (ng/g, d.w.)"     "Sediment (ng/g, d.w.)"   "Water, filtered (ng/L)"  "Water, particles (ng/L)"
+# [7] "Biota (ng/g, w.w.)"      "Dust (ng/g, w.w.)"       "Air (ng/m^3)"            "Air, particles (ng/m^3)"
+
+Air_all <- subset(df_freq, Medium_id == c("Air, particles (ng/m^3)"))
+#Air_all_a <- subset(df_freq, Medium_id == c("Air (ng/m^3)" )) #we do not include air measurements since we dont have those from the "hot spot" locations. 
+
+#barplot with number of observation and faceted by site
+ggplot(Air_all, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_point(size=3)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-6, hjust=0.5)+
+  facet_grid(Site_Category ~ ., scales="free", space='free_x')
+```
+
+Water
+```{r}
+Wat_all <- subset(df_freq, subset = Medium_id %in% c("Water, total (ng/L)", "Water, filtered (ng/L)", "Water, particles (ng/L)"))
+#unique(Wat_all$Medium_id)
+Wat_all2 <- subset(Wat_all, Site_Category !="Tyre collection site")
+
+#Make selection from tunnel and select only the discharged water from Bekkelaget
+
+ww <- subset(Wat_all2, Site_Category == "Wastewater treatment plant")
+
+ggplot(Wat_all2, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-6, hjust=0.5)+
+  facet_grid(Site_Category ~ .,  space='free_x')
+
+ggplot(ww, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-6, hjust=0.5)+
+  facet_grid(Comment_season ~ .,  space='free_x')
+
+```
+
+
+Sludge and sediment
+```{r}
+sol_all <- subset(df_freq, subset = Medium_id %in% c("Sludge (ng/g, d.w.)", "Sediment (ng/g, d.w.)"))
+#unique(sol_all$Medium_id)
+sol_all2 <- subset(sol_all, Site_Category !="Tyre collection site")
+
+#Make selection from tunnel and select only the discharged water from Bekkelaget
+ww_s <- subset(sol_all2, Site_Category == "Wastewater treatment plant")
+
+ggplot(sol_all2, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-3, hjust=0.5)+
+  facet_grid(Site_Category ~ .,  space='free_x')
+
+ggplot(ww_s, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-6, hjust=0.5)+
+  facet_grid(Comment_season ~ .,  space='free_x')
+
+```
+
+Biota
+```{r}
+bio_all <- subset(df_freq, subset = Medium_id %in% c("Biota (ng/g, w.w.)"))
+#unique(df_freq$Medium_id)
+sol_all2 <- subset(sol_all, Site_Category !="Tyre collection site")
+
+#Make selection from tunnel and select only the discharged water from Bekkelaget
+ww_s <- subset(sol_all2, Site_Category == "Wastewater treatment plant")
+
+ggplot(bio_all, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-3, hjust=0.5)+
+  facet_grid(Comment_condition ~ ., scale="free", space='free_x')
+
+ggplot(ww_s, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+  geom_boxplot()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-6, hjust=0.5)+
+  facet_grid(Comment_season ~ .,  space='free_x')
+
+```
+
+
+
+
 
 ###Heatmap plot for articifial grass pitch
 - average value must be recalculated, without 0.5x LOD (?)
@@ -107,13 +404,18 @@ footb2 = footb1 %>%
   mutate(meanx2 = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-
+#provide detection frequency as well as number of observations
 footb2 <- footb1  %>%
   group_by(compound, Medium_id) %>%
   mutate(lodcountx = sum(lengths(regmatches(value, gregexpr("<", value)))),
             nx = (length(value)),
             det_fracx = (100-(lodcount/n)*100))%>%
   ungroup() 
+
+#take a look in excel
+
+
+#how should the mean/median be calculated?
 
 ```
 
