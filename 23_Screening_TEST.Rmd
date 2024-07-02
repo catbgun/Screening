@@ -38,12 +38,11 @@ Should be no zero values
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
 
-df23 <- read.table("240702_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+df23 <- read.table("240702_240528_SCRE2023_Resultater.txt", skip=1, header=TRUE, sep="\t", na.string=c(""))
 
 ```
 
 ```{r from wide to long}
-df_long <- gather(df, compound, value, ABT:LCCP, factor_key=TRUE)
 df23_long <- gather(df23, compound, value, AOZKF:Fett, factor_key=TRUE)
 
 unique(df23_longg$value)
@@ -55,15 +54,14 @@ df23_longg <- subset(df23_long, !is.na(value))
 #length(unique(df_long$compound))
 ```
 
-need to make column with frequency and then summary table.
-will not rely in NA, but need to define >LOD.
-Rather calculate mean later, after LOD has been replaced
-```{r}
-#by using mutate insytead of summarise we add the new columns to the old. consider un_group() at the end?
-#df_longg$Medium_id <- revalue(df_longg$Medium_id, c("Particle"="Water_particle"))
+## Grouping the data
+- by part 1 and 2
+- by susbtance group
+- and by groups of sampling sites/samples
+- by sample type?
 
+```{r Groupings}
 print(unique(df23_longg$Matrix))
-
 #one suggestion to group the 2023 data, but division of some sample types, especially products is needed
 
 #Note that matrix soil has space in the end....
@@ -74,18 +72,33 @@ df23_longgg = df23_longg%>%
                                 Matrix %in%c("Textiles and shoes", "Unspecified", "EE products", "Paint and varnish", "Toys") ~ "Unknown hotspot"))
 
 df23_longggz = df23_longgg%>%
-  mutate(Part = case_when(Sample_type %in% c("Wastewater treatment", "Unknown hotspot", "Known hotspots") ~ "Part1",
+  mutate(Part = case_when(Sample_type %in% c("Wastewater treatment", "Unknown hotspot", "Known hotspot") ~ "Part1",
                                 Matrix %in% c("Whales and sharks") ~ "Part2"))
 
 
-     
+
+gr23 <- read.table("Scre23_Groupings.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+
+newtable <- merge(df23_longggz,gr23, by.x  = "compound", by.y="ID") 
+
+print(unique(newtable$Group))
+
+```
+
+need to make column with frequency and then summary table.
+will not rely in NA, but need to define >LOD.
+Rather calculate mean later, after LOD has been replaced
+
+```{r Detection frequency}
 #Checking:
 unique(df23_longg$Matrix)
 unique(df23_longgg$Sample_type)
 
 length(unique(df_longgg$value))
 
-df23_long_freq = df23_longggz %>%
+#Here, the grouping is important! need to consider more thoroughly
+
+df23_long_freq = newtable %>%
   group_by(Sample_type, compound, Species) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
@@ -113,18 +126,18 @@ Filter out observations with < 30 detection frequency
 #  isLimit <- grepl("<", v)
 
 #filter observations with < 30 detection frequency
-df23_long_filtered <- df23_long_freq %>% 
-  filter(!(det_frac < 30))
+#df23_long_filtered <- df23_long_freq %>% 
+#  filter(!(det_frac < 30))
 #write.csv(df_long_filtered, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount_filter.csv", row.names=FALSE)
 ```
 
 ```{r Calculate 0.5xLOD}
-df23_long_X <- cbind(df23_long_filtered[,c(1:7,9:13)], apply(df23_long_filtered[,8, drop=F],2, dLimity))
+#df23_long_X <- cbind(df23_long_filtered[,c(1:7,9:13)], apply(df23_long_filtered[,8, drop=F],2, #dLimity))
 
 #write.csv(df_long_X, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount_filter_LOD.csv", row.names=FALSE)
 ```
 
-#perhaps this one was better?
+#perhaps this one was better? START EHR!!! NOE SOM IKKE STEMMER
 ```{r Testing new approach to be able to indicate < 30 detection frequency in table}
 #filter observations with < 30 detection frequency
 tosty23 <- df23_long_freq %>% 
@@ -134,7 +147,7 @@ tosty23 <- df23_long_freq %>%
 
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-df23_long_X <- cbind(tosty23[,c(1:7,9:13 )], apply(tosty23[,8, drop=F],2, dLimity))
+df23_long_X <- cbind(tosty23[,c(1:7,9:14 )], apply(tosty23[,8, drop=F],2, dLimity))
 #df_long_X <- cbind(tosty[,c(1:3,8:14,17:22)], apply(tosty[,23, drop=F],2, dLimity))
 
 ```
@@ -187,11 +200,7 @@ df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Biota"="Biota (ng/g, w.w.
 
 NEW groupings, 29/9
 ```{r Groupings}
-gr23 <- read.table("Scre23_Groupings.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 
-newtable <- merge(df_finalx,gr23, by.x  = "compound", by.y="ID") 
-
-print(unique(newtable$Group))
 ```
 
 ```{r Groupings}
