@@ -148,7 +148,7 @@ ggplot(road_slud, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
 geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
 
 #AIR
-ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
+ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
   geom_boxplot()+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -160,8 +160,10 @@ ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)
-    geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)+
+facet_grid(Site_name~ .,  space='free_x')
+    
+geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
   
     #facet_grid(Site_name~ ., scales="free", space='free_x')
   stat_summary(fun.data = get_box_stats, geom = "text", vjust=0, hjust=0.5)
