@@ -257,7 +257,7 @@ ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")
 ### Screening substances
 - whales and sharks
 
-```{r Part2}
+```{r Part2 scre23}
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Scre23")
 
 ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
@@ -300,10 +300,53 @@ ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in
 ### Extra(urban fjord) substances
 - whales and sharks
 
-```{r Part2}
+```{r Part2 Extra}
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Extra")
+#without metals
+part2_finalxy23u <- subset(part2_finalxy23, Group != "Metal")
 
-ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+wsu <- ggplot(subset(part2_finalxy23u, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Whales and sharks") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+#save
+ggsave("whaleshark.png", wsu, width = 10, height = 15)
+
+
+#only metals
+part2_finalxy23m <- subset(part2_finalxy23, Group == "Metal")
+
+ggplot(subset(part2_finalxy23m, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
