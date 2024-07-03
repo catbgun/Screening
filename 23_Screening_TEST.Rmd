@@ -38,17 +38,17 @@ Should be no zero values
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
 
-df23 <- read.table("240702_240528_SCRE2023_Resultater.txt", skip=1, header=TRUE, sep="\t", na.string=c(""))
+df23 <- read.table("240702_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 
 ```
 
 ```{r from wide to long}
 df23_long <- gather(df23, compound, value, AOZKF:Fett, factor_key=TRUE)
 
-unique(df23_longg$value)
+df23_long[complete.cases(df23_long$value),] #usikker på hva denne gjør
+df23_longg <- subset(df23_long, !is.na(value)) #usikker om denne tar bort alle versjoner av na
 
-df23_long[complete.cases(df23_long$value),]
-df23_longg <- subset(df23_long, !is.na(value))
+unique(df23_longg$value)
 
 #the length of unique compounds equals to the length of unique compounds in excel file
 #length(unique(df_long$compound))
@@ -63,26 +63,17 @@ df23_longg <- subset(df23_long, !is.na(value))
 ```{r Groupings}
 print(unique(df23_longg$Matrix))
 #one suggestion to group the 2023 data, but division of some sample types, especially products is needed
-
-#Note that matrix soil has space in the end....
-df23_longgg = df23_longg%>%
-  mutate(Sample_type = case_when(Matrix %in% c("Wastewater treated", "Sediment_saltwater", "Soft biological parts") ~ "Wastewater treatment",
-                                Matrix %in% c("Dust","Soil ", "Granule") ~ "Known hotspot",
-                                Matrix %in%c("Blubber", "Liver", "Muscle") ~ "Whales and sharks",
-                                Matrix %in%c("Textiles and shoes", "Unspecified", "EE products", "Paint and varnish", "Toys") ~ "Unknown hotspot"))
-
-df23_longggz = df23_longgg%>%
-  mutate(Part = case_when(Sample_type %in% c("Wastewater treatment", "Unknown hotspot", "Known hotspot") ~ "Part1",
-                                Matrix %in% c("Whales and sharks") ~ "Part2"))
-
-
-
 gr23 <- read.table("Scre23_Groupings.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 
-newtable <- merge(df23_longggz,gr23, by.x  = "compound", by.y="ID") 
+#count substances per group
+gr23x <- gr23 %>%
+  group_by(Group) %>%
+  mutate(unique_types = n_distinct(ID))
 
-print(unique(newtable$Group))
 
+newtable <- merge(df23_longg,gr23, by.x  = "compound", by.y="ID") 
+
+#print(unique(newtable$Group))
 ```
 
 need to make column with frequency and then summary table.
@@ -91,183 +82,76 @@ Rather calculate mean later, after LOD has been replaced
 
 ```{r Detection frequency}
 #Checking:
-unique(df23_longg$Matrix)
-unique(df23_longgg$Sample_type)
+part1 <- subset(newtable, Part == "Part1")
 
-length(unique(df_longgg$value))
+part2 <- subset(newtable, Part == "Part2")
+#New column in part2 to separate based on level of predator
+unique(part2$Category)
+#Killer whale and sperm whale are top predators. fin whale and humpback whale are intermediate. 
+
+#need to check if the following categorisation is correct  
+part2x = part2%>%
+  mutate(Level = case_when(Category %in% c("Killer whale","sperm whale", "Harbor porpoise", "White beaked dolphin", "H???kjerring", "H???brann") ~ "Top predator",
+                                Category %in% c("Humpback whale", "Fin whale",  "Piggh???") ~ "Intermediate predator"))
 
 #Here, the grouping is important! need to consider more thoroughly
+#Treatmen
+part1_freq = part1 %>%
+  group_by(Category, compound, Sample.type) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
 
-df23_long_freq = newtable %>%
-  group_by(Sample_type, compound, Species) %>%
+#use either level or category
+part2_freq = part2x %>%
+  group_by(Level, compound, Sample.type) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
 #to check frequency is ok
-#write.csv(df_long_freq, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount.csv", row.names=FALSE)
+#write.csv(df_long_freq, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount.csv", row.names=FALSE)
 ```
 
 Filter out observations with < 30 detection frequency
-```{r Filter observations with low detection frequency}
-#should be something saying something like LOD more than 30% should be marked as "<LOD/LOQ"
-
-#df_long_filtered <- df_long_freq %>% 
-# filter(if (det_frac < 30) value2 == Value else value2 == ) 
-#  tail(1)
-#df_long_filtered <- df_long_freq %>% 
-#  group_by(Site_Category, compound, Medium_id2) %>% 
-#  filter(if (y=="") x>3 else x<3) %>%  
-#  filter(!(det_frac < 30))%>% 
-#  ungroup()
-
-#  v <- as.character(v)
-#  isLimit <- grepl("<", v)
-
-#filter observations with < 30 detection frequency
-#df23_long_filtered <- df23_long_freq %>% 
-#  filter(!(det_frac < 30))
-#write.csv(df_long_filtered, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount_filter.csv", row.names=FALSE)
-```
-
-```{r Calculate 0.5xLOD}
-#df23_long_X <- cbind(df23_long_filtered[,c(1:7,9:13)], apply(df23_long_filtered[,8, drop=F],2, #dLimity))
-
-#write.csv(df_long_X, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount_filter_LOD.csv", row.names=FALSE)
-```
-
 #perhaps this one was better? START EHR!!! NOE SOM IKKE STEMMER
 ```{r Testing new approach to be able to indicate < 30 detection frequency in table}
 #filter observations with < 30 detection frequency
-tosty23 <- df23_long_freq %>% 
+part1_filt <- part1_freq %>% 
   mutate(plotting = ifelse(det_frac <30, 
                            "low detection", 
                            value))
 
-
 # claculate 0.5xLOD for those with detection frequency above 30%
-df23_long_X <- cbind(tosty23[,c(1:7,9:14 )], apply(tosty23[,8, drop=F],2, dLimity))
+part1_filt_X <- cbind(part1_filt[,c(1:20)], apply(part1_filt[,21, drop=F],2, dLimity))
 #df_long_X <- cbind(tosty[,c(1:3,8:14,17:22)], apply(tosty[,23, drop=F],2, dLimity))
 
+part2_filt <- part2_freq %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+
+# claculate 0.5xLOD for those with detection frequency above 30%
+part2_filt_X <- cbind(part2_filt[,c(1:21)], apply(part2_filt[,22, drop=F],2, dLimity))
 ```
 
 Calculate mean
 - sjekk at ble riktig! ta ut excel f eks
 ```{r}
-#df_long_Y <- df_long_X[!is.na(df_long_X$value),] 
-df_finalx = df23_long_X %>%
-  group_by(Sample_type, compound, Species) %>%
+#df_long_Y <- df_long_X[!is.na(df_long_X$value),]
+#Treatmen
+part1_finalx = part1_filt_X %>%
+  group_by(Category, compound, Sample.type) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-```
-
-```{r fix names}
-df_finalx$compound <- revalue(df_finalx$compound, c("X6PPD"="6PPD"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X6PPDq"="6PPD-q"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X44PD"="44-PD"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X7PPD"="7PPD"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X77PD"="77PD"))
-df_finalx$compound <- revalue(df_finalx$compound, c("CTC_CTA"="CTC/CTA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("OH_BPA"="OH-BPA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("BP_8"="BP-8"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X4_4_ADP"="4,4-ADP"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X44_BPS2"="44-BPS2"))
-df_finalx$compound <- revalue(df_finalx$compound, c("BIS_TMC"="BIS TMC"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X12_PFECA"="12-PFECA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X112_PFECA"="112-PFECA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X1112_PFECA"="1112-PFECA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X11112_PFECA"="11112-PFECA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X13_PFECA"="13-PFECA"))
-df_finalx$compound <- revalue(df_finalx$compound, c("X4_HBP"="4-HBP"))
-df_finalx$compound <- revalue(df_finalx$compound, c("Amitryptyline"="Amitriptyline"))
-
-
-df_finalx$Site_Category <- revalue(df_finalx$Site_Category, c("Urban river_Alna"="Urban river"))
-
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, total"="Water, total (ng/L)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, filtered"="Water, filtered (ng/L)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Water, particles"="Water, particles (ng/L)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Granule"="Granule (ng/g, w.w.)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sediment"="Sediment (ng/g, d.w.)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Sludge"="Sludge (ng/g, d.w.)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Air_particles"="Air, particles (ng/m^3)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Dust"="Dust (ng/g, w.w.)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Air"="Air (ng/m^3)"))
-df_finalx$Medium_id <- revalue(df_finalx$Medium_id, c("Biota"="Biota (ng/g, w.w.)"))
-```
-
-NEW groupings, 29/9
-```{r Groupings}
-
-```
-
-```{r Groupings}
-df_finalz1 = df_finalx%>%
-  mutate(m_group = case_when(compound %in%c("LCCP") ~ "Long-chain chlorinated paraffins",
-                             compound %in%c("BPSE", "BPAE", "BCPS", "4,4-ADP", "TMBP", "OH-BPA", "44-BPS2", "BIS TMC") ~ "Bisphenols",
-                             compound %in%c("TCM", "DCM", "TCE", "PCE", "CCl4", "DBM") ~ "Disinfectants and solvents",
-                             compound %in%c("Amitriptyline", "Fexofenadine", "Indoxacarb", "Fipronil", "Cyhalothrin", "CTC/CTA") ~ "Pesticides and Pharmaceuticals",
-
-                             compound %in%c("ABT", "BTSA", "MTBT", "PhBT", "OHBT", "MBT", "CPPD", "6PPD-q", "DPPD", "DNPD", "IPPD", "77PD", "6PPD", "7PPD", "44-PD", "MTDID", "NDPD", "MPAMS", "PPPA", "BOPA", "TMMAT", "DPG","TMQ", "TAI", "TAOT", "isoTAC", "TAC") ~ "Rubber related",
-                             compound %in%c("L6", "L7", "L8", "L9", "L10") ~ "Siloxanes",
-                             compound %in%c("OP", "12-PFECA", "112-PFECA", "1112-PFECA", "11112-PFECA", "13-PFECA") ~ "Surfactants incl. PFAS",
-                             compound %in%c("BP-8", "4-HBP") ~ "UV-additives"))
-
-```
-
-add molecule grouping
-```{r}
-#total of 62 compounds, correct? are the groupings correct? there is a difference between the excel and the word files
-#df_finalz = df_finalx%>%
-#  mutate(m_group = case_when(compound %in%c("LCCP") ~ "Chlorparaffins",
-#                             compound %in%c("CTC/CTA", "BCPS", "isoTAC", "TAC") ~ "Semi-volatiles",
-#                             compound %in% c("ABT", "BTSA", "MTBT", "PhBT","OHBT", "MBT", "CPPD", "6PPDq", "DPPD", "DNPD", "IPPD", "77PD", "6PPD", "X7PPD", "44PD", #"MTDID", "NDPD", "MPAMS", "PPPA", "BOPA","TMMAT","DPG","TMQ","TAI","TAOT") ~ "Rubber",
-#                             compound %in% c("BPSE", "BPAE",  "4,4_ADP", "TMBP", "OH-BPA",	"44_BPS2",	"BIS", "TMC") ~ "Bisphenols",
-#                             compound %in%c("TCM",	"DCM",	"TCE",	"PCE",	"CCl4",	"DBM") ~ "Volatiles",
-#                             compound %in%c("L6",	"L7",	"L8",	"L9",	"L10") ~ "Siloxanes",
-#                          compound %in% c("Fipronil","Cyhalothrin", "Amitryptyline", "Fexofenadine","Indoxacarb") ~ "Pesticides_Pharmaceuticals",
-#                          compound %in%c("OP", "12_PFECA",	"112_PFECA",	"1112_PFECA",	"11112_PFECA",	"13_PFECA") ~ "Surfactants including PFAS",
-#                          compound %in%c("BP-8", "4_HBP") ~ "UV-additives"))
-
-write.csv(df_finalz, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231002_TEST_final.csv", row.names=FALSE)
-length(unique(df_finalz$compound))
-#is.na(df_finalx$m_group)
-```
-
-Below we have the plot in ggplot
-```{r}
-df_finalzz <- df_finalz1 %>% 
-  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TMC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalothrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC",  "L6", "L7", "L8", "L9", "L10","LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
-
-#replace certain mean values with S to indicate suspect screening
-#df_finalzzz <- df_finalzz %>% 
-#  mutate(meanxy = ifelse(is.na(meanx), 
-#                           "<LOD", 
-#                           " "))
-
-df_finalzzzz <- df_finalzz %>% 
-  mutate(meanxyz = ifelse(compound == "112-PFECA" |compound == "1112-PFECA" | compound =="11112-PFECA" |compound =="L10" |compound =="L9", 
-                           "S", 
-                           " "))
-
-#library(scales) # for muted function
-chl <- subset(df_finalzzzz, m_group == "Long-chain chlorinated paraffins")
-bis <- subset(df_finalzzzz, m_group == "Bisphenols")
-dis <- subset(df_finalzzzz, m_group == "Disinfectants and solvents")
-pest <- subset(df_finalzzzz, m_group == "Pesticides and Pharmaceuticals")
-rub <- subset(df_finalzzzz, m_group == "Rubber related")
-sil <- subset(df_finalzzzz, m_group == "Siloxanes")
-surf <- subset(df_finalzzzz, m_group == "Surfactants incl. PFAS")
-UV <- subset(df_finalzzzz, m_group == "UV-additives")
-
-unique(sil$Medium_id)
-#unique(chl$Medium_id)
-#sigfig <- function(vec, digits){return(gsub(\\.$, "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
-#  }
-
-
+#use either level or category
+part2_finalx = part2_filt_X %>%
+  group_by(Level, compound, Sample.type) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
 ```
 
 ```{r Test to set desired number of digits}
@@ -276,1052 +160,191 @@ sigfig <- function(vec, digits){
   return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
 }
 #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-#geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 3))), color = "white", size = 5)
 #geom_text(aes(label=ifelse(is.na(meanx), "", round(meanx, digits=3))), color = "white", size = 5)
-
 ```
 
-### Plotte resultater screening 2023- strategi
-1) Vi må dele på del 1 og del 2!
-
-1) Bisphenols
-```{r BISPHENOLS}
-unique(bis$compound)
-
-#Group 23 by substance group
-ggplot(subset(newtable, Group%in% c("Bisphenol")), aes(x=Matrix, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)
- scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,140,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-#Group 23 by sample type
- #AIR AND SOLIDS
-ggplot(subset(df_finalx, Sample_type%in% c("Whales and sharks")), aes(x=Matrix, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)
- scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,140,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
- #AIR
-bis2 <- ggplot(subset(bis, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
-     scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,140,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
- 
-bis3 <- ggplot(subset(bis, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,140,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids including Biota") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-bissx <- egg::ggarrange(bis1, bis2)
-
-
-ggsave("bissx.png", bissx, width = 10, height = 12)
-ggsave("bissy.png", bis3, width = 10, height = 6)
-
-```
-
-
-2) Disinfectants (?)
-- solids
-- water
-- biota
-- air
-
-#HERE IS THE UPDATED. why not setting total no of digits
-```{r disinfectants}
-unique(dis$Medium_id)
-unique(dis$Medium_id2)
-
-class(dis$meanx)
-#  geom_text(aes(label=scales::number(meanx, accuracy = .1)), color = "white", size = 5)+
-#  #geom_text(aes(label = meanxyz), color = "white", size = 5)+# write the values
-
-#Water
-#dis1 <- ggplot(subset(dis, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-#  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-#  geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5)+
-##  scale_fill_gradient2(low = "green", 
-#                       mid = "orange", 
-#                       high = "red",
-#                       midpoint = 50,
-#                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-#  theme(panel.grid.major.x=element_blank(), #no gridlines
-#        panel.grid.minor.x=element_blank(), 
-#        panel.grid.major.y=element_blank(), 
-#        panel.grid.minor.y=element_blank(),
-#        panel.background=element_rect(fill="white"), # background=white
-#        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-#        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-#        axis.text.y = element_text(size = 17, colour="black"),
-#        legend.text=element_text(size=13),
-#        axis.line.x = element_line(color="black", linewidth = 1),
-#        axis.line.y = element_line(color="black", linewidth = 1),
-#        axis.ticks = element_line(color="black", linewidth=1),
-##        legend.position =c(0.75, 1.11),
-#        legend.direction = "horizontal",
-##        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-#        legend.margin=margin(0,0,0,0),
-#        legend.box.margin=margin(10,10,150,10),
-#        strip.text.x = element_text(size = 15),
-#        panel.spacing.x = unit(0.2, "lines")) +
-#  ggtitle("Water") + 
-#  theme(legend.title=element_text(size=12)) + 
-#  scale_x_discrete(name="") +
-#  scale_y_discrete(name="") +
-#  labs(fill="Detection frequency (%)")+
-#  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-#Air
-dis2 <- ggplot(subset(dis, Medium_id2%in% c("Water", "Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,130,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water and Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-#diss <- egg::ggarrange(dis1, dis2)
-
-ggsave("dis.png", dis2, width = 8, height = 5.5)
-```
-
-3) Long-chain Chlorparaffins
-- since there are few, can we have water, air aand soluds
-- NOT SURE HOW TO
-NEED to have the tables looking nice, also when of different sizes. checkin out different margins options. 
-plot.margin = margin(t = 20,  # Top margin
-                             r = 50,  # Right margin
-                             b = 40,  # Bottom margin
-                             l = 10)) # Left margin
-
-```{r Heatmap table chl}
-unique(chl$Medium_id)
-unique(chl$Site_Category)
-
-#WATER
-chl1 <- ggplot(subset(chl, Medium_id2%in% c("Water")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"), #top, right, bottom, left
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-#  geom_text(aes(label = round(meanx, 2)), color = "white", size = 5)+ # write the values
-
-#AIR
-chl2 <- ggplot(subset(chl, Medium_id2%in% c("Air")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
- 
-#  geom_text(aes(label = round(mean, 0)), color = "white", size = 5)+ # write the values
-#SOLIDS  
-chl3 <- ggplot(subset(chl, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=compound, fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids including Biota") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-chls <- egg::ggarrange(chl1, chl2, chl3)
-
-ggsave("chls.png", chls, width = 10, height = 13)
-```
-
-4) Pesticides and Pharmaceuticals
-```{r pest}
-unique(pest$Medium_id2)
-
-#WATER and SOLIDS
-pest1 <- ggplot(subset(pest, Medium_id2%in% c("Water", "Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.65, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water and Solids") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-pest2 <- ggplot(subset(pest, Medium_id2%in% c("Air", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.65, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air and Biota") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-pests <- egg::ggarrange(pest1, pest2)
-
-ggsave("pests.png", pests, width = 10, height = 13)
-
-```
-
-OW to make the heatmap table sizes the same
-
-https://stackoverflow.com/questions/58830318/setting-specific-tile-size-for-geom-tile-between-two-graphs
-
-4) Group RUBBER
-  - water
-  - solids
-  - air
-```{r Heatmap table RUBBER}
-unique(rub$Medium_id)
-unique(rub$Medium_id2)
-
-#  geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5)+ 
-
-
-ruby <- rub[!(rub$compound %in% "TAI"),]
-ruby1 <- ruby[!(ruby$compound %in% "TAOT"),]
-
-rub2 <- ggplot(subset(ruby1, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,60,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-  scale_fill_continuous()
-
- #SOLIDS
-rub2 <- ggplot(subset(ruby1, Medium_id2%in% c("Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+ scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,60,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
- 
- #AIR
-rub3 <- ggplot(subset(ruby1, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(2, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,60,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-#rubs <- egg::ggarrange(rub1, rub2, rub3)
-ggsave("rub1.png", rub1, width = 10, height = 13)
-ggsave("rub2.png", rub2, width = 10, height = 13)
-ggsave("rub3.png", rub3, width = 12, height = 14)
-```
-
-5) SIloxanes
-her er det problem med at NAs kommer opp. Vet ikke hvorfor. funker ikke med na.omit
-```{r SILOXANES}
-unique(sil$Medium_id2)
-unique(sil$Site_Category)
-
-write.csv(sil, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST.csv", row.names=FALSE)
-
-#gg1 <- melt(subset(sil, Medium_id2%in% c("Water", "Solids"))) %>% 
-#geom_text(aes(label=ifelse(is.na(meanx), "", sprintf(meanx, fmt = "%3.1f"))), color = "white", size = 5) 
-#geom_text(aes(label=ifelse(meanxyz == " ", " ", meanxyz)), color = "white", size = 5) 
-#  geom_text(aes(label=ifelse(meanxyz=="S", "S", na.omit(round(meanx, 0)))), color = "white", size = 5) +
-#geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5) 
-
-#WATER
-sil1 <- ggplot(subset(sil, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label=ifelse(meanxyz=="S", meanxyz, na.omit(sigfig(meanx, 2)))), color = "white", size = 5) +
-    scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")  +# determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-ggplot(subset(sil, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")  +# determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
- #Solids AND BIOTA
- #something wrong with the categories, sludge in commercial building??
-sil3 <- ggplot(subset(sil, Medium_id2%in% c("Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(round(meanx, 1))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids including Biota") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-#TO make tables look the same
-## Save plots into variables
-## Let ggarrange line up the panels
-
-silssx <- egg::ggarrange(sil1, sil2)
-
-ggsave("silssx.png", silssx, width = 11, height = 11)
-ggsave("silss.png", sil3, width = 11, height = 6)
-
-```
-
-
-7) Surfactants including PFAS
-```{r Surfactants including PFAS}
-unique(surf$Medium_id2)
-#    
-
-#WATER
-surf1 <- ggplot(subset(surf, Medium_id2%in% c("Water")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-
-#SOLIDS
-surf2 <- ggplot(subset(surf, Medium_id2%in% c("Solids")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Solids") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-#AIR
-surf3 <- ggplot(subset(surf, Medium_id2%in% c("Air")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
-  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
-                       mid = "orange", 
-                       high = "red",
-                       midpoint = 50,
-                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(),
-        panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
-        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
-        legend.text=element_text(size=13),
-        axis.line.x = element_line(color="black", linewidth = 1),
-        axis.line.y = element_line(color="black", linewidth = 1),
-        axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
-        legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
-        strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
-  theme(legend.title=element_text(size=12)) + 
-  scale_x_discrete(name="") +
-  scale_y_discrete(name="") +
-  labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-
-
-
-surfsx <- egg::ggarrange(surf1, surf2)
-
-ggsave("surfsx.png", surfsx, width = 10, height = 11)
-ggsave("surfsy.png", surf3, width = 10, height = 6)
-
-```
-
-9) UV-additives
+Set order of substances in plot
 ```{r}
-unique(UV$Medium_id2)
+part1_finalxy <- subset(part1_finalx, det_frac > 30)
+part1_finalxyz <- subset(part1_finalxy, compound != "Fett")
+part1_finalxyz$compound <- as.character(part1_finalxyz$compound)
+part1_finalxyz$Group <- as.character(part1_finalxyz$Group)
 
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 2))))), color = "white", size = 5) 
+part2_finalxy <- subset(part2_finalx, det_frac > 30)
+part2_finalxyz <- subset(part2_finalxy, compound != "Fett")
+part2_finalxyz$compound <- as.character(part2_finalxyz$compound)
+part2_finalxyz$Group <- as.character(part2_finalxyz$Group)
+```
 
-uv1 <- ggplot(subset(UV, Medium_id2%in% c("Water", "Solids", "Biota")), aes(x=Medium_id, y=fct_rev(compound), fill=det_frac)) +
+##Part 1
+### Wastewater treatment plant
+```{r Part1 Wastewater treatment}
+ggplot(subset(part1_finalxyz, Category%in% c("Wastewater treatment")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-    geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
+   theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
         panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
         plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
+        axis.text.y = element_text(size = 12, colour="black"),
         legend.text=element_text(size=13),
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
         legend.position =c(0.75, 1.11),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
+        legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Water and Solids including Biota") + 
+  ggtitle("Wastewater treatment") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
-uv2 <- ggplot(subset(UV, Medium_id2%in% c("Air")), aes(x=Medium_id,y=fct_rev(compound), fill=det_frac)) +
+```
+### HOTSPOTS (known and unknown)
+```{r Part1 HOTSPOTS}
+#known and unknown hotspots together
+ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
-  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5) +
-  scale_fill_gradient2(low = "green", 
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-  theme(panel.grid.major.x=element_blank(), #no gridlines
+   theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
         panel.background=element_rect(fill="white"), # background=white
-        axis.text.x = element_text(angle=90, hjust = 1,vjust=1,size = 15,colour="black"),
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
         plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
-        axis.text.y = element_text(size = 17, colour="black"),
+        axis.text.y = element_text(size = 12, colour="black"),
         legend.text=element_text(size=13),
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
         legend.position =c(0.75, 1.11),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.15, 0.15, 0.15, "cm"),
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(10,10,150,10),
+        legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Air") + 
+  ggtitle("Hotspots") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(~Site_Category, scales="free", labeller = label_wrap_gen(width=2))
-
-uvs <- egg::ggarrange(uv1, uv2)
-
-ggsave("uvs.png", uvs, width = 10, height = 9)
-```
-
-
-PNEC FIGUE
-The following compounds: LCCP, CTC_CTA, BCPS, isoTAC, TAC, BTSA, OHBT, 6PPD,6PPDq,DPPD,IPPD,TMQ,TMMAT,DPG,44_BPS2,BIS_TMC,TCM,DCM,TCE,PCE,CCl4,DBM,L6,L7,L8,BP_8,4_HBP
-```{r Making the PNEC Figure}
-#Based on the information provied, the following compounds are of interest. Perhaps excluding L9 and L10 due to suspect screening. Others from NIVA? Check
-
-#tar ut "DBM",  for under LOD, eventuelt sjekk
-df_finalzzc <- df_finalzz %>% 
-  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", "12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalthrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC", "L10", "L6", "L7", "L8", "L9", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
-
-pnec <- subset(df_finalzzc, compound%in% c("LCCP", "CTC/CTA", "BCPS", "isoTAC", "BTSA", "OHBT", "6PPD", "6PPD-q", "DPPD", "IPPD", "TMQ", "TMMAT", "DPG", "44-BPS2", "BIS-TMC", "TAOT", "DCM", "TCE", "PCE", "CCl4", "L6", "L7", "L8",  "BP-8", "4-HBP", "OP", "Amitriptyline", "Fexofenadine"))
-#unique(pnec$compound)  #sjekk at alle er med. Noen endrer navn i R ved lesing
-
-#følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
-pnec$value2 <- as.numeric(pnec$value)
-pnec2 <- pnec %>% drop_na(value2)
-
-#filter out max an min values for each category. Wich categories to choose? 
-pnec_max_minx <- pnec2 %>%
-  group_by(compound, Medium_id2) %>%
-  mutate(Min = min(value2), Max = max(value2))
-unique(pnec2$Medium_id2)
-
-#Make new categories to match the PNEC categories of freswater, sediment og biota
-#not using air values here
-pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
-
-pnec_max_min2 <- pnec_max_miny%>%
-  mutate(sample_category = case_when
-         (Medium_id2 %in% c("Water") ~ "Freshwater",
-          Medium_id2 %in% c("Solids") ~ "Sediment",
-          Medium_id2 %in% c("Biota") ~ "Biota"))
-
-nrow(pnec_max_min2)
-unique(pnec_max_min2$sample_category)
-#Laste opp fil med PNEC verdier. Laget fra info i word
-#condition and sample category
-# short and compound
-dx <- read.table("PNEC3.txt", header=TRUE, sep="\t", na.string=c(""))
-#Calculate to the correct abbreviations
-dx$Freshwater2 <- dx$Freshwater *1
-dx$Sediment2 <- dx$Sediment *1
-dx$Biota2 <- dx$Biota*1
-
-dx_long <- gather(dx, sample_category, limit, Freshwater2:Biota2, factor_key=TRUE)
-
-dx_long$compound <- revalue(dx_long$compound, c("6PPDq"="6PPD-q"))
-dx_long$compound <- revalue(dx_long$compound, c("CTC_CTA"="CTC/CTA"))
-dx_long$compound <- revalue(dx_long$compound, c("BP_8"="BP-8"))
-dx_long$compound <- revalue(dx_long$compound, c("44_BPS2"="44-BPS2"))
-dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
-dx_long$compound <- revalue(dx_long$compound, c("4_HBP"="4-HBP"))
-#dx_long$compound <- revalue(dx_long$compound, c("Amitryptyline"="Amitriptyline"))
-
-#one may have wrong class
-pnec_max_min4 <- as.data.frame(pnec_max_min2)
-#subsetting to keep only those with match
-pnec_max_min4$sample_category <- revalue(pnec_max_min4$sample_category, c("Freshwater"="Freshwater2", "Biota"="Biota2", "Sediment"="Sediment2"))
-
-pnec_max_min5 <- subset(pnec_max_min4, sample_category%in% c("Freshwater2", "Sediment2", "Biota2"))
-
-
-#MERGE. Til pnec_max_min2 skal vi fra dx legge til alle kolonner ved å matche 
-dx2 <- merge(x=pnec_max_min5,y=dx_long, by=c(as.character("compound"), as.character("sample_category")),
-             all.x=TRUE)
-
-#ARE THRER wrong abbreviations for pnec??
-
-write.csv(dx2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST_pnec.csv", row.names=FALSE)
-```
-
-Må rydde opp i følgende:
-- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
-- sorter stoffene etter stoffgruppe
-- legg til stoffgruppenavn
-
-- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
-
-```{r Cleaning up before plotting}
-#remove duplicate rows before plotting
-dx3 <-dx2 %>% 
-  distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
-
-#sett rekkefølgen til molekylgruppene
-dx4 <- dx3 %>% 
-  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "Amitriptyline", "CTC/CTA","Fexofenadine",
-                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAOT", "TMMAT", "TMQ", "L6", "L7", "L8", "OP", "4-HBP", "BP-8")))
+  facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
 ```
 
-```{r PNEC plot}
-pnec <- ggplot(dx4, aes(y=fct_rev(compound), x=value2, xmin = Min, xmax=Max, colour = sample_category))+ 
-  geom_linerange(size=2, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
-  geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
-  scale_x_continuous(trans='log10') +
-  theme_bw()+
-  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
-        axis.text.y = element_text(size = 15,colour="black"),
-        axis.title.y = element_blank(),
-        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
-        panel.spacing = unit(0, "lines"), 
-        strip.background = element_blank(),
-        strip.placement = "outside",
-        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
-        legend.title = element_blank(),
-        legend.text = element_text(size=15),
-        plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
-        legend.position = "top")+
-  facet_grid(m_group~., scales="free_y", space='free')+
-  xlab("log10(concentration)")+
-  scale_alpha(guide = 'none')+
-  guides(color=guide_legend("sample_category"), fill = "none")+
-  scale_color_manual(values = c("#C77CFF", "#00BFC4", "#7CAE00"),
-  labels = c('Biota', 'Freshwater', 'Sediment'))
+## Part 2
+### Screening substances
+- whales and sharks
 
-ggsave("pnec.png", pnec, width = 7, height = 9.3)
+```{r Part2}
+part2_finalxy23 <- subset(part2_finalxyz, Extra == "Scre23")
 
-#, values = c("red", "blue", "grey"))
-#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
+ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Whales and sharks") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Category, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
   
-  #scale_fill_manual(values = c("red", "blue", "grey"))
-  #scale_colour_manual(values = c("red", "blue", "grey"))
-
-
 ```
+
+
+### Extra(urban fjord) substances
+- whales and sharks
+
+```{r Part2}
+part2_finalxy23 <- subset(part2_finalxyz, Extra == "Extra")
+
+ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.75, 1.11),
+        legend.direction = "horizontal",
+        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines")) +
+  ggtitle("Whales and sharks") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  
+```
+
+
+
+
+
+
+
 
 
 # Exploring site specific contamination patterns
