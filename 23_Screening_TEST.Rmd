@@ -256,7 +256,6 @@ ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")
 ## Part 2
 ### Screening substances
 - whales and sharks
-
 ```{r Part2 scre23}
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Scre23")
 
@@ -296,10 +295,8 @@ ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in
   
 ```
 
-
 ### Extra(urban fjord) substances
 - whales and sharks
-
 ```{r Part2 Extra}
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Extra")
 #without metals
@@ -382,31 +379,284 @@ ggplot(subset(part2_finalxy23m, Treatmen%in% c("Whales", "Sharks")&Sample.type%i
   
 ```
 
-
-
-
-
-
-
-
-
 # Exploring site specific contamination patterns
+- if using average values, need to make sure that the averages are calculated correctly based on grouping
+- do we caare about the detection frequency here? and how to deal with < LOD?
 
 1) Waste water treatment
 - are thre differences between high and low treatment? water and solids
 - are there differences between time points of sampling?
 
-Illustrating differebces between e.g. low and high purification wastewater
-- if using average values, need to make sure that the averages are calculated correctly based on grouping
 
-```{r}
-df_finalzzzz$Comment_location <- revalue(df_finalzzzz$Comment_location, c("Recipient pond_upper"="Recipient pond"))
-df_finalzzzz$Comment_location <- revalue(df_finalzzzz$Comment_location, c("Recipient pond_lower"="Recipient pond"))
 
-#remove susbtances suspect screening
-df_finalzzzzx<-df_finalzzzz[!(df_finalzzzz$compound == "112-PFECA" | df_finalzzzz$compound == "1112-PFECA"| df_finalzzzz$compound =="11112-PFECA" | df_finalzzzz$compound =="L10" | df_finalzzzz$compound =="L9"),]
+a) wastewater treatment high and low, and with recipient below 
+```{r Wastewater treatment high and low}
+#bruker samme gjennomsnitt som over. Per Category, compound, sample type, burde passe også her
+#nei, det stemmer ikke! Vi skal jo skille på purification degree
+
+part1_freq_ww = part1 %>%
+  group_by(Category, compound, Sample.type, Treatmen) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+part1_filt_ww <- part1_freq_ww %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+part1_filt_ww <- cbind(part1_filt_ww[,c(1:20)], apply(part1_filt_ww[,21, drop=F],2, dLimity))
+part1_final_ww = part1_filt_ww %>%
+  group_by(Category, compound, Sample.type, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+part1_final_wwy <- subset(part1_final_ww, det_frac > 30)
+part1_final_wwyz <- subset(part1_final_wwy, compound != "Fett")
+part1_final_wwyz$compound <- as.character(part1_final_wwyz$compound)
+part1_final_wwyz$Group <- as.character(part1_final_wwyz$Group)
+
+#set order
+part1_final_wwyz$Sample.type <- factor(part1_final_wwyz$Sample.type, levels=c("Water, filtered", "Water, particulate", "Sludge", "Sediment", "Blue mussel")) 
+
+
+ggplot(subset(part1_final_wwyz, Category%in% c("Wastewater treatment")), aes(y=log(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Sample.type~Group, scales="free", space='free_x')
+
+#  
+#  legend.position = "none"
+```
+
+b) indoor dust - private homes and recycling facility
+```{r Wastewater treatment high and low}
+#bruker samme gjennomsnitt som over. Per Category, compound, sample type, burde passe også her
+#nei, det stemmer ikke! Vi skal jo skille på purification degree
+
+part1_freq_du = part1 %>%
+  group_by(Treatmen, compound, Sample.type) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+part1_filt_du <- part1_freq_ww %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+part1_filt_du <- cbind(part1_filt_du[,c(1:20)], apply(part1_filt_du[,21, drop=F],2, dLimity))
+part1_final_du = part1_filt_du %>%
+  group_by(compound, Sample.type, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+part1_final_duy <- subset(part1_final_du, det_frac > 30)
+part1_final_duyz <- subset(part1_final_duy, compound != "Fett")
+part1_final_duyz$compound <- as.character(part1_final_duyz$compound)
+part1_final_duyz$Group <- as.character(part1_final_duyz$Group)
+
+#set order
+part1_final_duyz$Treatmen <- factor(part1_final_duyz$Treatmen, levels=c("Recycling facility", "Private home")) 
+
+
+ggplot(subset(part1_final_duyz, Sample.type%in% c("Dust")), aes(y=log(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Treatmen~Group, scales="free_x", space='free_x')
+
+#  
+#  legend.position = "none"
+```
+
+```{r Products}
+#gjennomsnitt på: Treatmen, compound, Sample.type
+ggplot(subset(part1_final_duyz, Category%in% c("Unknown hotspot")), aes(y=(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Treatmen~Group, scales="free", space='free_x')
+```
+
+- agricultural soils? Need to separate the different types in the file. 
+
+Part 2) Whales and sharks
+- species
+- tissue
+- sex
+- age
+- fat
+- isotopes
+
+```{r Blubber by specie}
+part2_freq_wb = part2 %>%
+  group_by(Category, compound, Sample.type) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+part2_filt_wb <- part1_freq_wb %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+part2_filt_wbz <- cbind(part2_filt_wb[,c(1:20)], apply(part2_filt_wb[,21, drop=F],2, dLimity))
+
+part2_final_wb = part2_filt_wbz %>%
+  group_by(Category, compound, Sample.type, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+part2_final_wby <- subset(part2_final_wb, det_frac > 30)
+part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
+part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
+part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
+
+#SEPARATE
+part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Extra")
+part2_final_wbyz23met <- subset(part2_final_wbyz, Group == "Metal")
+part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Scre23")
+
+#PLOTTING
+ggplot(subset(part2_final_wbyz23met, Sample.type%in% c("Blubber")), aes(y=(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Category~Group, scales="free", space='free_x')
 
 ```
+
+```{r Muscle by specie}
+part2_freq_wb = part2 %>%
+  group_by(Category, compound, Sample.type) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+part2_filt_wb <- part1_freq_wb %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+part2_filt_wbz <- cbind(part2_filt_wb[,c(1:20)], apply(part2_filt_wb[,21, drop=F],2, dLimity))
+
+part2_final_wb = part2_filt_wbz %>%
+  group_by(Category, compound, Sample.type, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+part2_final_wby <- subset(part2_final_wb, det_frac > 30)
+part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
+part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
+part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
+
+#SEPARATE
+part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Extra")
+part2_final_wbyz23met <- subset(part2_final_wbyz, Group == "Metal")
+part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Scre23")
+part2_final_wbyz23 <- subset(part2_final_wbyz, Group != "Metal")
+
+#PLOTTING
+ggplot(subset(part2_final_wbyz23, Sample.type%in% c("Muscle")), aes(y=(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Category~Group, scales="free", space='free_x')
+
+```
+
+```{r Killer whales}
+
+killerw <- subset(part2, Category =="Killer whale")
+
+part2_freq_wb = part2 %>%
+  group_by(Category, compound, Sample.type) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+part2_filt_wb <- part1_freq_wb %>% 
+  mutate(plotting = ifelse(det_frac <30, 
+                           "low detection", 
+                           value))
+part2_filt_wbz <- cbind(part2_filt_wb[,c(1:20)], apply(part2_filt_wb[,21, drop=F],2, dLimity))
+
+part2_final_wb = part2_filt_wbz %>%
+  group_by(Category, compound, Sample.type, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+part2_final_wby <- subset(part2_final_wb, det_frac > 30)
+part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
+part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
+part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
+
+ggplot(subset(part2_final_wbyz23met, Category%in% c("Killer whale")), aes(y=(meanx), x=compound, fill=Treatmen))+
+  geom_col(position="dodge")+
+  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid(Category~Group, scales="free", space='free_x')
+
+```
+
+
+
 
 Calculate mean
 - sjekk at ble riktig! ta ut excel f eks
@@ -497,17 +747,6 @@ envixxc = envixx12y %>%
 
 ```
 
-Below we have the plot in ggplot
-```{r}
-print(unique(df_finalz$compound))
-
-envixx2x <- envixxc %>% 
-  mutate(compound = factor(compound, levels = c("12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", "ABT",  "Amitriptyline", "BCPS", "BIS TMC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", "CTC/CTA", "Cyhalothrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", "Indoxacarb", "IPPD", "isoTAC",  "L6", "L7", "L8", "LCCP", "MBT", "MPAMS", "MTBT",  "MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", "TCM", "TMBP", "TMMAT", "TMQ")))
-
-#envixx2 <- envixx2x %>% 
-#  mutate(Site_name = factor(Site_name, levels = c("Kalbakken", "Brubak", "Breivoll", "Kværner")))
-
-```
 
 1) Artificial grass pitch
 - fix order of facets and size of text, grouping of molecules
