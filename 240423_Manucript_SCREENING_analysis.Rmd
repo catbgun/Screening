@@ -100,7 +100,7 @@ write.csv(df_freq, "240621_MS_TEST.csv", row.names=FALSE)
 https://www.appsilon.com/post/ggplot2-boxplots
 
 ```{r create figure looking into the tunnel environment}
-unique(road$Medium_id)
+#unique(road$Medium_id)
 # unique(road$Medium_id) [1] "Water, filtered (ng/L)"  "Water, particles (ng/L)" "Sludge (ng/g, d.w.)"     "Air, particles (ng/m^3)"
 
 road <- subset(df_freq, Site_Category == "Trafficked road")
@@ -111,26 +111,11 @@ road_slud <- subset(road, Medium_id == c("Sludge (ng/g, d.w.)"))
 #geom_col(position="dodge")
 
 #WATER
-road_water_dis <- subset(road_water, Comment_location == c("Treated discharge"))
-ggplot(road_water_dis, aes(y=as.numeric(value), x=compound, fill=Site_Comment))+
-  geom_boxplot()+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")
-  facet_grid(Site_Comment~ ., scales="free", space='free_x')+
-  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
-    
-geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+#road_water_dis <- subset(road_water, Comment_location == c("Treated discharge"))
+road_water2 <- subset(road_water, Comment_location != c("Sedimentation pool"))
+road_water2$Comment_location <- revalue(road_water2$Comment_location, c("Pump basin"="Untreated wash water"))
 
-#SLUDGE
-ggplot(road_slud, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+ggplot(road_water2, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
   geom_boxplot()+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -142,8 +127,27 @@ ggplot(road_slud, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(Comment_location~ ., scales="free", space='free_x')+
+  facet_grid(fct_rev(Comment_location)~ ., scales="free", space='free_x')+
   stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
+    
+geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+
+#SLUDGE
+ggplot(road_slud, aes(y=as.numeric(value), x=compound, colour=Comment_location))+
+  geom_col(position="dodge2", size=5)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")
+  #stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
+  #facet_grid(Comment_location~ ., scales="free", space='free_x')
+
     
 geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
 

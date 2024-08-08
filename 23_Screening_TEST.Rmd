@@ -178,8 +178,22 @@ part2_finalxyz$Group <- as.character(part2_finalxyz$Group)
 
 ##Part 1
 ### Wastewater treatment plant
-```{r Part1 Wastewater treatment}
-ggplot(subset(part1_finalxyz, Category%in% c("Wastewater treatment")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+```{r Part1 Wastewater treatment pretreatment}
+#subset
+wwt <- subset(part1_finalxyz, Category == "Wastewater treatment")
+
+#better names for sample types
+wwt$Sample.type <- revalue(wwt$Sample.type, c("Water, filtered" = "Water, filtered (ng/L)", "Water, particulate" = "Water, particulate (xx/xx)", "Sludge" ="Sludge (ng/g)", "Sediment" ="Marine sediment (ng/g)", "Blue mussel" ="Blue mussel (ng/g)"))
+
+```
+
+```{r WWTP samples}
+wwt1 <- subset(wwt, Sample.type==c("Water, filtered (ng/L)", "Water, particulate (xx/xx)", "Sludge (ng/g)"))
+
+wwt2 <- wwt1 %>% 
+  mutate(Sample.type = factor(Sample.type, levels = c("Water, filtered (ng/L)", "Water, particulate (xx/xx)", "Sludge" ="Sludge (ng/g)")))
+
+ww_t <- ggplot(wwt2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
@@ -199,25 +213,38 @@ ggplot(subset(part1_finalxyz, Category%in% c("Wastewater treatment")), aes(x=Sam
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.85, 0.96),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Wastewater treatment") + 
-  theme(legend.title=element_text(size=12)) + 
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0)) +
+  ggtitle("Wastewater treatment plant") + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
+#theme(strip.text.y = element_text(angle = 0),
+ #           legend.position = "none")
+
+
+ggsave("WW_t.png", ww_t, width = 10, height = 10)
+
 ```
-### HOTSPOTS (known and unknown)
-```{r Part1 HOTSPOTS}
-#known and unknown hotspots together
-ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+
+```{r Part1 Wastewater treatment RECIPIENTS}
+#subset
+wwt_r <- subset(wwt, Sample.type==c("Marine sediment (ng/g)", "Blue mussel (ng/g)"))
+
+wwt_r2 <- wwt_r %>% 
+  mutate(Sample.type = factor(Sample.type, levels = c("Marine sediment (ng/g)", "Blue mussel (ng/g)")))
+
+
+wwt_r_t <- ggplot(wwt_r2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
@@ -237,13 +264,81 @@ ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.85, 0.96),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0)) +
+  ggtitle("Marine recipient samples") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+#theme(strip.text.y = element_text(angle = 0),
+ #           legend.position = "none")
+
+
+ggsave("WW_r_t.png", wwt_r_t, width = 10, height = 8)
+
+```
+
+
+### HOTSPOTS (known and unknown)
+
+to do:
+- separate between dust private homes and commercial buildings
+```{r Part1 HOTSPOTS}
+#subset
+hotspot <- subset(part1_finalxyz, Category == c("Known hotspot", "Unknown hotspot"))
+#separate dust from homes and commercial
+hotspot$Sample.type[(hotspot$Sample.type == "Dust") & (hotspot$Treatmen == "Private home")] <- "Private home, dust (ng/g)"
+hotspot$Sample.type[(hotspot$Sample.type == "Dust") & (hotspot$X == "Commercial building")] <- "Waste recycling, dust (ng/g)"
+
+
+#better names for sample types
+hotspot$Sample.type <- revalue(hotspot$Sample.type, c("Soil" = "Agricultural soil (ng/g)", "Product" ="Commercial products (ng/g)"))
+
+#set the order
+hotspot1 <- hotspot %>% 
+  mutate(Sample.type = factor(Sample.type, levels = c("Waste recycling, dust (ng/g)","Private home, dust (ng/g)", "Commercial products (ng/g)", "Agricultural soil (ng/g)")))
+
+
+#known and unknown hotspots together
+HS_t<-  
+  ggplot(hotspot1, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+    theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0)) +
   ggtitle("Hotspots") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
@@ -251,6 +346,7 @@ ggplot(subset(part1_finalxyz, Category%in% c("Known hotspot", "Unknown hotspot")
   labs(fill="Detection frequency (%)")+
   facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
+ggsave("HS_t.png", HS_t, width = 10, height = 10)
 ```
 
 ## Part 2
