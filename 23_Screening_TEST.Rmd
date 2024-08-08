@@ -83,8 +83,8 @@ Rather calculate mean later, after LOD has been replaced
 ```{r Detection frequency}
 #Checking:
 part1 <- subset(newtable, Part == "Part1")
-
 part2 <- subset(newtable, Part == "Part2")
+
 #New column in part2 to separate based on level of predator
 unique(part2$Category)
 #Killer whale and sperm whale are top predators. fin whale and humpback whale are intermediate. 
@@ -105,7 +105,7 @@ part1_freq = part1 %>%
 
 #use either level or category
 part2_freq = part2x %>%
-  group_by(Level, compound, Sample.type) %>%
+  group_by(Category, compound, Sample.type) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
@@ -149,7 +149,7 @@ part1_finalx = part1_filt_X %>%
 
 #use either level or category
 part2_finalx = part2_filt_X %>%
-  group_by(Level, compound, Sample.type) %>%
+  group_by(Category, compound, Sample.type) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 ```
@@ -287,17 +287,13 @@ ggsave("WW_r_t.png", wwt_r_t, width = 10, height = 8)
 
 ```
 
-
 ### HOTSPOTS (known and unknown)
-
-to do:
-- separate between dust private homes and commercial buildings
 ```{r Part1 HOTSPOTS}
 #subset
 hotspot <- subset(part1_finalxyz, Category == c("Known hotspot", "Unknown hotspot"))
 #separate dust from homes and commercial
-hotspot$Sample.type[(hotspot$Sample.type == "Dust") & (hotspot$Treatmen == "Private home")] <- "Private home, dust (ng/g)"
-hotspot$Sample.type[(hotspot$Sample.type == "Dust") & (hotspot$X == "Commercial building")] <- "Waste recycling, dust (ng/g)"
+hotspot$Sample.type[(hotspot$Sample.type == "Dust_private") & (hotspot$Treatmen == "Private home")] <- "Private home, dust (ng/g)"
+hotspot$Sample.type[(hotspot$Sample.type == "Dust_recycling") & (hotspot$X == "Commercial building")] <- "Waste recycling, dust (ng/g)"
 
 
 #better names for sample types
@@ -305,7 +301,7 @@ hotspot$Sample.type <- revalue(hotspot$Sample.type, c("Soil" = "Agricultural soi
 
 #set the order
 hotspot1 <- hotspot %>% 
-  mutate(Sample.type = factor(Sample.type, levels = c("Waste recycling, dust (ng/g)","Private home, dust (ng/g)", "Commercial products (ng/g)", "Agricultural soil (ng/g)")))
+  mutate(Sample.type = factor(Sample.type, levels = c("Private home, dust (ng/g)","Waste recycling, dust (ng/g)", "Commercial products (ng/g)", "Agricultural soil (ng/g)")))
 
 
 #known and unknown hotspots together
@@ -352,10 +348,30 @@ ggsave("HS_t.png", HS_t, width = 10, height = 10)
 ## Part 2
 ### Screening substances
 - whales and sharks
+```{r Urban fjord preparation - Part 2}
+#REVALUE
+part2_finalxyz$Sample.type <- revalue(part2_finalxyz$Sample.type, c("Blubber" ="Blubber (ng/g)", "Liver" = "Liver (ng/g)", "Muscle"="Muscle (ng/g)"))
+#unique(part2_finalxy23x$Sample.type)
+#unique(part2_finalxyz$Category) 
+
+part2_finalxyz$Category <- revalue(part2_finalxyz$Category, c("H?brann" = "Porbeagle shark", "Piggh?" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H?kjerring"="Greenland shark"))
+
+```
+
+
 ```{r Part2 scre23}
+
+#SUBSET
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Scre23")
 
-ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+#SET THE ORDER IN PLOT
+part2_finalxy23x <- part2_finalxy23 %>% 
+  mutate(Category = factor(Category, levels = c("Killer whale", "Sperm whale", "Fin whale", "Humpback whale", "White beaked dolphin", "Greenland shark", "Porbeagle shark", "Spiny dogfish")))
+
+unique(part2_finalxy23x$Category) 
+
+#PLOTTING
+WS_23 <- ggplot(subset(part2_finalxy23x, Treatmen%in% c("Whales", "Sharks")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
@@ -363,7 +379,7 @@ ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in
                        high = "red",
                        midpoint = 50,
                        breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
-   theme(panel.grid.major.x=element_blank(), #no gridlines
+  theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
         panel.grid.minor.y=element_blank(),
@@ -375,30 +391,49 @@ ggplot(subset(part2_finalxy23, Treatmen%in% c("Whales", "Sharks")&Sample.type%in
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.85, 1.05),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Whales and sharks") + 
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=10)) +
+  ggtitle("Whales and sharks (scre23)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(Group~Category, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
-  
+
+ggsave("WS_23.png", WS_23, width = 8, height = 6) 
 ```
 
 ### Extra(urban fjord) substances
 - whales and sharks
 ```{r Part2 Extra}
 part2_finalxy23 <- subset(part2_finalxyz, Extra == "Extra")
-#without metals
-part2_finalxy23u <- subset(part2_finalxy23, Group != "Metal")
 
-wsu <- ggplot(subset(part2_finalxy23u, Treatmen%in% c("Whales", "Sharks")&Sample.type%in% c("Blubber", "Muscle", "Liver")), aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+#unique(part2_finalxy23$Category)
+
+part2_finalxy23x <- part2_finalxy23 %>% 
+  mutate(Category = factor(Category, levels = c("Killer whale", "Sperm whale", "Fin whale", "Humpback whale", "White beaked dolphin", "Harbor porpoise", "Greenland shark", "Porbeagle shark", "Spiny dogfish")))
+
+
+#without metals
+#part2_finalxy23u <- subset(part2_finalxy23, Group != "Metal")
+
+part2_UF_1 <- subset(part2_finalxy23x, Group == c("CP", "Dechlorane", "nBFR", "OPFR", "OPFR_metabolite"))
+part2_UF_2 <- subset(part2_finalxy23x, Group == c("nPFAS", "PBDE", "PCB"))
+part2_UF_3 <- subset(part2_finalxy23x, Group == c("PFCA", "PFSA", "QNH4", "UV"))
+part2_UF_met <- subset(part2_finalxy23x, Group == c("Metal"))
+
+part2_UF_met$compound <- revalue(part2_UF_met$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn"))
+
+unique(part2_finalxy23$Group)
+
+UFmet <-  ggplot(part2_UF_met, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
@@ -418,23 +453,27 @@ wsu <- ggplot(subset(part2_finalxy23u, Treatmen%in% c("Whales", "Sharks")&Sample
         axis.line.x = element_line(color="black", linewidth = 1),
         axis.line.y = element_line(color="black", linewidth = 1),
         axis.ticks = element_line(color="black", linewidth=1),
-        legend.position =c(0.75, 1.11),
+        legend.position =c(0.85, 1.05),
         legend.direction = "horizontal",
-        plot.margin = margin(0.8, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(10,10,140,10),
         strip.text.x = element_text(size = 15),
-        panel.spacing.x = unit(0.2, "lines")) +
-  ggtitle("Whales and sharks") + 
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=9), 
+        strip.text.y = element_text(angle = 0, size=10)) +
+  ggtitle("Whales and sharks (urban fjord)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~Category, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
 #save
-ggsave("whaleshark.png", wsu, width = 10, height = 15)
-
+ggsave("Part1_UF1.png", UF1, width = 10, height = 10)
+ggsave("Part1_UF2.png", UF2, width = 10, height = 12)
+ggsave("Part1_UF3.png", UF3, width = 10, height = 10)
+ggsave("Part1_met.png", UFmet, width = 10, height = 15)
 
 #only metals
 part2_finalxy23m <- subset(part2_finalxy23, Group == "Metal")
