@@ -48,6 +48,7 @@ Should be no zero values
 - hvordan behandle "n.a"?
 - hvordan behandle "detektert"?
 - noen hadde mellomrom mellom < og nummer, fjernet i excel
+- KAN IKKE HA BINDESTREK I COMPOUND-NAME)
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
 
@@ -490,47 +491,58 @@ ggsave("Part1_UF3.png", UF3, width = 8, height = 10)
 - are thre differences between high and low treatment? water and solids
 - are there differences between time points of sampling?
 
-
 a) wastewater treatment high and low, and with recipient below 
 ```{r Wastewater treatment high and low}
-#bruker samme gjennomsnitt som over. Per Category, compound, sample type, burde passe også her
-#nei, det stemmer ikke! Vi skal jo skille på purification degree
+#gjennomsnitt på skille på purification degree
+#NAs already removed
 
-part1_freq_ww = part1 %>%
+#We only need water filtered, water particles, and sludge
+part1xx <- subset(part1x, Sample.type == c("Water. filtered", "Water. particulate", "Sludge"))
+
+part1_freq_ww = part1xx %>%
   group_by(Category, compound, Sample.type, Treatmen) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
-part1_filt_ww <- part1_filt_ww %>% 
-  mutate(plotting = ifelse(det_frac <30, 
-                           "low detection", 
+part1_filt_ww <- part1_freq_ww %>% 
+  mutate(plotting = ifelse(det_frac == 0, 
+                           "<LOD", 
                            value))
-part1_filt_ww <- cbind(part1_filt_ww[,c(1:20)], apply(part1_filt_ww[,21, drop=F],2, dLimity))
 
-part1_final_ww = part1_filt_ww %>%
+part1_filt_ww <- cbind(part1_filt_ww[,c(1:23)], apply(part1_filt_ww[,24, drop=F],2, dLimity))
+
+part1_final_ww1 = part1_filt_ww %>%
   group_by(Category, compound, Sample.type, Treatmen) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-part1_final_wwy <- subset(part1_final_ww, det_frac > 30)
-part1_final_wwyz <- subset(part1_final_wwy, compound != "Fett")
-part1_final_wwyz$compound <- as.character(part1_final_wwyz$compound)
-part1_final_wwyz$Group <- as.character(part1_final_wwyz$Group)
+part1_final_ww1$compound <- as.character(part1_final_ww1$compound)
+part1_final_ww1$Group <- as.character(part1_final_ww1$Group)
 
-print(unique(part1_final_wwyz$Sample.type))
+unique(part1_final_ww1$Sample.type)
 #rename
-part1_final_wwyz$Sample.type <- revalue(part1_final_wwyz$Sample.type, c("Water, filtered" = "Water, filtered (ng/L)", "Water, particulate" = "Water, particulate (xx/xx)", "Sludge" ="Sludge (ng/g)", "Sediment" ="Marine sediment (ng/g)", "Blue mussel" ="Blue mussel (ng/g)"))
+part1_final_ww1$Sample.type <- revalue(part1_final_ww1$Sample.type, c("Water. filtered" = "Water, filtered (ng/L)", "Water. particulate" = "Water, particulate (ng/g)", "Sludge" ="Sludge (ng/g)"))
 
 #set order
-part1_final_wwyz$Sample.type <- factor(part1_final_wwyz$Sample.type, levels=c("Water, filtered (ng/L)", "Water, particulate (xx/xx)", "Sludge (ng/g)", "Marine sediment (ng/g)", "Blue mussel (ng/g)")) 
+part1_final_ww1$Sample.type <- factor(part1_final_ww1$Sample.type, levels=c("Water, filtered (ng/L)", "Water, particulate (ng/g)", "Sludge (ng/g)", "Marine sediment (ng/g)", "Blue mussel (ng/g)")) 
+#Fjern alle < LOD
+part1_final_ww2 <- subset(part1_final_ww1, meanx != "NaN") 
 
 
+#remove the duplicated values, but value and plotting are different so must first be removed
 
-ggplot(subset(part1_final_wwyz, Category%in% c("Wastewater treatment")& Sample.type%in% c("Water, filtered (ng/L)", "Water, particulate (xx/xx)", "Sludge (ng/g)")), aes(y=(meanx), x=compound, fill=Treatmen))+
+part1_final_ww3 <- distinct(part1_final_ww2, meanx, Sample.type, compound, Treatmen, .keep_all= TRUE) 
+
+#part1_final_ww3<- part1_final_ww2x[!duplicated(part1_final_ww2x), ]
+
+tri3 <- subset(part1_final_ww1, Group=="Bisphenol")
+
+ggplot(part1_final_ww3, aes(y=log(meanx), x=compound, fill=Treatmen))+
   #geom_col(position = position_dodge2(preserve = "single")) +
-  geom_col(position="dodge")+
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_col(position="dodge", width = 0.5)+
   scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -544,15 +556,12 @@ ggplot(subset(part1_final_wwyz, Category%in% c("Wastewater treatment")& Sample.t
         strip.placement = "bottom")+
   facet_grid(Sample.type~Group, scales="free", space='free_x')
 
-#  
-#  legend.position = "none"
+ggsave("WWT_treatment.png", WWT_treatment, width = 10, height = 9)
 ```
 
 b) indoor dust - private homes and recycling facility
 ```{r Wastewater treatment high and low}
-#bruker samme gjennomsnitt som over. Per Category, compound, sample type, burde passe også her
-#nei, det stemmer ikke! Vi skal jo skille på purification degree
-
+# skille på purification degree
 part1_freq_du = part1 %>%
   group_by(Treatmen, compound, Sample.type) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
@@ -560,26 +569,33 @@ part1_freq_du = part1 %>%
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
-part1_filt_du <- part1_freq_ww %>% 
-  mutate(plotting = ifelse(det_frac <30, 
-                           "low detection", 
+part1_filt_du1 <- part1_freq_du %>% 
+  mutate(plotting = ifelse(det_frac == 0, 
+                           "< LOD", 
                            value))
-part1_filt_du <- cbind(part1_filt_du[,c(1:20)], apply(part1_filt_du[,21, drop=F],2, dLimity))
+
+part1_filt_du <- cbind(part1_filt_du1[,c(1:23)], apply(part1_filt_du1[,24, drop=F],2, dLimity))
+
 part1_final_du = part1_filt_du %>%
   group_by(compound, Sample.type, Treatmen) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-part1_final_duy <- subset(part1_final_du, det_frac > 30)
-part1_final_duyz <- subset(part1_final_duy, compound != "Fett")
-part1_final_duyz$compound <- as.character(part1_final_duyz$compound)
-part1_final_duyz$Group <- as.character(part1_final_duyz$Group)
-part1_final_duyz$Treatmen <- as.character(part1_final_duyz$Treatmen)
+#part1_final_duy <- subset(part1_final_du, det_frac > 30)
+#part1_final_duyz <- subset(part1_final_duy, compound != "Fett")
+part1_final_du$compound <- as.character(part1_final_du$compound)
+part1_final_du$Group <- as.character(part1_final_du$Group)
+part1_final_du$Treatmen <- as.character(part1_final_du$Treatmen)
 
-#set order
-part1_final_duyz$Treatmen <- factor(part1_final_duyz$Treatmen, levels=c("Recycling facility", "Private home")) 
+#set order (also for products used blow)
+part1_final_du$Treatmen <- factor(part1_final_du$Treatmen, levels=c("Recycling facility", "Private home", "boat care products", "Detergents for textiles", "EE products", "Fabric clothes", "Fabric furniture", "Paint and varnish", "Toys" )) 
 
-ggplot(subset(part1_final_duyz, Sample.type%in% c("Dust")), aes(y=log(meanx), x=compound, fill=Treatmen))+
+#Fjern alle < LOD
+part1_final_du2 <- subset(part1_final_du, meanx != "NaN") 
+
+#dust <- subset(part1_final_du, Sample.type == "")
+
+dust <- ggplot(subset(part1_final_du2, Sample.type%in% c("Dust")), aes(y=log(meanx), x=compound, fill=Treatmen))+
   geom_col(position="dodge")+
   scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
   theme_bw()+
@@ -588,21 +604,26 @@ ggplot(subset(part1_final_duyz, Sample.type%in% c("Dust")), aes(y=log(meanx), x=
         axis.title.x= element_blank(),
         axis.title.y = element_blank(),
         strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
+        strip.text.y = element_text(size=13, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")+
+        strip.placement = "bottom",
+        legend.position="none")+
   facet_grid(Treatmen~Group, scales="free_x", space='free_x')
 
-#  
+ggsave("DUST.png", dust, width = 10, height = 8)
+
 #  legend.position = "none"
 ```
 
 c)
 ```{r Products}
+
+unknown <- subset(part1_filt_du1, Category =="Unknown hotspot")
 #gjennomsnitt på: Treatmen, compound, Sample.type
-ggplot(subset(part1_final_duyz, Category%in% c("Unknown hotspot")), aes(y=log(meanx)+10, x=compound, fill=Treatmen))+
-  geom_col(position="dodge")+
+products <- ggplot(subset(part1_final_du2, Category%in% c("Unknown hotspot")), aes(y=log(meanx)+10, x=compound, fill=Treatmen))+
+  #geom_col(position="dodge")+
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
@@ -613,7 +634,10 @@ ggplot(subset(part1_final_duyz, Category%in% c("Unknown hotspot")), aes(y=log(me
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(Treatmen~Group, scales="free", space='free_x')
+  facet_grid(.~Group, scales="free", space='free_x')
+
+ggsave("PRODUCTS.png", products, width = 10, height = 5)
+
 ```
 
 - agricultural soils? Need to separate the different types in the file. 
@@ -651,6 +675,9 @@ part2_final_2$Group <- as.character(part2_final_2$Group)
 - looking at the top preds
 ```{r top predators}
 
+library(ggbreak) 
+library(patchwork)
+
 topP <- subset(part2_final_2, Level=c("Whale top predator", "Shark top predator"))
 topP2 <- subset(topP, meanx != "NaN") #only include those with average value and no suspect etc or < LOD.
 
@@ -664,7 +691,7 @@ topP3 <- subset(topP2, Sample.type =c("Blubber", "Liver"))
 topP4 <- subset(topP3, Level ==c("Whale top predator", "Shark top predator"))
 topP5 <- subset(topP4, Level ==c("Whale top predator"))
 
-ggplot(topP3, aes(x=compound, y=log(plotting)+5, colour=Level))+
+ggplot(topP3, aes(x=compound, y=(plotting), colour=Level))+
   geom_point(size=3)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -677,6 +704,8 @@ ggplot(topP3, aes(x=compound, y=log(plotting)+5, colour=Level))+
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
   facet_grid(.~Group, scales="free", space='free_x')
+  scale_y_break(c(40000, 60000))
+  ylim(0, 750)
   geom_boxplot()
   
   ggplot(topP5, aes(x=compound, y=log(plotting)+5, colour=Category))+
