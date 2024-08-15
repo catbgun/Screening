@@ -26,7 +26,6 @@ sigfig <- function(vec, digits){
 }
 ```
 
-
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 #install.packages(c("dplyr", "ggplot2", "plyr", "Rmisc", "tidyverse", "lubridate", "stringr"))
 Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats")
@@ -49,25 +48,19 @@ Should be no zero values
 - hvordan behandle "detektert"?
 - noen hadde mellomrom mellom < og nummer, fjernet i excel
 - KAN IKKE HA BINDESTREK I COMPOUND-NAME)
+- decomposes: TIPSIMA	TIPSIA
+
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
-
-#df23 <- read.table("240702_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
-df23 <- read.table("240812_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+df23 <- read.table("240815_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 ```
 
 ```{r from wide to long}
 df23_long <- gather(df23, compound, value, AOZKF:Fett, factor_key=TRUE)
-
-df23_long[complete.cases(df23_long$value),] #usikker på hva denne gjør
 df23_longg <- subset(df23_long, !is.na(value)) #usikker om denne tar bort alle versjoner av na
 
-unique(df23_longg$value)
-
-df23_longg$compound <- revalue(df23_longg$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn"))
-
-#the length of unique compounds equals to the length of unique compounds in excel file
-#length(unique(df_long$compound))
+#compound BSAN removed since only NAs
+#UV320 both NIVA and NILU
 ```
 
 ## Grouping the data
@@ -77,34 +70,31 @@ df23_longg$compound <- revalue(df23_longg$compound, c("AG"="Ag", "AS"="As", "CD"
 - by sample type?
 
 ```{r Groupings}
-print(unique(df23_longg$Matrix))
-#one suggestion to group the 2023 data, but division of some sample types, especially products is needed
-gr23 <- read.table("Scre23_Groupings.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+gr23 <- read.table("Scre23_Groupings2.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 
 #count substances per group
 gr23x <- gr23 %>%
   group_by(Group) %>%
   mutate(unique_types = n_distinct(ID))
 
-newtable <- merge(df23_longg,gr23, by.x  = "compound", by.y="ID") 
-#print(unique(newtable$Group))
+newtable <- merge(df23_longg, gr23, by.x  = "compound", by.y="ID") 
+
+#to check if all are included. can be issues with names. "TIPSIMA" "TIPSIA" decomposed. 
+setdiff(df23_long$compound,gr23$ID)
+setdiff(df23_long$compound,newtable$compound)
+
+newtable$compound <- revalue(newtable$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn"))
 ```
 
 need to make column with frequency and then summary table.
 will not rely in NA, but need to define >LOD.
 Rather calculate mean later, after LOD has been replaced
-
 ```{r Detection frequency}
 #Checking:
 part1 <- subset(newtable, Part == "Part1")
 part2 <- subset(newtable, Part == "Part2")
 
 #New column in part2 to separate based on level of predator
-#unique(part2$Category)
-#Killer whale and sperm whale are top predators. fin whale and humpback whale are intermediate. 
-
-#need to check if the following categorisation is correct
-
 part2$Category <- revalue(part2$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
 
 part2x = part2%>%
@@ -112,24 +102,20 @@ part2x = part2%>%
                            Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top predator",
                                 Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
                            Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
-#print(unique(part2x$Level))
 ```
 
 ```{r Detection frequency}
-#Here, the grouping is important! need to consider more thoroughly
-#Treatmen
+#remove n.a due to limited sample material. SHould not be included in calculations
 part1x <- subset(part1, value != "n.a.")
 
 part1_freq = part1x %>%
   group_by(Category, compound, Sample.type) %>%
-  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), #in this was "n.a." is included in the length
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), 
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
-#write.csv(part1_freq, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/240813_TEST_filtercount.csv", row.names=FALSE)
-
-#use either level or category
+#For part 2, use Level instead of category
 part2xx <- subset(part2x, value != "n.a.")
 
 part2_freq = part2xx %>%
@@ -138,23 +124,19 @@ part2_freq = part2xx %>%
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
-
-#to check frequency is ok
-#write.csv(df_long_freq, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/230914_TEST_filtercount.csv", row.names=FALSE)
 ```
 
 Filter out observations with < 30 detection frequency
 #perhaps this one was better? START EHR!!! NOE SOM IKKE STEMMER
-```{r Testing new approach to be able to indicate < 30 detection frequency in table}
-#filter observations with < 30 detection frequency
+```{r Avoid plotting average of those with only < LOD}
 part1_filt <- part1_freq %>% 
   mutate(plotting = ifelse(det_frac == 0, 
                            "<LOD", 
                            value))
 
-# claculate 0.5xLOD for those with detection frequency above 30%
-part1_filt_X <- cbind(part1_filt[,c(1:23)], apply(part1_filt[,24, drop=F],2, dLimity))
-#df_long_X <- cbind(tosty[,c(1:3,8:14,17:22)], apply(tosty[,23, drop=F],2, dLimity))
+# claculate 0.5xLOD 
+part1_filt_X <- cbind(part1_filt[,c(1:42)], apply(part1_filt[,43, drop=F],2, dLimity))
+
 
 part2_filt <- part2_freq %>% 
   mutate(plotting = ifelse(det_frac ==0, 
@@ -162,14 +144,12 @@ part2_filt <- part2_freq %>%
                            value))
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-part2_filt_X <- cbind(part2_filt[,c(1:24)], apply(part2_filt[,25, drop=F],2, dLimity))
+part2_filt_X <- cbind(part2_filt[,c(1:43)], apply(part2_filt[,44, drop=F],2, dLimity))
 ```
 
 Calculate mean
 - sjekk at ble riktig! ta ut excel f eks
 ```{r}
-#df_long_Y <- df_long_X[!is.na(df_long_X$value),]
-#Treatmen
 part1_finalx = part1_filt_X %>%
   group_by(Category, compound, Sample.type) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
@@ -180,7 +160,6 @@ part2_finalx = part2_filt_X %>%
   group_by(Level, compound, Sample.type) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
-
 ```
 
 ##geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
@@ -188,15 +167,13 @@ part2_finalx = part2_filt_X %>%
 
 Set order of substances in plot
 ```{r}
-#part1_finalxy <- subset(part1_finalx, det_frac > 30)
-#part1_finalxyz <- subset(part1_finalxy, compound != "Fett")
 part1_finalx$compound <- as.character(part1_finalx$compound)
 part1_finalx$Group <- as.character(part1_finalx$Group)
 
-#part2_finalxy <- subset(part2_finalx, det_frac > 30)
-#part2_finalxyz <- subset(part2_finalxy, compound != "Fett")
 part2_finalx$compound <- as.character(part2_finalx$compound)
 part2_finalx$Group <- as.character(part2_finalx$Group)
+part2_finalx$Sex <- as.character(part2_finalx$Sex)
+part2_finalx$Maturity <- as.character(part2_finalx$Maturity)
 ```
 
 ##Part 1
@@ -206,15 +183,28 @@ part1_finalxy <- part1_finalx %>%
   mutate(meanxyz = ifelse(compound == "BHPMEBD" |compound == "DMPTDPP" | compound =="DMPTTPP", 
                            "S", 
                            " "))
+
+#Rename names e.g. starting with a number
+unique(part1_finalxy$compound)
+
+part1_finalxy$compound <- revalue(part1_finalxy$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B.2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP" ))
+
+part1_finalxyz <- subset(part1_finalxy, compound!="Fett")
 ```
 
 ### Wastewater treatment plant
 ```{r Part1 Wastewater treatment pretreatment}
 #subset
-wwt <- subset(part1_finalx, Category == "Wastewater treatment")
-print(unique(wwt$Sample.type))
+wwt <- subset(part1_finalxyz, Category == "Wastewater treatment")
+
 #better names for sample types
-wwt$Sample.type <- revalue(wwt$Sample.type, c("Water. filtered" = "Water, filtered (ng/L)", "Water. particulate" = "Water, particulate (ng/g)", "Sludge" ="Sludge (ng/g)", "Sediment" ="Marine sediment (ng/g)", "Blue mussel" ="Blue mussel (ng/g)"))
+unique(wwt$Sample.type)
+
+wwt$Sample.type <- revalue(wwt$Sample.type, c("Water. filtered" = "Water, filtered (ng/L)", "Water. particulate" = "Water, particulate (ng/g, d.w.)", "Sludge" ="Sludge (ng/g, d.w.)", "Sediment" ="Marine sediment (ng/g, d.w.)", "Blue mussel" ="Blue mussel (ng/g, w.w.)"))
+
+#set order of dample types
+wwt2 <- wwt %>% 
+  mutate(Sample.type = factor(Sample.type, levels = c("Water, filtered (ng/L)", "Water, particulate (ng/g, d.w.)", "Sludge (ng/g, d.w.)", "Marine sediment (ng/g, d.w.)", "Blue mussel (ng/g, w.w.)")))
 
 ```
 
@@ -222,24 +212,7 @@ BSAN (CAS 1678-25-7) n.a. due to limited sample material? <- na på alle så treng
 Bisphenol, BHPMEBD (CAS 147504-92-5) suspect screaming only (not relevant for Part 2). 
 Triazines, DMPTDPP (CAS 178905-31-2) and DMPTTPP (CAS 178905-32-3) suspect screening only. 
 ```{r WWTP samples}
-bsan <- subset(wwt, compound=="BSAN")
-
-#to get "s" for suspect and "n.a." for not available
-wwtx <- wwt %>% 
-  mutate(meanxyz = ifelse(compound == "BHPMEBD" |compound == "DMPTDPP" | compound =="DMPTTPP", 
-                           "S", 
-                           " "))
-
-# 
-
-wwt1 <- subset(wwtx, Sample.type==c("Water, filtered (ng/L)", "Water, particulate (ng/g)", "Sludge (ng/g)", "Marine sediment (ng/g)", "Blue mussel (ng/g)"))
-
-wwt1x <- subset(wwt1, compound!="Fett")
-
-wwt2 <- wwt1x %>% 
-  mutate(Sample.type = factor(Sample.type, levels = c("Water, filtered (ng/L)", "Water, particulate (ng/g)", "Sludge (ng/g)", "Marine sediment (ng/g)", "Blue mussel (ng/g)")))
-
-ggplot(wwt2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+wwt_long2 <- ggplot(wwt3, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
   geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5)+
@@ -269,7 +242,7 @@ ggplot(wwt2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0)) +
-  ggtitle("Wastewater treatment plant") + 
+  ggtitle("Wastewater treatment plant (scre23)") + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
@@ -286,19 +259,19 @@ ggsave("WW_t2.png", wwt_long2, width = 10, height = 18)
 - dust was separated to private home and commercial manually in excel, if needed
 ```{r Part1 HOTSPOTS}
 #subset
-hotspot <- subset(part1_finalxy, Category == c("Known hotspot", "Unknown hotspot"))
-#separate dust from homes and commercial
-hotspot$Sample.type[(hotspot$Sample.type == "Dust_private") & (hotspot$Treatmen == "Private home")] <- "Private home, dust (ng/g)"
-hotspot$Sample.type[(hotspot$Sample.type == "Dust_recycling") & (hotspot$X == "Commercial building")] <- "Waste recycling, dust (ng/g)"
+hotspot <- subset(part1_finalxyz, Category == c("Known hotspot", "Unknown hotspot"))
 
-#print(unique(hotspot1$Sample.type))
+unique(hotspot$Sample.type)
+#separate dust from homes and commercial
+#hotspot$Sample.type[(hotspot$Sample.type == "Dust_private") & (hotspot$Treatmen == "Private home")] <- #"Private home, dust (ng/g, d.w.)"
+#hotspot$Sample.type[(hotspot$Sample.type == "Dust_recycling") & (hotspot$X == "Commercial building")] <- "Waste recycling, dust (ng/g, d.w.)"
 
 #better names for sample types
-hotspot$Sample.type <- revalue(hotspot$Sample.type, c("Soil" = "Agricultural soil (ng/g)", "Product" ="Commercial products (ng/g)", "Dust" = "Indoor dust (ng/g)"))
+hotspot$Sample.type <- revalue(hotspot$Sample.type, c("Soil" = "Agricultural soils (ng/g, d.w.)", "Product" ="Commercial products (ng/g)", "Dust" = "Indoor dust (ng/g, d.w.)"))
 
 #set the order
 hotspot1 <- hotspot %>% 
-  mutate(Sample.type = factor(Sample.type, levels = c("Indoor dust (ng/g)", "Commercial products (ng/g)", "Agricultural soil (ng/g)")))
+  mutate(Sample.type = factor(Sample.type, levels = c("Indoor dust (ng/g, d.w.)", "Commercial products (ng/g)", "Agricultural soils (ng/g, d.w.)")))
 
 
 #known and unknown hotspots together
@@ -333,7 +306,7 @@ HS_t <- ggplot(hotspot1, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac))
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0)) +
-  ggtitle("Hotspots") + 
+  ggtitle("Hotspots (known and unknown") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -342,6 +315,7 @@ HS_t <- ggplot(hotspot1, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac))
 
 ggsave("HS_t.png", HS_t, width = 10, height = 18)
 ```
+
 
 ## Part 2
 ### Screening substances
@@ -353,31 +327,24 @@ OPFR metabolites (n=7) not available for all samples due to limited sample mater
 - whales and sharks
 ```{r Urban fjord preparation - Part 2}
 #REVALUE
-part2_finalx$Sample.type <- revalue(part2_finalx$Sample.type, c("Blubber" ="Blubber (ng/g)", "Liver" = "Liver (ng/g)", "Muscle"="Muscle (ng/g)"))
-#unique(part2_finalxy23x$Sample.type)
-#unique(part2_finalxyz$Category) 
-opfr <- subset(part2_finalx, Group =="OPFR_metabolite")
+part2_finalx$Sample.type <- revalue(part2_finalx$Sample.type, c("Blubber" ="Blubber (ng/g, w.w.)", "Liver" = "Liver (ng/g, w.w.)", "Muscle"="Muscle (ng/g, w.w.)"))
 
-#print(unique(part2_finalx$Level))
+part2_finalxc <- subset(part2_finalx, compound !="Fett")
 
+part2_finalxc$compound <- revalue(part2_finalxc$compound, c("BENAZOL.P"="BENAZOL P", "X2BBTMP"="2BBTMP",  "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B.2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X2TBCLBEP"="2TBCLBEP",
+                                                            "X42FTS"="42FTS", "X62FTS"="62FTS", "X82FTS"="82FTS", "X102FTS"="102FTS", "X122FTS"="122FTS", "X2BDMP"="2BDMP"))
 ```
 
 ```{r Part2 scre23}
 #SUBSET
-part2_finalxy23 <- subset(part2_finalx, Extra == "Scre23")
+part2_finalxy23 <- subset(part2_finalxc, Extra == "Scre23")
 
 #SET THE ORDER IN PLOT
-#part2_finalxy23x <- part2_finalxy23 %>% 
-#  mutate(Category = factor(Category, levels = c("Killer whale", "Sperm whale", "Fin whale", "Humpback whale", "White beaked dolphin", "Greenland shark", #"Porbeagle shark", "Spiny dogfish")))
-
 part2_finalxy23x <- part2_finalxy23 %>% 
   mutate(Level = factor(Level, levels = c("Whale top predator", "Whale intermediate predator", "Shark top predator", "Shark intermediate predator")))
 
-unique(part2_finalxy23x$Level) 
-
-part2_finalxy23xx <- subset(part2_finalxy23x, compound !="Fett")
 #PLOTTING
-WS_23 <- ggplot(part2_finalxy23xx, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+ggplot(part2_finalxy23x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
  scale_fill_gradient2(low = "green", 
@@ -419,25 +386,89 @@ ggsave("WS_23.png", WS_23, width = 8, height = 17)
 ### Extra(urban fjord) substances
 - whales and sharks
 ```{r Part2 Extra}
-part2_finalxy23 <- subset(part2_finalx, Extra == "Extra")
+part2_extra <- subset(part2_finalxc, Extra == "Extra")
 
-#unique(part2_finalxy23$Category)
-
-#part2_finalxy23x <- part2_finalxy23 %>% 
-#  mutate(Category = factor(Category, levels = c("Killer whale", "Sperm whale", "Fin whale", "Humpback whale", "White beaked dolphin", "Harbor porpoise", #"Greenland shark", "Porbeagle shark", "Spiny dogfish")))
-
-part2_finalxy23x <- part2_finalxy23 %>% 
+part2_extra1 <- part2_extra %>% 
   mutate(Level = factor(Level, levels = c("Whale top predator", "Whale intermediate predator", "Shark top predator", "Shark intermediate predator")))
 
-#without metals
-#part2_finalxy23u <- subset(part2_finalxy23, Group != "Metal")
-#part2_UF_met <- subset(part2_finalxy23x, Group == c("Metal"))
+sh <- subset(part2_UF_1, Level =="Whale top predator"& compound=="LCCP")
+sd <- subset(part2_extra1, Level =="Whale top predator"& compound=="LCCP")
 
-part2_UF_1 <- subset(part2_finalxy23x, Group == c("CP", "Dechlorane", "nBFR", "OPFR", "OPFR_metabolite"))
-part2_UF_2 <- subset(part2_finalxy23x, Group == c("nPFAS", "PBDE", "PCB"))
-part2_UF_3 <- subset(part2_finalxy23x, Group == c("PFCA", "PFSA", "QNH4", "UV") | compound=="Hg")
+part2_UF_1 <- subset(part2_extra1, Group %in% c("CP", "Dechlorane", "nBFR", "OPFR", "OPFR_metabolite"))
+part2_UF_2 <- subset(part2_extra1, Group %in% c("nPFAS", "PBDE", "PCB"))
+part2_UF_3 <- subset(part2_extra1, Group %in%c("PFCA", "PFSA", "QNH4", "UV") | compound=="Hg")
 
-#unique(part2_finalxy23$Group)
+UF1 <-ggplot(part2_UF_1, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91") +# determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 1.05),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=9), 
+        strip.text.y = element_text(angle = 0, size=10)) +
+  ggtitle("Whales and sharks (urban fjord 1/3)") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+UF2 <- ggplot(part2_UF_2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+ scale_fill_gradient2(low = "green", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(30,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 1.05),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=9), 
+        strip.text.y = element_text(angle = 0, size=10)) +
+  ggtitle("Whales and sharks (urban fjord 2/3)") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
 UF3 <- ggplot(part2_UF_3, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
@@ -468,7 +499,7 @@ UF3 <- ggplot(part2_UF_3, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=9), 
         strip.text.y = element_text(angle = 0, size=10)) +
-  ggtitle("Whales and sharks (urban fjord)") + 
+  ggtitle("Whales and sharks (urban fjord 3/3)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -494,13 +525,13 @@ ggsave("Part1_UF3.png", UF3, width = 8, height = 10)
 a) wastewater treatment high and low, and with recipient below 
 ```{r Wastewater treatment high and low}
 #gjennomsnitt på skille på purification degree
-#NAs already removed
+#"n.a." already removed
 
 #We only need water filtered, water particles, and sludge
-part1xx <- subset(part1x, Sample.type == c("Water. filtered", "Water. particulate", "Sludge"))
+part1xx <- subset(part1x, Matrix == c("Wastewater treated"))
 
 part1_freq_ww = part1xx %>%
-  group_by(Category, compound, Sample.type, Treatmen) %>%
+  group_by(compound, Sample.type, Treatmen) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
@@ -511,35 +542,31 @@ part1_filt_ww <- part1_freq_ww %>%
                            "<LOD", 
                            value))
 
-part1_filt_ww <- cbind(part1_filt_ww[,c(1:23)], apply(part1_filt_ww[,24, drop=F],2, dLimity))
+part1_filt_ww1 <- cbind(part1_filt_ww[,c(1:42)], apply(part1_filt_ww[,43, drop=F],2, dLimity))
 
-part1_final_ww1 = part1_filt_ww %>%
+part1_final_ww2 = part1_filt_ww1 %>%
   group_by(Category, compound, Sample.type, Treatmen) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
-part1_final_ww1$compound <- as.character(part1_final_ww1$compound)
-part1_final_ww1$Group <- as.character(part1_final_ww1$Group)
+part1_final_ww2$compound <- as.character(part1_final_ww2$compound)
+part1_final_ww2$Group <- as.character(part1_final_ww2$Group)
 
-unique(part1_final_ww1$Sample.type)
 #rename
-part1_final_ww1$Sample.type <- revalue(part1_final_ww1$Sample.type, c("Water. filtered" = "Water, filtered (ng/L)", "Water. particulate" = "Water, particulate (ng/g)", "Sludge" ="Sludge (ng/g)"))
+part1_final_ww2$Sample.type <- revalue(part1_final_ww2$Sample.type, c("Water. filtered" = "Water, filtered (ng/L)", "Water. particulate" = "Water, particulate (ng/g, d.w.)", "Sludge" ="Sludge (ng/g, d.w.)"))
 
 #set order
-part1_final_ww1$Sample.type <- factor(part1_final_ww1$Sample.type, levels=c("Water, filtered (ng/L)", "Water, particulate (ng/g)", "Sludge (ng/g)", "Marine sediment (ng/g)", "Blue mussel (ng/g)")) 
+part1_final_ww2$Sample.type <- factor(part1_final_ww2$Sample.type, levels=c("Water, filtered (ng/L)", "Water, particulate (ng/g, d.w.)", "Sludge (ng/g, d.w.)")) 
 #Fjern alle < LOD
-part1_final_ww2 <- subset(part1_final_ww1, meanx != "NaN") 
-
+part1_final_ww3 <- subset(part1_final_ww2, meanx != "NaN") 
 
 #remove the duplicated values, but value and plotting are different so must first be removed
-
-part1_final_ww3 <- distinct(part1_final_ww2, meanx, Sample.type, compound, Treatmen, .keep_all= TRUE) 
+part1_final_ww4 <- distinct(part1_final_ww3, meanx, Sample.type, compound, Treatmen, .keep_all= TRUE) 
 
 #part1_final_ww3<- part1_final_ww2x[!duplicated(part1_final_ww2x), ]
 
-tri3 <- subset(part1_final_ww1, Group=="Bisphenol")
 
-ggplot(part1_final_ww3, aes(y=log(meanx), x=compound, fill=Treatmen))+
+WWT_treatment <-ggplot(part1_final_ww4, aes(y=log(meanx), x=compound, fill=Treatmen))+
   #geom_col(position = position_dodge2(preserve = "single")) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   #geom_col(position="dodge", width = 0.5)+
@@ -560,42 +587,45 @@ ggsave("WWT_treatment.png", WWT_treatment, width = 10, height = 9)
 ```
 
 b) indoor dust - private homes and recycling facility
-```{r Wastewater treatment high and low}
+```{r Dust private and recycling}
 # skille på purification degree
-part1_freq_du = part1 %>%
-  group_by(Treatmen, compound, Sample.type) %>%
+dust <- subset(part1x, Sample.type == "Dust")
+
+dust1 = dust %>%
+  group_by(Treatmen, compound) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
-part1_filt_du1 <- part1_freq_du %>% 
+dust2 <- dust1 %>% 
   mutate(plotting = ifelse(det_frac == 0, 
                            "< LOD", 
                            value))
 
-part1_filt_du <- cbind(part1_filt_du1[,c(1:23)], apply(part1_filt_du1[,24, drop=F],2, dLimity))
+dust3 <- cbind(dust2[,c(1:42)], apply(dust2[,43, drop=F],2, dLimity))
 
-part1_final_du = part1_filt_du %>%
-  group_by(compound, Sample.type, Treatmen) %>%
+dust4 = dust3 %>%
+  group_by(compound, Treatmen) %>%
   mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
   ungroup()
 
 #part1_final_duy <- subset(part1_final_du, det_frac > 30)
 #part1_final_duyz <- subset(part1_final_duy, compound != "Fett")
-part1_final_du$compound <- as.character(part1_final_du$compound)
-part1_final_du$Group <- as.character(part1_final_du$Group)
-part1_final_du$Treatmen <- as.character(part1_final_du$Treatmen)
+dust4$compound <- as.character(dust4$compound)
+dust4$Group <- as.character(dust4$Group)
+dust4$Treatmen <- as.character(dust4$Treatmen)
+
+#rename
+dust4$Treatmen <- revalue(dust4$Treatmen, c("Recycling facility"="Recycling facility, dust (ng/g, d.w.)", "Private home" = "Private homes, dust (ng/g, d.w.)"))
 
 #set order (also for products used blow)
-part1_final_du$Treatmen <- factor(part1_final_du$Treatmen, levels=c("Recycling facility", "Private home", "boat care products", "Detergents for textiles", "EE products", "Fabric clothes", "Fabric furniture", "Paint and varnish", "Toys" )) 
+dust4$Treatmen <- factor(dust4$Treatmen, levels=c("Recycling facility, dust (ng/g, d.w.)", "Private homes, dust (ng/g, d.w.)")) 
 
 #Fjern alle < LOD
-part1_final_du2 <- subset(part1_final_du, meanx != "NaN") 
+dust5 <- subset(dust4, meanx != "NaN") 
 
-#dust <- subset(part1_final_du, Sample.type == "")
-
-dust <- ggplot(subset(part1_final_du2, Sample.type%in% c("Dust")), aes(y=log(meanx), x=compound, fill=Treatmen))+
+dust <- ggplot(dust5, aes(y=log(meanx), x=compound, fill=Treatmen))+
   geom_col(position="dodge")+
   scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
   theme_bw()+
@@ -618,10 +648,37 @@ ggsave("DUST.png", dust, width = 10, height = 8)
 
 c)
 ```{r Products}
+prod <- subset(part1x, Sample.type=="Product")
 
-unknown <- subset(part1_filt_du1, Category =="Unknown hotspot")
-#gjennomsnitt på: Treatmen, compound, Sample.type
-products <- ggplot(subset(part1_final_du2, Category%in% c("Unknown hotspot")), aes(y=log(meanx)+10, x=compound, fill=Treatmen))+
+prod1 = prod %>%
+  group_by(Treatmen, compound) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+prod2 <- prod1 %>% 
+  mutate(plotting = ifelse(det_frac == 0, 
+                           "< LOD", 
+                           value))
+
+prod3 <- cbind(prod2[,c(1:42)], apply(prod2[,43, drop=F],2, dLimity))
+
+prod4 = prod3 %>%
+  group_by(compound, Treatmen) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+
+#part1_final_duy <- subset(part1_final_du, det_frac > 30)
+#part1_final_duyz <- subset(part1_final_duy, compound != "Fett")
+prod4$compound <- as.character(prod4$compound)
+prod4$Group <- as.character(prod4$Group)
+prod4$Treatmen <- as.character(prod4$Treatmen)
+
+#Fjern alle < LOD
+prod5 <- subset(prod4, meanx != "NaN") 
+
+products <- ggplot(prod5, aes(y=log(meanx)+10, x=compound, fill=Treatmen))+
   #geom_col(position="dodge")+
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   theme_bw()+
@@ -634,7 +691,9 @@ products <- ggplot(subset(part1_final_du2, Category%in% c("Unknown hotspot")), a
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(.~Group, scales="free", space='free_x')
+  facet_grid(.~Group, scales="free", space='free_x')+
+  scale_fill_discrete(name = "Product type")+
+  ylab("log(ng/L, d.w.)+10")
 
 ggsave("PRODUCTS.png", products, width = 10, height = 5)
 
@@ -648,7 +707,7 @@ d) WHALES AND SHARKS
 #allerede fjernet er "n.a."
 part2_freq_2 = part2xx %>%
   group_by(Group, compound, Sample.type) %>%
-  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), #her må det også legges inn "n.a."!!
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), 
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
@@ -659,7 +718,7 @@ part2_filt_2 <- part2_freq_2 %>%
                            value))
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-part2_filt_X_2 <- cbind(part2_filt_2[,c(1:24)], apply(part2_filt_2[,25, drop=F],2, dLimity))
+part2_filt_X_2 <- cbind(part2_filt_2[,c(1:43)], apply(part2_filt_2[,44, drop=F],2, dLimity))
 
 #Category - for part 2 of report
 part2_final_2 = part2_filt_X_2 %>%
@@ -688,11 +747,19 @@ print(unique(topP2$Category))
 #compare whale blubber with shark top liver?
 unique(topP2$Sample.type)
 topP3 <- subset(topP2, Sample.type =c("Blubber", "Liver"))
-topP4 <- subset(topP3, Level ==c("Whale top predator", "Shark top predator"))
-topP5 <- subset(topP4, Level ==c("Whale top predator"))
+topP3x <- subset(topP3, Level ==c("Whale top predator", "Shark top predator"))
 
-ggplot(topP3, aes(x=compound, y=(plotting), colour=Level))+
-  geom_point(size=3)+
+
+#rename
+topP3$Level <- revalue(topP3$Level, c("Shark intermediate predator" = "Shark intermediate pred. (liver)", "Shark top predator" = "Shark top pred. (liver)", "Whale intermediate predator" = "Whale intermediate pred. (blubber)", "Whale top predator"= "Whale top pred. (blubber)"))
+
+#set order (also for products used blow)
+topP3$Level <- factor(topP3$Level, levels=c("Whale top pred. (blubber)","Shark top pred. (liver)", "Whale intermediate pred. (blubber)", "Shark intermediate pred. (liver)")) 
+topP4 <- subset(topP3, !compound %in% c("Fett", "Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn"))
+
+#Looking at the four different groups together
+whales <- ggplot(topP4, aes(x=compound, y=log(plotting)+10, colour=Level))+
+  geom_point(size=2)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
@@ -702,13 +769,17 @@ ggplot(topP3, aes(x=compound, y=(plotting), colour=Level))+
         strip.text.y = element_text(size=10, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  facet_grid(.~Group, scales="free", space='free_x')
-  scale_y_break(c(40000, 60000))
-  ylim(0, 750)
-  geom_boxplot()
+        strip.placement = "bottom",
+        legend.position="top")+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  scale_colour_discrete(name = "Group")
   
-  ggplot(topP5, aes(x=compound, y=log(plotting)+5, colour=Category))+
+ggsave("Whale groups.png", whales, width = 10, height = 7)
+
+#Looking at the top whale group
+topP3xx <- subset(topP4, Level ==c("Whale top pred. (blubber)"))
+
+ggplot(topP3xx, aes(x=compound, y=(plotting), colour=Category))+
   geom_point(size=3)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -730,9 +801,12 @@ ggplot(topP3, aes(x=compound, y=(plotting), colour=Level))+
 ```{r}
 
 #find back the metadata!!! and perhaps also the stable isotopes
-topP2_K <- subset(topP2, Category=="Killer whale")
+KW <- subset(topP4, Category=="Killer whale")
 
-ggplot(topP2_K, aes(x=compound, y=log(plotting, colour=)))+
+KW$Maturity <- as.character(KW$Maturity)
+part2_final_2$Group <- as.character(part2_final_2$Group)
+
+ggplot(KW, aes(x=compound, y=log(plotting), fill=newtable$Maturity))+
   geom_point(size=3)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -743,7 +817,7 @@ ggplot(topP2_K, aes(x=compound, y=log(plotting, colour=)))+
         strip.text.y = element_text(size=10, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")
+        strip.placement = "bottom")+
   facet_grid(.~Group, scales="free", space='free_x')
   geom_boxplot()
 
