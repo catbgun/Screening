@@ -49,10 +49,12 @@ Should be no zero values
 - noen hadde mellomrom mellom < og nummer, fjernet i excel
 - KAN IKKE HA BINDESTREK I COMPOUND-NAME)
 - decomposes: TIPSIMA	TIPSIA
+16.08.2024
+- la til manglende metadata hval + info om pakke (ny kolonne!)
 
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
-df23 <- read.table("240815_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+df23 <- read.table("240816_240528_SCRE2023_Resultater.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
 ```
 
 ```{r from wide to long}
@@ -135,7 +137,7 @@ part1_filt <- part1_freq %>%
                            value))
 
 # claculate 0.5xLOD 
-part1_filt_X <- cbind(part1_filt[,c(1:42)], apply(part1_filt[,43, drop=F],2, dLimity))
+part1_filt_X <- cbind(part1_filt[,c(1:43)], apply(part1_filt[,44, drop=F],2, dLimity))
 
 
 part2_filt <- part2_freq %>% 
@@ -144,7 +146,7 @@ part2_filt <- part2_freq %>%
                            value))
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-part2_filt_X <- cbind(part2_filt[,c(1:43)], apply(part2_filt[,44, drop=F],2, dLimity))
+part2_filt_X <- cbind(part2_filt[,c(1:44)], apply(part2_filt[,45, drop=F],2, dLimity))
 ```
 
 Calculate mean
@@ -174,6 +176,7 @@ part2_finalx$compound <- as.character(part2_finalx$compound)
 part2_finalx$Group <- as.character(part2_finalx$Group)
 part2_finalx$Sex <- as.character(part2_finalx$Sex)
 part2_finalx$Maturity <- as.character(part2_finalx$Maturity)
+part2_finalx$Packaging <- as.character(part2_finalx$Packaging)
 ```
 
 ##Part 1
@@ -187,7 +190,7 @@ part1_finalxy <- part1_finalx %>%
 #Rename names e.g. starting with a number
 unique(part1_finalxy$compound)
 
-part1_finalxy$compound <- revalue(part1_finalxy$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B.2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP" ))
+part1_finalxy$compound <- revalue(part1_finalxy$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B.2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP", "B.2ETF"="B-2ETF" )) #er den siste riktig?
 
 part1_finalxyz <- subset(part1_finalxy, compound!="Fett")
 ```
@@ -323,7 +326,6 @@ SVOC, semi-quantified: Sus62 (CAS 54464-54-9), SYLKL (CAS 676532-44-8), SEROLD (
 HCBD (CAS 87-68-3) not available due to limited sample material. 
 
 OPFR metabolites (n=7) not available for all samples due to limited sample material. 
-
 - whales and sharks
 ```{r Urban fjord preparation - Part 2}
 #REVALUE
@@ -391,8 +393,8 @@ part2_extra <- subset(part2_finalxc, Extra == "Extra")
 part2_extra1 <- part2_extra %>% 
   mutate(Level = factor(Level, levels = c("Whale top predator", "Whale intermediate predator", "Shark top predator", "Shark intermediate predator")))
 
-sh <- subset(part2_UF_1, Level =="Whale top predator"& compound=="LCCP")
-sd <- subset(part2_extra1, Level =="Whale top predator"& compound=="LCCP")
+#sh <- subset(part2_UF_1, Level =="Whale top predator"& compound=="LCCP")
+#sd <- subset(part2_extra1, Level =="Whale top predator"& compound=="LCCP")
 
 part2_UF_1 <- subset(part2_extra1, Group %in% c("CP", "Dechlorane", "nBFR", "OPFR", "OPFR_metabolite"))
 part2_UF_2 <- subset(part2_extra1, Group %in% c("nPFAS", "PBDE", "PCB"))
@@ -718,7 +720,7 @@ part2_filt_2 <- part2_freq_2 %>%
                            value))
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-part2_filt_X_2 <- cbind(part2_filt_2[,c(1:43)], apply(part2_filt_2[,44, drop=F],2, dLimity))
+part2_filt_X_2 <- cbind(part2_filt_2[,c(1:44)], apply(part2_filt_2[,45, drop=F],2, dLimity))
 
 #Category - for part 2 of report
 part2_final_2 = part2_filt_X_2 %>%
@@ -728,15 +730,14 @@ part2_final_2 = part2_filt_X_2 %>%
 
 part2_final_2$compound <- as.character(part2_final_2$compound)
 part2_final_2$Group <- as.character(part2_final_2$Group)
+part2_final_2$Sex <- as.character(part2_final_2$Sex)
+part2_final_2$Maturity <- as.character(part2_final_2$Maturity)
+part2_final_2$Packaging <- as.character(part2_final_2$Packaging)
 
 ```
 
 - looking at the top preds
 ```{r top predators}
-
-library(ggbreak) 
-library(patchwork)
-
 topP <- subset(part2_final_2, Level=c("Whale top predator", "Shark top predator"))
 topP2 <- subset(topP, meanx != "NaN") #only include those with average value and no suspect etc or < LOD.
 
@@ -745,9 +746,9 @@ print(unique(topP2$Group))
 print(unique(topP2$Category))
 
 #compare whale blubber with shark top liver?
-unique(topP2$Sample.type)
+#unique(topP2$Sample.type)
 topP3 <- subset(topP2, Sample.type =c("Blubber", "Liver"))
-topP3x <- subset(topP3, Level ==c("Whale top predator", "Shark top predator"))
+#topP3x <- subset(topP3, Level ==c("Whale top predator", "Shark top predator"))
 
 
 #rename
@@ -798,15 +799,42 @@ ggplot(topP3xx, aes(x=compound, y=(plotting), colour=Category))+
 
 ```
 - looking at the killer whales
-```{r}
+```{r whales blubber}
 
 #find back the metadata!!! and perhaps also the stable isotopes
 KW <- subset(topP4, Category=="Killer whale")
+blub <- subset(topP4, Sample.type=="Blubber")
+whale <- subset(topP4, Treatmen=="Whales")
+HP <- subset(topP4, Category=="Harbor porpoise"&Length==136)
 
 KW$Maturity <- as.character(KW$Maturity)
+unique(KW$Maturity)
 part2_final_2$Group <- as.character(part2_final_2$Group)
 
-ggplot(KW, aes(x=compound, y=log(plotting), fill=newtable$Maturity))+
+blub$value <- as.numeric(blub$value)
+whale$value <- as.numeric(whale$value)
+HP$value <- as.numeric(HP$value)
+
+HP$value <- as.numeric(HP$value)
+
+ggplot(subset(HP, !is.na(value)), aes(x=compound,  y=log(value)+10, fill=Sample.type, colour=Sample.type))+
+  geom_point(size=5, shape=15)+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  labs(title="Harbour porpoise)", ylab="Concentration log(ng/g, w.w.)+10")+
+  facet_grid(.~Group, scales="free", space='free_x')
+  geom_boxplot()
+  
+  ggplot(wbd, aes(x=compound, y=log(value),colour=Sample.type))+
   geom_point(size=3)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -818,13 +846,110 @@ ggplot(KW, aes(x=compound, y=log(plotting), fill=newtable$Maturity))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
+  labs(title="Whales (blubber)", ylab="Concentration log(ng/g, w.w.)+10")+
   facet_grid(.~Group, scales="free", space='free_x')
   geom_boxplot()
 
+```
+
+```{r sharks}
+#find back the metadata!!! and perhaps also the stable isotopes
+shark <- subset(topP4, Treatmen=="Sharks")
+blub <- subset(topP4, Sample.type=="Blubber")
+
+KW$Maturity <- as.character(KW$Maturity)
+unique(KW$Maturity)
+part2_final_2$Group <- as.character(part2_final_2$Group)
+
+shark$value <- as.numeric(shark$value)
+
+#New column in part2 to separate based on level of predator
+
+ggplot(shark, aes(x=compound, y=log(value), colour=Category, shape=Sample.type))+
+  geom_point(size=3)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  labs(title="Sharks", ylab="Concentration log(ng/g, w.w.)+10")+
+  facet_grid(.~Group, scales="free", space='free_x')
+  geom_boxplot()
+```
+
+```{r Packaging}
+
+topP4$value <- as.numeric(topP4$value)
+ggplot(topP4, aes(x=compound, y=log(value), colour=Packaging))+
+  geom_point(size=3)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  labs(title="Packaging material (whales and sharks)", ylab="Concentration log(ng/g, w.w.)+10")+
+  facet_grid(.~Group, scales="free", space='free_x')
+  geom_boxplot()
+```
+
+Se på stabil isotop
+```{r}
+topP4$Delta.13C <- as.numeric(topP4$Delta.13C)
+
+ggplot(subset(topP4, !is.na(Delta.15N)), aes(x=Category, y=W..C.N))+
+  geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_point(size=3)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  labs(title="Packaging material (whales and sharks)", ylab="Concentration log(ng/g, w.w.)+10")
+  facet_grid(Sample.type~., scales="free", space='free_x')
+  geom_boxplot()
 
 ```
 
 
+
+
+```{r sperm whale}
+spermw <- subset(topP4, Category=="Sperm whale")
+
+spermw$value <- as.numeric(spermw$value)
+ggplot(spermw, aes(x=compound, y=log(value)+10, colour=Packaging))+
+  geom_point(size=3)+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  labs(title="Packaging material (whales and sharks)", ylab="Concentration log(ng/g, w.w.)+10")+
+  facet_grid(.~Group, scales="free", space='free_x')
+  geom_boxplot()
+
+```
 
 
 ```{r Harbor Porpoise - 3 different tissues}
