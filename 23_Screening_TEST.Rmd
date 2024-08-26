@@ -92,6 +92,15 @@ newtable$compound <- revalue(newtable$compound, c("AG"="Ag", "AS"="As", "CD"="Cd
 
 newtable$compound <- revalue(newtable$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B-2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP", "B.2ETF"="B-2ETF", "X2BDMP"="2BDMP", "F.TOT"="F-TOT" )) #er den siste riktig?
 
+#New column in part2 to separate based on level of predator
+newtable$Category <- revalue(newtable$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
+
+newtablex = newtable%>%
+  mutate(Level = case_when(Category %in% c("Killer whale","Sperm whale", "Harbor porpoise", "White beaked dolphin") ~ "Whale top predator",
+                           Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top predator",
+                                Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
+                           Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
+
 
 ```
 
@@ -100,18 +109,9 @@ will not rely in NA, but need to define >LOD.
 Rather calculate mean later, after LOD has been replaced
 ```{r Detection frequency}
 #Checking:
-part1 <- subset(newtable, Part == "Part1")
-part2 <- subset(newtable, Part == "Part2")
+part1 <- subset(newtablex, Part == "Part1")
+part2 <- subset(newtablex, Part == "Part2")
 
-#New column in part2 to separate based on level of predator
-part2$Category <- revalue(part2$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
-
-part2x = part2%>%
-  mutate(Level = case_when(Category %in% c("Killer whale","Sperm whale", "Harbor porpoise", "White beaked dolphin") ~ "Whale top predator",
-                           Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top predator",
-                                Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
-                           Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
-unique(part2x$Category)
 ```
 
 ```{r Detection frequency}
@@ -126,9 +126,9 @@ part1_freq = part1x %>%
   ungroup() 
 
 #For part 2, use Level instead of category
-part2xx <- subset(part2x, value != "n.a.")
+part2x <- subset(part2, value != "n.a.")
 
-part2_freq = part2xx %>%
+part2_freq = part2x %>%
   group_by(Level, compound, Sample.type) %>%
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), #her må det også legges inn "n.a."!!
             n = (length(value)),
@@ -145,7 +145,7 @@ part1_filt <- part1_freq %>%
                            value))
 
 # claculate 0.5xLOD 
-part1_filt_X <- cbind(part1_filt[,c(1:44)], apply(part1_filt[,45, drop=F],2, dLimity))
+part1_filt_X <- cbind(part1_filt[,c(1:45)], apply(part1_filt[,46, drop=F],2, dLimity))
 
 
 part2_filt <- part2_freq %>% 
@@ -336,7 +336,6 @@ HS_t <- ggplot(hotspot2, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac))
 
 ggsave("HS_t.png", HS_t, width = 10, height = 12)
 ```
-
 
 ## Part 2
 ### Screening substances
@@ -621,7 +620,7 @@ part1_final_ww5 <- distinct(part1_final_ww4, meanx, Sample.type, compound, Treat
 #part1_final_ww3<- part1_final_ww2x[!duplicated(part1_final_ww2x), ]
 part1_final_ww5$Treatmen = factor(part1_final_ww5$Treatmen, levels = c("Low purification", "High purification") )
 
-ggplot(part1_final_ww5, aes(y=(meanx), x=compound, fill=Treatmen))+
+ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fill=Treatmen))+
   #geom_col(position = position_dodge2(preserve = "single")) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   #geom_col(position="dodge", width = 0.5)+
@@ -786,7 +785,6 @@ ggsave("PRODUCTS.png", products, width = 10, height = 6)
 
 ```
 
-
 d) WHALES AND SHARKS
 - need to new averages, not based on level but on category (+ sample type and compound)
 ```{r}
@@ -842,8 +840,8 @@ topP6 <- subset(topP5, plotting != "NaN")
 
 topP6z <- subset(topP6, compound !="Fett")
 
-
-whales <- ggplot(topP6z, aes(x=compound, y=log(plotting)+10, colour=Level, shape=Level))+
+topP6z$compound <- as.character(topP6z$compound)
+ggplot(topP6z, aes(x=compound, y=log(plotting)+10, colour=Level, shape=Level))+
   geom_point(size=3.5)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
@@ -898,12 +896,11 @@ pack <- ggplot(topP6z, aes(x=compound, y=log(plotting)+10, colour=Packaging))+
  ggsave("packaing.png", pack, width = 10, height = 8)
 ```
 
-
 -whale species
 ```{r}
 topP7 <- subset(topP6, Treatmen == "Whales" & Sample.type=="Blubber")
 
-unique(topP7$Category)
+#unique(topP7$Category)
 topP7$Category <- factor(topP7$Category, levels=c("Killer whale", "Sperm whale", "Harbor porpoise", "Fin whale", "Humpback whale")) 
 topP7$plotting <- as.numeric(topP7$plotting)
 
@@ -912,7 +909,7 @@ topP8 <- subset(topP7, plotting != "NaN")
 
 jl <- subset(topP8, compound !="Fett")
 
-w_species <- ggplot(jl, aes(x=compound, y=log(plotting)+10, colour=Category, shape=Category))+
+ggplot(jl, aes(x=compound, y=log(plotting)+10, colour=Category, shape=Category))+
   geom_point(size=4)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
@@ -942,7 +939,7 @@ w_species <- ggplot(jl, aes(x=compound, y=log(plotting)+10, colour=Category, sha
 ggsave("Whale species.png", w_species, width = 10, height = 7)
 ```
 
-- whales effect from age and sex (/whale blubber)
+- whales effect from age  (/whale blubber)
 ```{r}
 
 topP8$Sex <- as.character(topP8$Sex)
@@ -1037,7 +1034,7 @@ shark <- subset(shark, plotting != "NaN")
 shark$Category <- factor(shark$Category, levels=c("Greenland shark", "Porbeagle shark", "Spiny dogfish")) 
 shark1 <- subset(shark, compound!="Fett")
 
-ggplot(shark1, aes(x=compound, y=(plotting), colour=Category, shape=Category))+
+ggplot(shark1, aes(x=fct_rev(compound), y=(plotting), colour=Category, shape=Category))+
   geom_point(size=4)+
   theme_bw()+
    theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -1070,23 +1067,22 @@ ggsave("SHARKY.png", SHARKY, width = 10, height = 7)
 ```
 
 ##Divide concentration by fat content
-
+- trophic level / fat (%)
 ```{r}
 df23_longx <- gather(df23, compound, value, AOZKF:F.TOT, factor_key=TRUE)
 
 newtablex <- merge(df23_longx, gr23, by.x  = "compound", by.y="ID") 
 
 #to check if all are included. can be issues with names. "TIPSIMA" "TIPSIA" decomposed. 
-setdiff(df23_longx$compound,gr23x$ID)
-setdiff(df23_longx$compound,newtablex$compound)
+#setdiff(df23_longx$compound,gr23x$ID)
+#setdiff(df23_longx$compound,newtablex$compound)
 
 (unique(newtablex$compound))
 
 newtablex$compound <- revalue(newtablex$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn"))
 
-newtablex$compound <- revalue(newtablex$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B-2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP", "B.2ETF"="B-2ETF", "X2BDMP"="2BDMP" )) #er den siste riktig?
+newtablex$compound <- revalue(newtablex$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B-2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP", "B.2ETF"="B-2ETF", "X2BDMP"="2BDMP", "F.TOT" = "F-TOT" )) #er den siste riktig?
 
-#part29 <- subset(newtablex, Part == "Part2")
 
 #New column in part2 to separate based on level of predator
 newtablex$Category <- revalue(newtablex$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
@@ -1097,13 +1093,11 @@ part30 = newtablex%>%
                                 Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
                            Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
 
-part30zz <- subset(part30, Sample.type %in% c("Blubber", "Liver"))
-
-part30zz$Level <- revalue(part30zz$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
+part30$Level <- revalue(part30$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
 
 #set order (also for products used blow)
 part30$Level <- factor(part30$Level, levels=c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)")) 
-part31 <- subset(part30, !compound %in% c("Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn"))
+part31 <- subset(part30, !compound %in% c("Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn", "BHPMEBD", "DMPTDPP", "DMPTTPP","Sus62", "SYLKL", "SEROLD","DIUDP", "EMOPCC", "CTCVB", "DCTCVB", "DCTCVB", "TCTDT", "ETTSDD", "MPSHDOSD", "HOTMIKA"))
 
 
 #remove those that do not have fat
@@ -1113,16 +1107,34 @@ part32 <- subset(part31x, !is.na(value))
 
 #part31$plotting2 <- part31$plotting:part31$Fett
 
-part33 <- mutate(part32, new = value / Fett)
+part32 <- mutate(part32, new = value / Fett)
+
+#dj <- subset(part34, compound=="F-TOT")
+
+part33 = part32%>%
+  mutate(Level = case_when(Category %in% c("Killer whale","Sperm whale", "Harbor porpoise", "White beaked dolphin") ~ "Whale top predator",
+                           Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top predator",
+                                Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
+                           Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
+
+```
+
+##Trophic level (liver and blubber)
+```{r}
 
 #hvis bare liver og blubber
-part34 <- subset(part33, Sample.type ==c("Blubber", "Liver"))
+part34 <- subset(part33, Sample.type %in% c("Blubber", "Liver"))
+class(part34$new)
 
+part34$Level <- revalue(part34$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
 
-ggplot(part34, aes(x=compound, y=log(new)+10, colour=Level, shape=Level))+
+#set order (also for products used blow)
+part34$Level <- factor(part34$Level, levels=c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)")) 
+
+fat_whale <- ggplot(part34, aes(x=fct_rev(compound), y=log(new)+10, colour=Level, shape=Level))+
   geom_point(size=3.5)+
   theme_bw()+
- theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
+  theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
         axis.title.x= element_blank(),
         axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
@@ -1135,7 +1147,7 @@ ggplot(part34, aes(x=compound, y=log(new)+10, colour=Level, shape=Level))+
         legend.title=element_blank(),
         legend.text=element_text(size=14))+
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log(concentration)+10")+
+  ylab("log(concentration:fat (%))+10")+
   scale_colour_manual(name = "Tissue",
                       labels = c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)"),
                       values = c("dodgerblue3", "green3", "plum", "orange1"))+    
@@ -1143,10 +1155,165 @@ ggplot(part34, aes(x=compound, y=log(new)+10, colour=Level, shape=Level))+
                      labels = c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)"),
                      values = c(19, 17, 19, 17))+
   guides(color = guide_legend(override.aes = list(size=4)))
+  
+  
+ggsave("whales_fat.png", fat_whale, width = 10, height = 7)
+```
+
+- whale species / fat (%)
+```{r}
+
+part34x <- subset(part33, Treatmen == "Whales" & Sample.type=="Blubber")
+
+part34x$compound <- as.character(part34x$compound)
+
+part34x$Category <- factor(part34x$Category, levels=c("Killer whale", "Sperm whale", "Harbor porpoise", "Fin whale", "Humpback whale")) 
+
+w_species_fat <- ggplot(part34x, aes(x=(compound), y=log(new)+10, colour=Category, shape=Category))+
+  geom_point(size=4)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=14, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=14))+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  #scale_colour_brewer(palette = "Set1")
+  ylab("log(concentration:fat (%))+10")+
+    scale_colour_manual(name = "Tissue",
+                      labels = c("Killer whale", "Sperm whale", "Harbor porpoise", "Fin whale", "Humpback whale"),
+                      values = c("steelblue1", "dodgerblue3",  "black", "orchid1", "orchid3"))+    
+  scale_shape_manual(name = "Tissue",
+                     labels = c("Killer whale", "Sperm whale",  "Harbor porpoise", "Fin whale", "Humpback whale"),
+                     values = c(19, 19, 19, 19, 19, 19))+
+  guides(color = guide_legend(override.aes = list(size=4.5)))
+  
+
+ggsave("Whale species_FAT.png", w_species_fat, width = 10, height = 7)
+```
+
+### tissue type
+```{r}
+part34y <- subset(part33, Category=="Harbor porpoise"&Length==136)
+#remove nas
+topP7x <- subset(topP6x, plotting != "NaN") 
+
+part34y$compound <- as.character(part34y$compound)
+w_tissue_fat <- ggplot(part34y, aes(x=compound, y=log(new)+10, shape=Sample.type, colour= Sample.type))+
+  geom_point(size=4.5)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=12, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=15))+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  ylab("log(concentration:fat)+10")+
+  scale_colour_manual(name = "Tissue",
+                      labels = c("Blubber", "Liver", "Muscle"),
+                      values = c("dodgerblue4", "orange1", "palevioletred2"))+    
+  scale_shape_manual(name = "Tissue",
+                     labels = c("Blubber", "Liver", "Muscle"),
+                     values = c(19, 16, 18))
+  
+
+ggsave("Whale tissue_FAT.png", w_tissue_fat, width = 10, height = 7)
+```
+
+- Age effect
+- subset whale blubber
+```{r}
+
+as_FAT <- ggplot(part34x, aes(x=compound, y=log(new)+10, colour=Maturity, shape=Maturity))+
+  geom_point(size=4)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=13, colour="black"),
+        strip.text.y = element_text(size=13, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=17))+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  #scale_colour_brewer(palette = "Set1")+
+  ylab("log(concentration:fat)+10")+
+      scale_colour_manual(name = "Maturity",
+                      labels = c("Adult", "Subadult", " "),
+                      values = c("steelblue1", "dodgerblue3",  "black"))+    
+  scale_shape_manual(name = "Maturity",
+                     labels = c("Adult", "Subadult", " "),
+                     values = c(16, 18, 5))+
+  guides(color = guide_legend(override.aes = list(size=4.5)))
+
+ggsave("age and sex_FAT.png", as_FAT, width = 10, height = 7)
+
 
 ```
 
+- Sharks
+```{r}
+shark <- subset(topP6, Treatmen=="Sharks")
+blub <- subset(topP4, Sample.type=="Blubber")
 
+part2_final_2$Group <- as.character(part2_final_2$Group)
+
+shark$value <- as.numeric(shark$value)
+
+#New column in part2 to separate based on level of predator
+#remove nas
+shark <- subset(shark, plotting != "NaN") 
+
+shark$Category <- factor(shark$Category, levels=c("Greenland shark", "Porbeagle shark", "Spiny dogfish")) 
+shark1 <- subset(shark, compound!="Fett")
+
+ggplot(shark1, aes(x=fct_rev(compound), y=(plotting), colour=Category, shape=Category))+
+  geom_point(size=4)+
+  theme_bw()+
+   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=12, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=15))+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  labs(ylab="Concentration log(ng/g, w.w.)+10")+
+  facet_grid(.~Group, scales="free", space='free_x')+
+  scale_colour_manual(name = "Specie and tissue",
+                      labels = c("Greenland shark, muscle", "Porbeagle shark, liver",  "Spiny dogfish, liver"),
+                      values = c("green4","green3", "orange1"))+
+  scale_shape_manual(name = "Specie and tissue",
+                     labels = c("Greenland shark, muscle", "Porbeagle shark, liver",  "Spiny dogfish, liver"),
+                     values = c(17, 18, 18))
+  
+  
+
+ggsave("SHARKY.png", SHARKY, width = 10, height = 7)
+```
 
 
 
@@ -1214,748 +1381,136 @@ ggplot(subset(topP4_z, !is.na(Delta.15N)), aes(x=Category, y=Delta.15N))+
 ```
 
 
-
-
-```{r sperm whale}
-spermw <- subset(topP4, Category=="Sperm whale")
-
-spermw$value <- as.numeric(spermw$value)
-ggplot(spermw, aes(x=compound, y=log(value)+10, colour=Packaging))+
-  geom_point(size=3)+
-  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  labs(title="Packaging material (whales and sharks)", ylab="Concentration log(ng/g, w.w.)+10")+
-  facet_grid(.~Group, scales="free", space='free_x')
-  geom_boxplot()
-
-```
-
-
-
-
-Part 2) Whales and sharks
-- species
-- tissue
-- sex
-- age
-- fat
-- isotopes
-
-```{r Blubber by specie}
-part2_freq_wb = part2 %>%
-  group_by(Category, compound, Sample.type) %>%
-  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
-            n = (length(value)),
-            det_frac = (100-(lodcount/n)*100))%>%
-  ungroup() 
-
-part2_filt_wb <- part2_freq_wb %>% 
-  mutate(plotting = ifelse(det_frac <30, 
-                           "low detection", 
-                           value))
-
-part2_filt_wbz <- cbind(part2_filt_wb[,c(1:23)], apply(part2_filt_wb[,24, drop=F],2, dLimity))
-
-part2_final_wb = part2_filt_wbz %>%
-  group_by(Category, compound, Sample.type, Treatmen) %>%
-  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-part2_final_wby <- subset(part2_final_wb, det_frac > 30)
-part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
-part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
-part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
-
-#SEPARATE
-part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Extra")
-part2_final_wbyz23met <- subset(part2_final_wbyz, Group == "Metal")
-part2_final_wbyz23i <- subset(part2_final_wbyz, Extra == "Scre23")
-
-#PLOTTING
-ggplot(subset(part2_final_wbyz23, Sample.type%in% c("Blubber")), aes(y=log(meanx)+5, x=compound, fill=Treatmen))+
-  geom_col(position="dodge")+
-  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  facet_grid(Category~Group, scales="free", space='free_x')
-
-```
-
-```{r Muscle by specie}
-part2_freq_wb = part2 %>%
-  group_by(Category, compound, Sample.type) %>%
-  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
-            n = (length(value)),
-            det_frac = (100-(lodcount/n)*100))%>%
-  ungroup() 
-
-part2_filt_wb <- part1_freq_wb %>% 
-  mutate(plotting = ifelse(det_frac <30, 
-                           "low detection", 
-                           value))
-part2_filt_wbz <- cbind(part2_filt_wb[,c(1:20)], apply(part2_filt_wb[,21, drop=F],2, dLimity))
-
-part2_final_wb = part2_filt_wbz %>%
-  group_by(Category, compound, Sample.type, Treatmen) %>%
-  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-part2_final_wby <- subset(part2_final_wb, det_frac > 30)
-part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
-part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
-part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
-
-#SEPARATE
-part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Extra")
-part2_final_wbyz23met <- subset(part2_final_wbyz, Group == "Metal")
-part2_final_wbyz23 <- subset(part2_final_wbyz, Extra == "Scre23")
-part2_final_wbyz23 <- subset(part2_final_wbyz, Group != "Metal")
-
-#PLOTTING
-ggplot(subset(part2_final_wbyz23, Sample.type%in% c("Muscle")), aes(y=(meanx), x=compound, fill=Treatmen))+
-  geom_col(position="dodge")+
-  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  facet_grid(Category~Group, scales="free", space='free_x')
-
-```
-
-```{r Killer whales}
-
-killerw <- subset(part2, Category =="Killer whale")
-
-part2_freq_wb = part2 %>%
-  group_by(Category, compound, Sample.type) %>%
-  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))),
-            n = (length(value)),
-            det_frac = (100-(lodcount/n)*100))%>%
-  ungroup() 
-
-part2_filt_wb <- part1_freq_wb %>% 
-  mutate(plotting = ifelse(det_frac <30, 
-                           "low detection", 
-                           value))
-part2_filt_wbz <- cbind(part2_filt_wb[,c(1:20)], apply(part2_filt_wb[,21, drop=F],2, dLimity))
-
-part2_final_wb = part2_filt_wbz %>%
-  group_by(Category, compound, Sample.type, Treatmen) %>%
-  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-part2_final_wby <- subset(part2_final_wb, det_frac > 30)
-part2_final_wbyz <- subset(part2_final_wby, compound != "Fett")
-part2_final_wbyz$compound <- as.character(part2_final_wbyz$compound)
-part2_final_wbyz$Group <- as.character(part2_final_wbyz$Group)
-
-ggplot(subset(part2_final_wbyz23met, Category%in% c("Killer whale")), aes(y=(meanx), x=compound, fill=Treatmen))+
-  geom_col(position="dodge")+
-  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2", "#E69F00"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  facet_grid(Category~Group, scales="free", space='free_x')
-
-```
-
-
-
-
-Calculate mean
-- sjekk at ble riktig! ta ut excel f eks
-
-```{r}
-#df_long_Y <- df_long_X[!is.na(df_long_X$value),]
-#Site_Comment indicate seasonality
-#Site_Comment22 indicate conditional differences like high and low purification
-
-#write.csv(df_long_X, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/2310054_TEST_barcharts.csv", row.names=FALSE)
-
-envixx1 = df_finalzzzzx %>%
-  group_by(Site_Category, compound, Medium_id, Comment_season, Site_name) %>%
-  mutate(meanx_season = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx2 = envixx1 %>%
-  group_by(Site_Category, compound, Medium_id, Comment_condition) %>%
-  mutate(meanx_cond = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx3 = envixx2 %>%
-  group_by(Site_Category, compound, Medium_id, Site_name) %>%
-  mutate(meanx_name = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx4 = envixx3 %>%
-  group_by(Site_Category, compound, Medium_id, Site_Comment) %>%
-  mutate(meanx_sc = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx5d = envixx4 %>%
-  group_by(Site_Category, compound, Comment_location, Medium_id, Comment_condition) %>%
-  mutate(meanx_sc2 = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx5 = envixx5d %>%
-  group_by(Site_Category, compound, Medium_id) %>%
-  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-#for the tunnel we want to separate by Medium_id and by tunnel versus recipient pond
-envixx6 <- envixx5 %>%
-  mutate(tunnel_site = ifelse(Site_name == "Smestaddammen", "Receiving pond", "Tunnel"))
-
-envixx7 = envixx6 %>%
-  group_by(Site_Category, compound, Medium_id2, Comment_location) %>%
-  mutate(meanx_tun = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-#for road traffick and park, also for wastewater
-envixx8 = envixx7 %>%
-  group_by(Site_Category, compound, Medium_id, Comment_season) %>%
-  mutate(meanx_air = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-#tuyre recycling to combine filtered and total water
-envixx9 = envixx8 %>%
-  group_by(Site_Category, compound, Medium_id2) %>%
-  mutate(meanx_tyr = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-#Alns
-envixx10 = envixx9 %>%
-  group_by(Site_Category, compound, Medium_id, Site_name) %>%
-  mutate(meanx_riv = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx11 = envixx10 %>%
-  group_by(Site_Category, compound, Medium_id, Site_name, Comment_condition) %>%
-  mutate(meanx_ri2v = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx12x = envixx11 %>%
-  group_by(Site_Category, compound, Medium_id, Comment_location) %>%
-  mutate(meanx_indo = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixx12y = envixx12x %>%
-  group_by(Site_Category, compound, Medium_id) %>%
-  mutate(meanx_indo2 = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-envixxc = envixx12y %>%
-  group_by(Site_Category, compound, Medium_id, Comment_location) %>%
-  mutate(meanx_loc = mean(plotting, na.rm = TRUE))%>% 
-  ungroup()
-
-```
-
-
-1) Artificial grass pitch
-- fix order of facets and size of text, grouping of molecules
-```{r}
-envixx4 <- subset(envixx2x, !is.na(meanx))
-
-envixx4$m_group <- revalue(envixx4$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-print(unique(envixx4$Medium_id))
-
-#set order of facets
-envixx4$Medium_id <- factor(envixx4$Medium_id, levels=c("Water, total (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)","Granule (ng/g, w.w.)", "Sediment (ng/g, d.w.)", "Dust (ng/g, w.w.)","Water, filtered (ng/L)", "Water, particles (ng/L)", "Biota (ng/g, w.w.)", "Air (ng/m^3)" )) 
-
-#testing grouping below x axis
-foot <- ggplot(subset(envixx4, Site_Category%in% c("Artificial grass pitch")), aes(y=meanx, x=compound, fill=Medium_id))+
-  geom_col(position="dodge")+
-  scale_fill_manual(values=c("dodgerblue3", "dodgerblue3", "dodgerblue3", "#E69F00"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = "none")+
-  facet_grid(Medium_id~m_group, scales="free", space='free_x')
- 
-ggsave("Football.png", foot)
-
-
-  
-```
-
-2) Tunnel environment
-- what ends up in the pond?
-- difference between filtered and total water?
-- differences during the washing?
-```{r}
-envixx4 <- subset(envixx2x, !is.na(meanx_tun))
-
-envixx4$m_group <- revalue(envixx4$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-#the most interesting is what reaches the pond. Figure with discharge and pond
-
-#envixx4x <- subset(envixx4, Medium_id  %in% c("Water (ng/L)", "Water, filtered (ng/L)"))
-#envixx4x1 <- subset(envixx4x, Medium_id  %in% c("Sediment (g/g)", "Sludge (g/g)"))
-#envixx4x1 <- subset(envixx4x, Medium_id  %in% c("Water (ng/L)"))
-
-envixx4$Comment_location <- revalue(envixx4$Comment_location, c("Sedimentation pool"="Sedimentation basin"))
-envixx4x1 <- subset(envixx4, Comment_location  %in% c("Recipient pond", "Sedimentation basin"))
-
-envixx4x2 <- subset(envixx4x1, Medium_id2  %in% c("Solids"))
-
-unique(envixx4x1$Comment_location)
-
-tunn <- ggplot(subset(envixx4x1, Site_Category%in% c("Tunnel environment")), aes(y=meanx_tun, x=compound, fill= Comment_location))+
-  geom_col(position="dodge")+
-  facet_grid(Comment_location~., scales="free")+
-  scale_fill_manual(values=c("dodgerblue3", "#E69F00"))+
-  theme_bw()+
-    theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=11, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = "none")+
-  facet_grid(Comment_location~m_group, scales="free", space='free_x')
-  
-
-
-ggsave("Tunnel.png", tunn, width = 7.86, height = 6)
-```
-3) Trafficked road and urban park
-- difference between park and road
-- difference between seasons
-- difference between weekend and weekday
-```{r}
-envixx4 <- subset(envixx2x, !is.na(meanx_air))
-
-envixx4x2 <- subset(envixx4, Medium_id  %in% c("Air, particles (ng/m^3)"))
-
-#remove duplicate rows before plotting
-envixx4x3 <-envixx4x2 %>% 
-  distinct(meanx_air, compound, Site_Category, Comment_season, .keep_all = TRUE)
-
-envixx4x3$m_group <- revalue(envixx4x3$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-
-road <- ggplot(subset(envixx4x3, Site_Category%in% c("Trafficked road", "Urban park")), aes(y=meanx_air, x=compound, fill=Site_Category))+
-  geom_col(position = position_dodge2(preserve = "single"))+
-  scale_fill_manual(values=c("dodgerblue4", "dodgerblue2"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=11, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = )+
-  labs(fill = "Site category")+
-facet_grid(Comment_season~m_group, scales="free", space='free_x')
-
-ggsave("Road.png", road, width = 7.86, height = 6)
-
-```
-
-4) Wastewater treatment
-- only focus on difference between high and low quality treatment
-- seasonality ont so interesting, and espesially not with only two observations
-To DO: rekkefølge medium, gruppering stoffene, etc. 
-```{r differences in wastewater treatment}
-#remove nas
-
-envixx4cs <- subset(envixx2x, !is.na(meanx_cond))
-
-envixx4cs$Comment_condition <- factor(envixx4cs$Comment_condition, levels=c("Low", "High" )) 
-envixx4cs$Medium_id <- factor(envixx4cs$Medium_id, levels=c("Water, total (ng/L)", "Sludge (ng/g, d.w.)")) 
-
-#pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
-envixx4css <- subset(envixx4cs, !Medium_id == c("Air (ng/^3)")) 
-
-unique(envixx4$Medium_id)
-
-envixx4css$m_group <- revalue(envixx4css$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-
-wwater <- ggplot(subset(envixx4css, Site_Category%in% c("Wastewater treatment plant")), aes(y=meanx_cond, x=compound, fill=Comment_condition))+
-  geom_col(position="dodge")+
-  facet_grid(Medium_id~., scales="free")+
-  theme_bw()+
-   theme(axis.text.x = element_text(angle = 90))+
-  scale_fill_manual(values=c("dodgerblue2", "dodgerblue4"))+
-  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = )+
-  labs(fill = "Site category")+
-facet_grid(Medium_id~m_group, scales="free", space='free_x')
-
-ggsave("Wwater.png", wwater, width = 7.86, height = 6.8)
-
-```
-
-5) Tyre collection site
-- what goes into the environment?
-- similar pattern as the rest?
-```{r}
-envixx4 <- subset(envixx2x, !is.na(meanx_tyr))
-
-#envixx4x2 <- subset(envixx4, !Medium_id  %in% c("Sludge (ng/g)"))
-envixx4x3 <- subset(envixx4, Medium_id  %in% c("Water, particles (ng/L)", "Water, filtered (ng/L)", "Dust (ng/g, w.w.)"))
-
-nrow(envixx4x3)
-nrow(envixx4)
-
-labx <- c("Air" = "Dust (ng/g)",
-          "Water" = "Water (ng/L)")
-
-envixx4x3$m_group <- revalue(envixx4x3$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-
-tyre <- ggplot(subset(envixx4x3, Site_Category%in% c("Tyre collection site")), aes(y=meanx_tyr, x=compound))+
-  geom_col(position="dodge", fill="dodgerblue3")+
-   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=12, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = "none")+
-  labs(fill = "Site category")+
-facet_grid(Medium_id2~m_group, scales="free", space='free_x', labeller = labeller(Medium_id2 =labx))
-
-ggsave("Tyre.png", tyre, width = 7.86, height = 6.8)
-```
-
-6) Urban river Alna
-- difference along the river
-- difference between low and high flow
-```{r}
-envixx4c <- subset(envixx2x, !is.na(meanx_riv))
-
-envixx4c$Site_name <- revalue(envixx4c$Site_name, c("Apall?kka"="Kalbakken"))
-print(unique(envixx4c$Site_name))
- 
-envixx5c <- envixx4c %>% 
-  mutate(Site_name = factor(Site_name, levels = c("Kalbakken", "Brubak", "Breivoll", "Kv'rner")))
-
-envixx5c$Site_name <- revalue(envixx5c$Site_name, c("Kv'rner"="Kværner"))
-envixx_AlnaS <- subset(envixx5c, Medium_id == "Sediment (ng/g, d.w.)")
-envixx_AlnaW <- subset(envixx5c, Medium_id == "Water, total (ng/L)")
-
-Alna <- ggplot(subset(envixx_AlnaW, Site_Category%in% c("Urban river")), aes(y=meanx_riv, x=compound, fill=Site_name))+
-  geom_col(position="dodge")+
-  facet_grid(Medium_id~Site_name, scales="free_y")+
-   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = "none")+
-  scale_fill_manual(values=c("dodgerblue", "dodgerblue3", "dodgerblue4",  "darkblue"))+
-  labs(fill = "Site category")+
-facet_grid(Site_name~m_group, scales="free_x", space='free_x')
-
-ggsave("Alna.png", Alna,  width= 6.86, height= 7.32)
-
-```
-
-7) Indoor air
-- Difference between private and commercial?
-- different between the commercial?
-```{r}
-envixx4c <- subset(envixx2x, !is.na(meanx_indo))
-envixx4c2 <- subset(envixx2x, !is.na(meanx_indo2))
-
-envixx_IndoA <- subset(envixx4c, Medium_id == "Air (ng/m^3)")
-envixx_IndoD <- subset(envixx4c, Medium_id == "Dust (ng/g)")
-
-envixx4c2$m_group <- revalue(envixx4c2$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-air <- ggplot(subset(envixx4c2, Site_Category%in% c("Private home", "Commercial building")), 
-       aes(y=meanx_indo2, x=compound, fill=Site_Category))+
-  geom_col(position="dodge")+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = )+
-  labs(fill = "Site category")+
-facet_grid(Medium_id~m_group, scales="free", space='free_x')+
-  scale_fill_manual(values=c("dodgerblue2", "dodgerblue4"))
-
-
-ggsave("Air.png", air, width = 7.86, height = 6.8)
-
-```
-
-7) Biota
-```{r}
-envixx4c <- subset(envixx2x, !is.na(meanx_sc2))
-length(envixx3)
-
-#  facet_grid(Medium_id~Site_Comment, scales="free_y")+
-#envixx4x <- subset(envixx4, Medium_id  %in% c("Granule (g/g)"))
-
-envixx5cs <- envixx4c %>% 
-  mutate(Comment_condition = factor(Comment_condition, levels = c("Duck mussel", "Perch liver and filet", "Cod liver", "Seagull egg", "Seal blubber")))
-
-envixx5cs$m_group <- revalue(envixx5cs$m_group, c("Long-chain chlorinated paraffins"="LC chlorinated paraffins"))
-
-biota <- ggplot(subset(envixx5cs, Site_Category%in% c("Recipient")), aes(y=meanx_sc2, x=compound, fill=Comment_condition))+
-  geom_col(position="dodge")+
-   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=11, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom",
-        legend.position = )+
-  labs(fill = "Specie and tissue")+
-  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "dodgerblue",  "dodgerblue3", "dodgerblue4"))+
-  facet_grid(Comment_location~m_group, scales="free_x", space='free_x')
-
-ggsave("Biota.png", biota, width = 7.86, height = 6.8)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-library(dplyr)
-#is the following correct?
-df_filteredX = df_filtered %>%
-  group_by(Site_Category, compound) %>%
-  summarize(mean = mean(value, na.rm = TRUE),
-            nacount = (sum(is.na(value))),
-            detect_frac = ((sum(!is.na(value)))/((sum(!is.na(value)))+nacount)*100), 
-            .groups="keep")
-
-class(df_filteredX$mean)
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r making table}
-#if(!require(devtools)) install.packages("devtools")
-#devtools::install_github("cardiomoon/ztable")
-library(ztable)
-library(moonBook)
-
-x=table(df_filtered$Dx,acs$smoking)
-x
-
-mycolor=gradientColor(low="yellow",mid="orange",high="red",n=6,plot=TRUE)
-
-#subset only those needed
-#from long to wide
-data_wide <- spread(df_filtered, compound, value)
-data_wide2 <-data_wide[,c(2,9, 15:21)]
-
-dfx2 <- na.omit(dfx)
-
-dfx3 <- unlist(dfx)
-
-
-dfx_wide <-spread(dfx, compound, value)
-
-class(dfx$v)
-symm = T
-dfx_wide2 <- na.omit(dfx_wide)
-ztable(head(dfx_wide2[2:8])) %>% 
-    makeHeatmap %>%
-    print(caption="Table 6. Heatmap table with user-defined palette")
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r filter}
+PNEC FIGUE
+The following compounds: PF201, DABPA, UV310, UV1164, BEMT,BPAP2,TBPHT,B-2ETF,CUMIN,CBZL,BDPME,TMPID,DPMPE,BZBA,FEFAC,MABT,DMPSHEN,DTBMMP,CB28,CB52,CB101,CB118,CB,38,CB153,CB180,BDE17,BDE28,BDE47,BDE49,BDE66,BDE71,BDE77,BDE85,BDE99,BDE100,BDE119,BDE126,BDE138,BDE153,BDE154,BDE156,BDE183,BDE184,BDE191,BDE196,BDE197,BDE202,BDE206,BDE207,SCCP,MCCP,LCCP,TBECHB,TBECHG,BATE,PBEB ,QCB,HCB,DDC_DBF,DDC_ANT,DDC_PS,DDC_PA,CR,FE,NI,CU,ZN,AS,SE,AG,CD,SN,SB,PB,HG,TTBPP,DEHPO,DOCDPA,DPGUAN,UV1130,KRYFIO,ETPPBR,ADNP,GBLA,BZDSA,UV329,SG3,UV360,UV234,DTBPPO,UV384,BAC_C12,BAC_C14,BAC_C16,ATAC_C12,ATAC_C14,A,AC_C16,ATAC_C18,UV327,OCTOC,PFNA,PFDA,PFUNDA,PFDODA,PFTRDA,PFHXS,PFOS,PFBSA,NMEFBSA,PFOSA
+
+```{r Making the PNEC Figure}
+#Based on the information provied, the following compounds are of interest. Perhaps excluding L9 and L10 due to suspect screening. Others from NIVA? Check
 library(magrittr)
+#tar ut "DBM",  for under LOD, eventuelt sjekk
+newtablexx <- subset(newtablex, value != "n.a.")
 
-df_long2 <- df_long %>%
-  filter(Group="Rubber")%>%
-  group_by(Compound)%>%
-  filter(Group="Rubber")%>%
-  aggregate(d[, 3:4], list(d$Name), mean)
+pnec <- subset(newtablexx, compound %in% c("PF201", "DABPA", "UV310", "UV1164","BEMT","BPAP2","TBPHT","B-2ETF","CUMIN","CBZL","BDPME","TMPID","DPMPE","BZBA","FEFAC","MABT","DMPSHEN","DTBMMP","CB28","CB52","CB101","CB118","CB38","CB153","CB180","BDE17","BDE28","BDE47","BDE49","BDE66","BDE71","BDE77","BDE85","BDE99","BDE100","BDE119","BDE126","BDE138","BDE153","BDE154","BDE156","BDE183","BDE184","BDE191","BDE196","BDE197","BDE202","BDE206","BDE207","SCCP","MCCP","LCCP","TBECHB","TBECHG","BATE","PBEB" ,"QCB","HCB","DDC_DBF","DDC_ANT","DDC_PS","DDC_PA","Cr","Fe","Ni","Cu","Zn","As","Se","Ag","Cd","Sn","Sb","Pb","Hg","TTBPP","DEHPO","DOCDPA","DPGUAN","UV1130","KRYFIO","ETPPBR","ADNP","GBLA","BZDSA","UV329","SG3","UV360","UV234","DTBPPO","UV384","BAC_C12","BAC_C14","BAC_C16","ATAC_C12","ATAC_C14","AAC_C16","ATAC_C18","UV327","OCTOC","PFNA","PFDA","PFUNDA","PFDODA","PFTRDA","PFHXS","PFOS","PFBSA","NMEFBSA","PFOSA"))
 
 
-adf %>%
-  add_count(x) %>% 
-  filter(n %in% tail(sort(unique(n)),2)) %>% 
-  arrange(desc(n))
+#følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
+pnec$value2 <- as.numeric(pnec$value)
+pnec2 <- pnec %>% drop_na(value2)
+
+unique(pnec2$Sample.type)
+pnec3 <- pnec2%>%
+  mutate(sample_category = case_when
+         (Sample.type %in% c("Water, filtered") ~ "Freshwater",
+          Sample.type %in% c("Sludge", "Soil", "Sediment") ~ "Sediment",
+          Sample.type %in% c("Blubber", "Blue mussel", "Liver", "Muscle") ~ "Biota_marine_fish"))
+
+#filter out max an min values for each category. Wich categories to choose? 
+
+pnec_max_minx <- pnec3 %>%
+  group_by(compound, sample_category) %>% #bruk noe annet enn treatment. Må tilpasses pnec kategorier. lage nye
+  mutate(Min = min(value2), Max = max(value2))
+unique(pnec2$Treatmen)
+
+#Make new categories to match the PNEC categories of freswater, sediment og biota
+#not using air values here
+#pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
+
+class(pnec_max_minx)
+
+nrow(pnec_max_minx)
+unique(pnec_max_min2$sample_category)
+#Laste opp fil med PNEC verdier. Laget fra info i word
+#condition and sample category
+# short and compound
+dx <- read.table("PNECs Screening 23.txt", header=TRUE, sep="\t", na.string=c(""))
+
+#Calculate to the correct abbreviations
+dx$Freshwater <- dx$Freshwater *1000
+#dx$Sediment2 <- dx$Sediment *1
+#dx$Biota2 <- dx$Biota*1
+
+#delete those missing for all categories
+dxx <- dx[ -c(6) ]
+x <- dxx[rowSums(is.na(dxx[,4:6]))!=3,]
+
+dx_long <- gather(x, sample_category, limit, Freshwater:Biota_marine_fish, factor_key=TRUE)
+
+#one may have wrong class
+#pnec_max_min4 <- as.data.frame(pnec_max_min2)
+#subsetting to keep only those with match
+#pnec_max_min4$sample_category <- revalue(pnec_max_min4$sample_category, c("Freshwater"="Freshwater2"))
+
+#pnec_max_min5 <- subset(pnec_max_min4, sample_category%in% c("Freshwater2", "Sediment2", "Biota2"))
+
+
+
+#MERGE. Til pnec_max_min2 skal vi fra dx legge til alle kolonner ved å matche 
+dx2 <- merge(x=pnec_max_minx,y=dx_long, by=c(as.character("compound"), as.character("sample_category")),
+             all.x=TRUE)
+
+nrow(pnec_max_minx)
+#substances to be excluded
+dx2x <- subset(dx2, !compound %in% c("BHPMEBD", "DMPTDPP", "DMPTTPP", "Sus62", "SYLKL", "SEROLD", "DIUDP", "EMOPCC", "CTCVB", "DCTCVB", "DCTCVB", "TCTDT", "ETTSDD", "MPSHDOSD", "HOTMIKA", "Fett"))
+
+#ARE THRER wrong abbreviations for pnec??
+
+write.csv(dx2x, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec.csv", row.names=FALSE)
+```
+
+Må rydde opp i følgende:
+- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
+- sorter stoffene etter stoffgruppe
+- legg til stoffgruppenavn
+
+- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
+
+```{r Cleaning up before plotting}
+#remove duplicate rows before plotting
+dx3 <-dx2x %>% 
+  distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
+nrow(dx4)
+#remove those not fitting into the pnec categories
+dx4 <- dx3[!is.na(dx3$sample_category),]
+dx5 <- dx4[!is.na(dx4$limit),]
+unique(dx4$compound)
+
+write.csv(dx4, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec_2.csv", row.names=FALSE)
 
 ```
 
-```{r}
+```{r PNEC plot}
+ggplot(dx5, aes(y=fct_rev(compound), x=value2+10, xmin = Min+10, xmax=Max+10, colour = sample_category))+ 
+  geom_linerange(aes(colour = sample_category, alpha=1), linewidth=1.5, position = position_dodge2(width = 0.7))+
+  geom_point(aes(x=(limit+10), fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
+  #scale_x_continuous(trans='log10') +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
+        axis.text.y = element_text(size = 15,colour="black"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
+        panel.spacing = unit(0, "lines"), 
+        strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
+        legend.title = element_blank(),
+        legend.text = element_text(size=15),
+        plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
+        legend.position = "top")+
+  facet_grid(Group~., scales="free_y", space='free')+
+  xlab("log10(concentration+10)")+
+  scale_alpha(guide = 'none')+
+  guides(color=guide_legend("sample_category"), fill = "none")+
+  scale_color_manual(values = c("#C77CFF", "#00BFC4", "#7CAE00"),
+  labels = c('Marine biota', 'Freshwater', 'Sediment'))+
+  xlim(0, 200)
 
-```
+ggsave("pnec23.png", pnecopp, width = 7, height = 20)
 
-First make summary
-First make a table
-Then make heatmap colouring https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html
-```{r try to make heatmap table}
-install.packages("ztable")
-library(ztable)
+#, values = c("red", "blue", "grey"))
+#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
+  
+  #scale_fill_manual(values = c("red", "blue", "grey"))
+  #scale_colour_manual(values = c("red", "blue", "grey"))
 
-df_long2 <- df_long[,14:15]
-
-x=table(acs$Dx,acs$smoking)
-
-ztable(head(df_long2)) %>% 
-    makeHeatmap(palette="YlOrRd",cols=c(14, 15),margin=2) %>%
-    print(caption="Table 8. Columnwise heatmap table")
-```
-
-
-
-```{r Filter out obs detect freq < 30%}
-#df_long2 <- df_long[!is.na(df_long$value),] #there should be no NAs
-class(df_long2$value)
-
-#Need to deal with the <LODs. For calculating average we use 0.5xLOD, but only when detection frequency is >30%. Per sample type and category.
-n_samples  <- n_distinct(df_long_freq$Site_Category, df_long_freq$Medium_id) # total number of samples
-
-df_long_filtered <- df_long_freq %>% 
-  group_by(compound, value) %>% 
-  filter(!((n_distinct(Site_Category, Medium_id)/n_samples < 0.50)& (value > 0)))%>% 
-  ungroup()
-
-#Need some way to filter out the >30% detection frequency, if >30 perform calculation, if below keep 
-
-#Filter those with <LOD
-
-df_long_X <- cbind(df_long_filtered[,c(1:3,9:10, 14, 16:18)], apply(df_long_filtered[,15, drop=F],2, dLimity))
-#is.na(df_long_X$value)
-#unique(df_long_X$value)
-#when converted to numeric the "<LOD" are converted to NAs. Must make sure that these are included in the rate calculations below. They might be which could solve the problem
-class(df_long_X$value)
-#remove NAs, should not be NAs here, but still missing data from NILU
-df_long_Y <- df_long_X[!is.na(df_long_X$value),] 
-#nrow(df_long_X)
-```
-
-
-
-ilter out those molecules with greater than 50% detection frequency in at least two independent sample types/environmental compartments
-
-```{r filter observations in dample type and environment with obs mor}
-#https://stackoverflow.com/questions/47536406/filter-based-on-percentage-of-samples-with-an-observation-in-dplyr
-#n_samples  <- n_distinct(df_long2$Site_Category, df_long2$Medium_id) # total number of samples
-#n_samples
-
-#check if the filtering is performed per compound!!!
-#df_filtered <- df_long2 %>% 
-#  group_by(compound, value) %>% 
-#  filter(!((n_distinct(Site_Category, Medium_id)/n_samples > 0.50)& (value > 0)))
-
-#nrow(df_filtered)
-
-#write.csv(df_filtered, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/230912_TEST_filtercount.csv", row.names=FALSE)
 
 ```
