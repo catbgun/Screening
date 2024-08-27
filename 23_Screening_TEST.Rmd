@@ -1382,47 +1382,39 @@ ggplot(subset(topP4_z, !is.na(Delta.15N)), aes(x=Category, y=Delta.15N))+
 
 
 PNEC FIGUE
-The following compounds: PF201, DABPA, UV310, UV1164, BEMT,BPAP2,TBPHT,B-2ETF,CUMIN,CBZL,BDPME,TMPID,DPMPE,BZBA,FEFAC,MABT,DMPSHEN,DTBMMP,CB28,CB52,CB101,CB118,CB,38,CB153,CB180,BDE17,BDE28,BDE47,BDE49,BDE66,BDE71,BDE77,BDE85,BDE99,BDE100,BDE119,BDE126,BDE138,BDE153,BDE154,BDE156,BDE183,BDE184,BDE191,BDE196,BDE197,BDE202,BDE206,BDE207,SCCP,MCCP,LCCP,TBECHB,TBECHG,BATE,PBEB ,QCB,HCB,DDC_DBF,DDC_ANT,DDC_PS,DDC_PA,CR,FE,NI,CU,ZN,AS,SE,AG,CD,SN,SB,PB,HG,TTBPP,DEHPO,DOCDPA,DPGUAN,UV1130,KRYFIO,ETPPBR,ADNP,GBLA,BZDSA,UV329,SG3,UV360,UV234,DTBPPO,UV384,BAC_C12,BAC_C14,BAC_C16,ATAC_C12,ATAC_C14,A,AC_C16,ATAC_C18,UV327,OCTOC,PFNA,PFDA,PFUNDA,PFDODA,PFTRDA,PFHXS,PFOS,PFBSA,NMEFBSA,PFOSA
+The following compounds: PF201, DABPA, UV310, UV1164, BEMT,BPAP2,TBPHT,B-2ETF,CUMIN,CBZL,BDPME,TMPID,DPMPE,BZBA,FEFAC,MABT,DMPSHEN,DTBMMP,CB28,CB52,CB101,CB118,CB,38,CB153,CB180,BDE17,BDE28,BDE47,BDE49,BDE66,BDE77,BDE85,BDE99,BDE100,BDE119,BDE126,BDE138,BDE153,BDE154,BDE156,BDE183,BDE184,BDE191,BDE196,BDE197,BDE202,BDE206,BDE207,SCCP,MCCP,LCCP,TBECHB,TBECHG,BATE,PBEB ,QCB,HCB,DDC_DBF,DDC_ANT,DDC_PS,DDC_PA,CR,FE,NI,CU,ZN,AS,SE,AG,CD,SN,SB,PB,HG,TTBPP,DEHPO,DOCDPA,DPGUAN,UV1130,KRYFIO,ETPPBR,ADNP,GBLA,BZDSA,UV329,SG3,UV360,UV234,DTBPPO,UV384,BAC_C12,BAC_C14,DADMAC_C10,ATAC_C12,ATAC_C14,A,AC_C16,ATAC_C18,UV327,OCTOC,PFNA,PFDA,PFUNDA,PFDODA,PFTRDA,PFHXS,PFOS,PFBSA,NMEFBSA,PFOSA
 
 ```{r Making the PNEC Figure}
 #Based on the information provied, the following compounds are of interest. Perhaps excluding L9 and L10 due to suspect screening. Others from NIVA? Check
 library(magrittr)
 #tar ut "DBM",  for under LOD, eventuelt sjekk
 newtablexx <- subset(newtablex, value != "n.a.")
-
-pnec <- subset(newtablexx, compound %in% c("PF201", "DABPA", "UV310", "UV1164","BEMT","BPAP2","TBPHT","B-2ETF","CUMIN","CBZL","BDPME","TMPID","DPMPE","BZBA","FEFAC","MABT","DMPSHEN","DTBMMP","CB28","CB52","CB101","CB118","CB38","CB153","CB180","BDE17","BDE28","BDE47","BDE49","BDE66","BDE71","BDE77","BDE85","BDE99","BDE100","BDE119","BDE126","BDE138","BDE153","BDE154","BDE156","BDE183","BDE184","BDE191","BDE196","BDE197","BDE202","BDE206","BDE207","SCCP","MCCP","LCCP","TBECHB","TBECHG","BATE","PBEB" ,"QCB","HCB","DDC_DBF","DDC_ANT","DDC_PS","DDC_PA","Cr","Fe","Ni","Cu","Zn","As","Se","Ag","Cd","Sn","Sb","Pb","Hg","TTBPP","DEHPO","DOCDPA","DPGUAN","UV1130","KRYFIO","ETPPBR","ADNP","GBLA","BZDSA","UV329","SG3","UV360","UV234","DTBPPO","UV384","BAC_C12","BAC_C14","BAC_C16","ATAC_C12","ATAC_C14","AAC_C16","ATAC_C18","UV327","OCTOC","PFNA","PFDA","PFUNDA","PFDODA","PFTRDA","PFHXS","PFOS","PFBSA","NMEFBSA","PFOSA"))
-
-
 #følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
-pnec$value2 <- as.numeric(pnec$value)
-pnec2 <- pnec %>% drop_na(value2)
+newtablexx$value <- as.numeric(newtablexx$value)
+newtablexxx <- newtablexx %>% drop_na(value)
 
-unique(pnec2$Sample.type)
-pnec3 <- pnec2%>%
+pnec <- subset(newtablexxx, compound %in% c("PF201", "DABPA", "UV310", "UV1164","BEMT","BPAP2","TBPHT","B-2ETF","CUMIN","CBZL","BDPME","TMPID","DPMPE","BZBA","FEFAC","MABT","DMPSHEN","DTBMMP","CB28","CB52","CB101","CB118","CB38","CB153","CB180","BDE17","BDE28","BDE47","BDE49","BDE66","BDE71","BDE77","BDE85","BDE99","BDE100","BDE119","BDE126","BDE138","BDE153","BDE154","BDE156","BDE183","BDE184","BDE191","BDE196","BDE197","BDE202","BDE206","BDE207","SCCP","MCCP","LCCP","TBECHB","TBECHG","BATE","PBEB" ,"QCB","HCB","DDC_DBF","DDC_ANT","DDC_PS","DDC_PA","Cr","Fe","Ni","Cu","Zn","As","Se","Ag","Cd","Sn","Sb","Pb","Hg","TTBPP","DEHPO","DOCDPA","DPGUAN","UV1130","KRYFIO","ETPPBR","ADNP","GBLA","BZDSA","UV329","SG3","UV360","UV234","DTBPPO","UV384","BAC_C12","BAC_C14","DADMAC_C10", "ATAC_C12","ATAC_C14","AAC_C16","ATAC_C18","UV327","OCTOC","PFNA","PFDA","PFUNDA","PFDODA","PFTRDA","PFHXS","PFOS","PFBSA","NMEFBSA","PFOSA"))
+
+pnec3 <- pnec%>%
   mutate(sample_category = case_when
          (Sample.type %in% c("Water, filtered") ~ "Freshwater",
           Sample.type %in% c("Sludge", "Soil", "Sediment") ~ "Sediment",
           Sample.type %in% c("Blubber", "Blue mussel", "Liver", "Muscle") ~ "Biota_marine_fish"))
 
 #filter out max an min values for each category. Wich categories to choose? 
-
 pnec_max_minx <- pnec3 %>%
   group_by(compound, sample_category) %>% #bruk noe annet enn treatment. Må tilpasses pnec kategorier. lage nye
-  mutate(Min = min(value2), Max = max(value2))
-unique(pnec2$Treatmen)
+  mutate(Min = min(value), Max = max(value))
+
 
 #Make new categories to match the PNEC categories of freswater, sediment og biota
 #not using air values here
 #pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
 
-class(pnec_max_minx)
-
-nrow(pnec_max_minx)
-unique(pnec_max_min2$sample_category)
 #Laste opp fil med PNEC verdier. Laget fra info i word
 #condition and sample category
 # short and compound
-dx <- read.table("PNECs Screening 23.txt", header=TRUE, sep="\t", na.string=c(""))
+dx <- read.table("PNECs Screening 23_v2.txt", header=TRUE, sep="\t", na.string=c(""))
 
 #Calculate to the correct abbreviations
 dx$Freshwater <- dx$Freshwater *1000
@@ -1457,54 +1449,54 @@ dx2x <- subset(dx2, !compound %in% c("BHPMEBD", "DMPTDPP", "DMPTTPP", "Sus62", "
 write.csv(dx2x, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec.csv", row.names=FALSE)
 ```
 
-Må rydde opp i følgende:
-- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
-- sorter stoffene etter stoffgruppe
-- legg til stoffgruppenavn
 
-- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
 
 ```{r Cleaning up before plotting}
 #remove duplicate rows before plotting
 dx3 <-dx2x %>% 
   distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
-nrow(dx4)
+
 #remove those not fitting into the pnec categories
 dx4 <- dx3[!is.na(dx3$sample_category),]
 dx5 <- dx4[!is.na(dx4$limit),]
 unique(dx4$compound)
 
-write.csv(dx4, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec_2.csv", row.names=FALSE)
+write.csv(dx5, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec_2.csv", row.names=FALSE)
 
 ```
 
 ```{r PNEC plot}
-ggplot(dx5, aes(y=fct_rev(compound), x=value2+10, xmin = Min+10, xmax=Max+10, colour = sample_category))+ 
-  geom_linerange(aes(colour = sample_category, alpha=1), linewidth=1.5, position = position_dodge2(width = 0.7))+
-  geom_point(aes(x=(limit+10), fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
-  #scale_x_continuous(trans='log10') +
+#dx5 <- as.numeric(dx5$limit)
+
+rfe <- subset(dx5, group=="PBDE")
+
+pnecopp <- ggplot(dx5, aes(y=fct_rev(compound), x=value, xmin = Min, xmax=Max, colour = sample_category))+ 
+  geom_linerange(aes(colour = sample_category, alpha=1), linewidth=2.5, position = position_dodge2(width = 0.7))+
+  geom_point(aes(x=(limit), fill = sample_category),  size=6, shape=18, position = position_dodge2(width = 0.7))+
   theme_bw()+
-  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
+  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 15,colour="black"),
         axis.text.y = element_text(size = 15,colour="black"),
         axis.title.y = element_blank(),
-        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
+        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=17),
         panel.spacing = unit(0, "lines"), 
         strip.background = element_blank(),
         strip.placement = "outside",
-        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
+        strip.text.y = element_text(size = 16, angle = 0, hjust=0),
         legend.title = element_blank(),
-        legend.text = element_text(size=15),
+        legend.text = element_text(size=18),
         plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
         legend.position = "top")+
   facet_grid(Group~., scales="free_y", space='free')+
-  xlab("log10(concentration+10)")+
+  scale_x_continuous(trans='log10') +  
+  xlab("log10(concentration)")+
   scale_alpha(guide = 'none')+
   guides(color=guide_legend("sample_category"), fill = "none")+
   scale_color_manual(values = c("#C77CFF", "#00BFC4", "#7CAE00"),
-  labels = c('Marine biota', 'Freshwater', 'Sediment'))+
-  xlim(0, 200)
+  labels = c('Marine biota', 'Freshwater', 'Sediment'))
+  
 
-ggsave("pnec23.png", pnecopp, width = 7, height = 20)
+
+ggsave("pnec23.png", pnecopp, width = 10, height = 18)
 
 #, values = c("red", "blue", "grey"))
 #  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
