@@ -112,6 +112,8 @@ Rather calculate mean later, after LOD has been replaced
 part1 <- subset(newtablex, Part == "Part1")
 part2 <- subset(newtablex, Part == "Part2")
 
+length(unique(part1$compound))
+
 ```
 
 ```{r Detection frequency}
@@ -136,7 +138,7 @@ part2_freq = part2x %>%
   ungroup() 
 ```
 
-Filter out observations with < 30 detection frequency
+
 #perhaps this one was better? START EHR!!! NOE SOM IKKE STEMMER
 ```{r Avoid plotting average of those with only < LOD}
 part1_filt <- part1_freq %>% 
@@ -206,6 +208,7 @@ part1_finalxy$compound <- revalue(part1_finalxyx$compound, c("BENAZOL.P"="BENAZO
 unique(part1_finalxy$compound)
 part1_finalxyz <- subset(part1_finalxy, compound!="Fett")
 
+length(unique(part1_finalxy$compound))
 ```
 
 ### Wastewater treatment plant
@@ -432,9 +435,13 @@ part2_UF_1 <- subset(part2_extra1, Group %in% c("CP", "Dechlorane", "nBFR", "OPF
 part2_UF_2 <- subset(part2_extra1, Group %in% c("nPFAS", "PBDE", "PCB"))
 part2_UF_3 <- subset(part2_extra1, Group %in%c("PFCA", "PFSA", "QNH4", "UV") | compound=="Hg")
 
+part2_UF_met <- subset(part2_extra1, compound %in%c("Cr", "Fe", "Ni", "Cu", "Zn", "As", "Se", "Ag", "Cd", "Sn", "Sb", "Pb"))
+
 part2_UF_1x <- subset(part2_UF_1, det_frac != 0) 
 part2_UF_2x <- subset(part2_UF_2, det_frac != 0) 
 part2_UF_3x <- subset(part2_UF_3, det_frac != 0) 
+
+part2_UF_metx <- subset(part2_UF_met, det_frac != 0) 
 
 #part2_finalxc <- subset(part2_finalx, compound !="Fett")
 
@@ -548,10 +555,54 @@ UF3 <- ggplot(part2_UF_3x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+#metals except Hg - for appendix
+part2_UF_metx
+
+metx <- ggplot(part2_UF_metx, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  geom_text(aes(label= ifelse(meanxyz=="S", meanxyz, ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1))))), color = "white", size = 5)+
+  #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 4)+
+ scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=17,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(10,10,210,-10),
+        strip.text.x = element_text(size = 14),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Whales and sharks (metals, except Hg)") + 
+  theme(legend.title=element_text(size=12)) + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+
 #save
 ggsave("Part1_UF1.png", UF1, width = 8, height = 7)
 ggsave("Part1_UF2.png", UF2, width = 8, height = 12)
 ggsave("Part1_UF3.png", UF3, width = 8, height = 8)
+
+ggsave("Part1_UF3_metals.png", metx, width = 8, height = 8)
 
 ```
 
@@ -584,7 +635,7 @@ part1_filt_ww <- part1_freq_ww %>%
                            "<LOD", 
                            value))
 
-part1_filt_ww1 <- cbind(part1_filt_ww[,c(1:44)], apply(part1_filt_ww[,45, drop=F],2, dLimity))
+part1_filt_ww1 <- cbind(part1_filt_ww[,c(1:45)], apply(part1_filt_ww[,46, drop=F],2, dLimity))
 
 part1_final_ww2 = part1_filt_ww1 %>%
   group_by(Category, compound, Sample.type, Treatmen) %>%
@@ -620,7 +671,7 @@ part1_final_ww5 <- distinct(part1_final_ww4, meanx, Sample.type, compound, Treat
 #part1_final_ww3<- part1_final_ww2x[!duplicated(part1_final_ww2x), ]
 part1_final_ww5$Treatmen = factor(part1_final_ww5$Treatmen, levels = c("Low purification", "High purification") )
 
-ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fill=Treatmen))+
+WWT_treatment <- ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fill=Treatmen))+
   #geom_col(position = position_dodge2(preserve = "single")) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   #geom_col(position="dodge", width = 0.5)+
@@ -638,8 +689,9 @@ ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fill=Treatmen))+
         legend.text=element_text(size=15),
         legend.position="top",
         legend.title=element_blank())+
+  scale_y_continuous(trans='log10') +
   facet_grid(Sample.type~Group, scales="free", space='free_x')+
-  ylab("log(concentration)+5")
+  ylab("Concentration")
 
 ggsave("WWT_treatment.png", WWT_treatment, width = 12, height = 11)
 ```
@@ -661,7 +713,7 @@ dust2 <- dust1 %>%
                            "< LOD", 
                            value))
 
-dust3 <- cbind(dust2[,c(1:44)], apply(dust2[,45, drop=F],2, dLimity))
+dust3 <- cbind(dust2[,c(1:45)], apply(dust2[,46, drop=F],2, dLimity))
 
 dust4 = dust3 %>%
   group_by(compound, Treatmen) %>%
@@ -698,7 +750,7 @@ dust5 <- subset(dust4aa, meanx != "NaN")
 dust6 <- distinct(dust5, meanx, Sample.type, compound, Treatmen, .keep_all= TRUE) 
 
 
-dust <- ggplot(dust6, aes(y=log(meanx), x=compound, fill=Treatmen))+
+dust <- ggplot(dust6, aes(y=meanx, x=compound, fill=Treatmen))+
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   #geom_col(position="dodge")+
   scale_fill_manual(values=c("orangered3", "#E69F00"))+
@@ -715,8 +767,9 @@ dust <- ggplot(dust6, aes(y=log(meanx), x=compound, fill=Treatmen))+
         legend.position="top",
         legend.title=element_blank(),
         legend.text=element_text(size=15))+
+  scale_y_continuous(trans='log10') +
   facet_grid(~Group, scales="free_x", space='free_x')+
-  ylab("log(concentration)")
+  ylab("Concentration (ng/g, d.w.)")
 
 ggsave("DUST.png", dust, width = 10, height = 7)
 
@@ -739,7 +792,7 @@ prod2 <- prod1 %>%
                            "< LOD", 
                            value))
 
-prod3 <- cbind(prod2[,c(1:44)], apply(prod2[,45, drop=F],2, dLimity))
+prod3 <- cbind(prod2[,c(1:45)], apply(prod2[,46, drop=F],2, dLimity))
 
 prod4 = prod3 %>%
   group_by(compound, Treatmen) %>%
@@ -760,7 +813,7 @@ prod4x <- subset(prod4, !compound %in% c("BHPMEBD", "DMPTDPP", "DMPTTPP", "Sus62
 prod5 <- subset(prod4x, meanx != "NaN") 
 
 
-ggplot(prod5, aes(y=(meanx), x=compound, fill=Treatmen))+
+products <- ggplot(prod5, aes(y=(meanx), x=compound, fill=Treatmen))+
   #geom_col(position="dodge")+
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"), colour="darkgrey")+
   theme_bw()+
@@ -775,10 +828,11 @@ ggplot(prod5, aes(y=(meanx), x=compound, fill=Treatmen))+
         strip.placement = "bottom",
         legend.title=element_blank(),
         legend.text=element_text(size=14))+
+  scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log(ng/L, d.w.)+10")+
-  scale_fill_brewer(palette = "Set1")+
-  ylab("log(concentration)")
+  ylab("Concentration (ng/g, d.w.)")+
+  scale_fill_brewer(palette = "Set1")
+ 
   
              
 ggsave("PRODUCTS.png", products, width = 10, height = 6)
@@ -821,9 +875,51 @@ part2_final_3 <- subset(part2_final_2, !compound %in% c("BHPMEBD", "DMPTDPP", "D
 
 ```
 
-- whales (blubber) and sharks (liver) - trophic level
+- figure for Hg in muscle 
+```{r Hg figure}
+Hg <- subset(part2_final_3, compound %in% c("Hg"))
+class(Hg$plotting)
+Hg$plotting <- as.character(Hg$plotting)
+Hg1 <- subset(Hg, plotting != "NaN")
+#Hg1$plotting1 <- Hg1$plotting:1000
+
+Hg$Category <- revalue(Hg$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
+
+Hg$Category <- factor(Hg$Category, levels=c("Killer whale","Sperm whale", "Fin whale", "Humpback whale", "White beaked dolphin", "Harbor porpoise", "Greenland shark", "Porbeagle shark", "Spiny dogfish")) 
+
+
+ggplot(Hg, aes(x=Category, y=as.numeric(value), shape=Sample.type, colour=Sample.type))+
+  geom_point(size=3.5)+
+  #geom_hline(yintercept=16000, colour="red", linewidth=1.5)+
+  theme_bw()+
+   theme(axis.text.x = element_text(angle = 45, size=11, colour="black", hjust=1),
+        axis.text.y = element_text(size=12, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=15, colour="black"),
+        strip.text.y = element_text(size=12, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.text=element_text(size=10),
+        #legend.position="top",
+        legend.title=element_blank())+
+  ylab("Concentration Hg (ng/g, w.w.)")+
+  scale_colour_manual(name = "Tissue",
+                      labels = c("Blubber", "Liver", "Muscle"),
+                      values = c("dodgerblue4", "orange1", "palevioletred2"))+    
+  scale_shape_manual(name = "Tissue",
+                     labels = c("Blubber", "Liver", "Muscle"),
+                     values = c(19, 16, 18))
+
+ggsave("Hg figure.png", Hg_fig, width = 6, height = 5)
+
+
+```
+
+- whales (blubber) and sharks (liver) - trophic level - not used!
 ```{r trophic level}
-topP3 <- subset(part2_final_3, Sample.type =c("Blubber", "Liver"))
+topP3 <- subset(part2_final_3, Sample.type %in% c("Blubber", "Liver"))
 #rename
 topP3$Level <- revalue(topP3$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
 
@@ -841,7 +937,7 @@ topP6 <- subset(topP5, plotting != "NaN")
 topP6z <- subset(topP6, compound !="Fett")
 
 topP6z$compound <- as.character(topP6z$compound)
-whales <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))+
+ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))+
   geom_point(size=3.5)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
@@ -858,7 +954,7 @@ whales <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))
         legend.text=element_text(size=14))+
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log10(concentration)")+
+  ylab("Concentration (ng/g, w.w.)")+
   scale_colour_manual(name = "Tissue",
                       labels = c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)"),
                       values = c("dodgerblue3", "green3", "plum", "orange1"))+    
@@ -871,6 +967,57 @@ whales <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))
 ggsave("Whale groups2.png", whales, width = 10, height = 8)
 
 ```
+
+- all whale and shark
+```{r trophic level}
+topP3 <- subset(part2_final_3, Sample.type %in% c("Blubber", "Liver", "Muscle"))
+#rename
+topP3$Level <- revalue(topP3$Level, c("Shark intermediate predator" = "Shark intermediate", "Shark top predator" = "Shark top", "Whale intermediate predator" = "Whale intermediate", "Whale top predator"= "Whale top"))
+
+#set order (also for products used blow)
+topP3$Level <- factor(topP3$Level, levels=c("Whale top","Shark top", "Whale intermediate", "Shark intermediate")) 
+topP4 <- subset(topP3, !compound %in% c("Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn"))
+
+#frqf <- subset(topP5, Group=="QNH4") 
+
+#remove nas
+topP5 <- subset(topP4, plotting != "<LOD") 
+topP5$plotting <- as.numeric(topP5$plotting)
+topP6 <- subset(topP5, plotting != "NaN")
+
+topP6z <- subset(topP6, compound !="Fett")
+
+topP6z$compound <- as.character(topP6z$compound)
+whales_all <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Sample.type))+
+  geom_point(size=3.5)+
+  theme_bw()+
+  scale_y_continuous(trans='log10') +
+  facet_grid(.~Group, scales="free", space='free_x')+
+  theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=12, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=14, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=14))+
+  ylab("Concentration (ng/g, w.w.)")+
+  scale_colour_manual(name = "Tissue",
+                      labels = c("Whale top","Shark top", "Whale intermediate", "Shark intermediate"),
+                      values = c("dodgerblue3", "green3", "plum", "orange1"))+  
+  scale_shape_manual(values = c(18, 17, 15))+ #17 er trekant
+  guides(color=guide_legend("Sample.type"), shape = "none")
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+  
+ggsave("Whale groups_all.png", whales_all, width = 10, height = 8)
+
+```
+
 
 ```{r Packaging}
 
@@ -892,7 +1039,7 @@ pack <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Packaging))+
         legend.text=element_text(size=16))+
     scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log10(concentration)")
+  ylab("Concentration (ng/g, w.w.)")
 
  ggsave("packaing2.png", pack, width = 10, height = 8)
 ```
@@ -928,7 +1075,7 @@ w_species <- ggplot(jl, aes(x=compound, y=plotting, colour=Category, shape=Categ
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
   #scale_colour_brewer(palette = "Set1")+
-  ylab("log10(concentration)")+
+  ylab("Concentration (ng/g, w.w.)")+
     scale_colour_manual(name = "Tissue",
                       labels = c("Killer whale", "Sperm whale", "Harbor porpoise", "Fin whale", "Humpback whale"),
                       values = c("steelblue1", "dodgerblue3",  "black", "orchid1", "orchid3"))+    
@@ -971,7 +1118,7 @@ as <- ggplot(topP10, aes(x=compound, y=plotting, colour=Maturity, shape=Maturity
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
   #scale_colour_brewer(palette = "Set1")+
-  ylab("log10(concentration)")+
+  ylab("Concentration (ng/g, w.w.)")+
       scale_colour_manual(name = "Maturity",
                       labels = c("Adult", "Subadult", " "),
                       values = c("steelblue1", "dodgerblue3",  "black"))+    
@@ -989,9 +1136,10 @@ ggsave("age and sex2.png", as, width = 10, height = 7)
 topP6x <- subset(topP6, Category=="Harbor porpoise"&Length==136)
 #remove nas
 topP7x <- subset(topP6x, plotting != "NaN") 
+topP7xx <- subset(topP7x, compound != "Fett") 
+options(scipen = 999)
 
-
-w_tissue <- ggplot(topP7x, aes(x=compound, y=(plotting), shape=Sample.type, colour= Sample.type))+
+ w_tissue <- ggplot(topP7xx, aes(x=compound, y=(plotting), shape=Sample.type, colour= Sample.type))+
   geom_point(size=4.5)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -1008,7 +1156,7 @@ w_tissue <- ggplot(topP7x, aes(x=compound, y=(plotting), shape=Sample.type, colo
         legend.text=element_text(size=15))+
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log10(concentration)")+
+  ylab("Concentration (ng/g, w.w.)")+
   scale_colour_manual(name = "Tissue",
                       labels = c("Blubber", "Liver", "Muscle"),
                       values = c("dodgerblue4", "orange1", "palevioletred2"))+    
@@ -1056,7 +1204,7 @@ SHARKY <- ggplot(shark1, aes(x=(compound), y=(plotting), colour=Category, shape=
         legend.text=element_text(size=15))+
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log10(concentration)")+
+  ylab("Concentration (ng/g, w.w.)")+
   facet_grid(.~Group, scales="free", space='free_x')+
   scale_colour_manual(name = "Specie and tissue",
                       labels = c("Greenland shark, muscle", "Porbeagle shark, liver",  "Spiny dogfish, liver"),
@@ -1076,7 +1224,7 @@ ggsave("SHARKY2.png", SHARKY, width = 10, height = 7)
 
 
 ##Divide concentration by FAT content
-- trophic level / fat (%)
+- trophic level / fat (%) - all sample types!
 ```{r}
 df23_longx <- gather(df23, compound, value, AOZKF:F.TOT, factor_key=TRUE)
 
@@ -1097,15 +1245,13 @@ newtablex$compound <- revalue(newtablex$compound, c("BENAZOL.P"="BENAZOL P", "X2
 newtablex$Category <- revalue(newtablex$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
 
 part30 = newtablex%>%
-  mutate(Level = case_when(Category %in% c("Killer whale","Sperm whale", "Harbor porpoise", "White beaked dolphin") ~ "Whale top predator",
-                           Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top predator",
-                                Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate predator",
-                           Category %in% c("Spiny dogfish") ~ "Shark intermediate predator"))
-
-part30$Level <- revalue(part30$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
+  mutate(Level = case_when(Category %in% c("Killer whale","Sperm whale", "Harbor porpoise", "White beaked dolphin") ~ "Whale top",
+                           Category %in% c("Greenland shark", "Porbeagle shark") ~ "Shark top",
+                                Category %in% c("Humpback whale", "Fin whale") ~ "Whale intermediate",
+                           Category %in% c("Spiny dogfish") ~ "Shark intermediate"))
 
 #set order (also for products used blow)
-part30$Level <- factor(part30$Level, levels=c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)")) 
+part30$Level <- factor(part30$Level, levels=c("Whale top","Shark top", "Whale intermediate", "Shark intermediate")) 
 part31 <- subset(part30, !compound %in% c("Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn", "BHPMEBD", "DMPTDPP", "DMPTTPP","Sus62", "SYLKL", "SEROLD","DIUDP", "EMOPCC", "CTCVB", "DCTCVB", "DCTCVB", "TCTDT", "ETTSDD", "MPSHDOSD", "HOTMIKA"))
 
 
@@ -1128,21 +1274,58 @@ part33 = part32%>%
 
 ```
 
+### PCB in killer whale
+```{r}
+KW <- subset(part33, Species =="Killer whale")
+KW_pcb <- subset(KW, Group=="PCB")
+
+KW_pcb1 = KW_pcb%>%
+  mutate(ID = case_when(Length %in% c("390") ~ "OO11",
+                           Length %in% c("392") ~ "005",
+                                Length %in% c("740") ~ "OO14"))
+
+KW_pcb <- ggplot(KW_pcb1, aes(x=ID, y=new, fill=compound))+
+  geom_bar(position="stack", stat="identity")+
+  geom_hline(yintercept=9000, colour="red", linewidth=1.5)+
+  theme_bw()+
+   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=12, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=13, margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=15, colour="black"),
+        strip.text.y = element_text(size=12, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom",
+        legend.text=element_text(size=10),
+        #legend.position="top",
+        legend.title=element_blank())+
+  ylab("Lipid normalised concentration (ng/g, l.w.)")
+  #scale_y_continuous(trans='log10') +
+  #facet_grid(Sample.type~Group, scales="free", space='free_x')+
+  
+  #scale_fill_brewer(palette = "Set5")
+
+ggsave("Killer whales_PCB.png", KW_pcb, width = 6, height = 4)
+  
+
+```
+
 ##Trophic level (liver and blubber)
 ```{r}
+#remove nas
+topP5 <- subset(topP4, plotting != "<LOD") 
+topP5$plotting <- as.numeric(topP5$plotting)
+topP6 <- subset(topP5, plotting != "NaN")
 
-#hvis bare liver og blubber
-part34 <- subset(part33, Sample.type %in% c("Blubber", "Liver"))
-class(part34$new)
+part32x <- subset(part32, Sample.type !="Blue mussel")
 
-part34$Level <- revalue(part34$Level, c("Shark intermediate predator" = "Shark intermediate (liver)", "Shark top predator" = "Shark top (liver)", "Whale intermediate predator" = "Whale intermediate (blubber)", "Whale top predator"= "Whale top (blubber)"))
-
-#set order (also for products used blow)
-part34$Level <- factor(part34$Level, levels=c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)")) 
-
-fat_whale <- ggplot(part34, aes(x=fct_rev(compound), y=(new), colour=Level, shape=Level))+
+part32x$compound <- as.character(part32x$compound)
+whales_all_FAT <- ggplot(part32x, aes(x=compound, y=new, colour=Level, shape=Sample.type))+
   geom_point(size=3.5)+
   theme_bw()+
+  scale_y_continuous(trans='log10') +
+  facet_grid(.~Group, scales="free", space='free_x')+
   theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
         axis.title.x= element_blank(),
@@ -1155,19 +1338,16 @@ fat_whale <- ggplot(part34, aes(x=fct_rev(compound), y=(new), colour=Level, shap
         legend.position="top",
         legend.title=element_blank(),
         legend.text=element_text(size=14))+
-   scale_y_continuous(trans='log10') +  
-  facet_grid(.~Group, scales="free", space='free_x')+
-  ylab("log(concentration:fat)")+
+  ylab("Lipid normalised concentration (ng/g, l.w.)")+
   scale_colour_manual(name = "Tissue",
-                      labels = c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)"),
-                      values = c("dodgerblue3", "green3", "plum", "orange1"))+    
-  scale_shape_manual(name = "Tissue",
-                     labels = c("Whale top (blubber)","Shark top (liver)", "Whale intermediate (blubber)", "Shark intermediate (liver)"),
-                     values = c(19, 17, 19, 17))+
+                      labels = c("Whale top","Shark top", "Whale intermediate", "Shark intermediate"),
+                      values = c("dodgerblue3", "green3", "plum", "orange1"))+  
+  scale_shape_manual(values = c(18, 17, 15))+ #17 er trekant
+  guides(color=guide_legend("Sample.type"), shape = "none")
   guides(color = guide_legend(override.aes = list(size=4)))
+
   
-  
-ggsave("whales_fat2.png", fat_whale, width = 10, height = 7)
+ggsave("Whale groups_all_FAT.png", whales_all_FAT, width = 10, height = 8)
 ```
 
 - whale species / fat (%)
@@ -1197,7 +1377,7 @@ w_species_fat <- ggplot(part34x, aes(x=(compound), y=new, colour=Category, shape
   scale_y_continuous(trans='log10') +  
   facet_grid(.~Group, scales="free", space='free_x')+
   #scale_colour_brewer(palette = "Set1")
-   ylab("log(concentration:fat)")+
+   ylab("Lipid normalised concentration (ng/g, l.w.)")+
     scale_colour_manual(name = "Tissue",
                       labels = c("Killer whale", "Sperm whale", "Harbor porpoise", "Fin whale", "Humpback whale"),
                       values = c("steelblue1", "dodgerblue3",  "black", "orchid1", "orchid3"))+    
@@ -1234,7 +1414,7 @@ w_tissue_fat <- ggplot(part34y, aes(x=compound, y=new, shape=Sample.type, colour
         legend.text=element_text(size=15))+
   scale_y_continuous(trans='log10') +  
   facet_grid(.~Group, scales="free", space='free_x')+
-    ylab("log(concentration:fat)")+
+    ylab("Lipid normalised concentration (ng/g, l.w.)")+
   scale_colour_manual(name = "Tissue",
                       labels = c("Blubber", "Liver", "Muscle"),
                       values = c("dodgerblue4", "orange1", "palevioletred2"))+    
@@ -1249,10 +1429,11 @@ ggsave("Whale tissue_FAT2.png", w_tissue_fat, width = 10, height = 7)
 - Age effect /fat
 - subset whale blubber
 ```{r}
+#the followin warning from NAs: Removed 32 rows containing missing value
 
-ioh <- subset(part34x, Group=="Antioxidant")
+ioh <- subset(part34x, Group!="Antioxidant") #beacuse only NA on age
 
-as_FAT <- ggplot(part34x, aes(x=compound, y=new, colour=Maturity, shape=Maturity))+
+as_FAT <- ggplot(ioh, aes(x=compound, y=new, colour=Maturity, shape=Maturity))+
   geom_point(size=4)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=10, colour="black"),
@@ -1270,7 +1451,7 @@ as_FAT <- ggplot(part34x, aes(x=compound, y=new, colour=Maturity, shape=Maturity
   scale_y_continuous(trans='log10') +
   facet_grid(.~Group, scales="free", space='free_x')+
   #scale_colour_brewer(palette = "Set1")+
-  ylab("log(concentration:fat)")+
+  ylab("Lipid normalised concentration (ng/g, l.w.)")+
       scale_colour_manual(name = "Maturity",
                       labels = c("Adult", "Subadult", " "),
                       values = c("steelblue1", "dodgerblue3",  "black"))+    
@@ -1316,7 +1497,7 @@ SHARKY_fat <- ggplot(shark, aes(x=fct_rev(compound), y=(value), colour=Category,
         legend.title=element_blank(),
         legend.text=element_text(size=15))+
   scale_y_continuous(trans='log10') +
-  ylab("log(concentration:fat)")+
+  ylab("Lipid normalised concentration (ng/g, l.w.)")+
   facet_grid(.~Group, scales="free", space='free_x')+
   labs(ylab="Concentration log(ng/g, w.w.)+10")+
   facet_grid(.~Group, scales="free", space='free_x')+
@@ -1338,62 +1519,88 @@ ggsave("SHARKY_FAT.png", SHARKY_fat, width = 10, height = 7)
 
 Se på stabil isotop
 ```{r}
-topP4$Delta.13C <- as.numeric(topP4$Delta.13C)
-topP4$Delta.15N <- as.numeric(topP4$Delta.15N)
+iso <- subset(part2_final_3, !compound %in% c("Ag","As","Cd","Cr", "Cu","Fe","Ni","Pb","Sb","Se","Sn","Zn"))
 
-topP4_x <- distinct(topP4, Sample.type, W..C.N, Treatmen, .keep_all= TRUE) 
-topP4_y <- distinct(topP4, Sample.type, Delta.13C, Treatmen, .keep_all= TRUE) 
-topP4_z <- distinct(topP4, Sample.type, Delta.15N, Treatmen, .keep_all= TRUE) 
+#set order (also for products used blow)
+iso$Category<- factor(iso$Category, levels=c("White beaked dolphin", "Harbor porpoise", "Greenland shark","Porbeagle shark", "Spiny dogfish")) 
 
+#topP4$X..C <- as.numeric(topP4$X..C)
+#topP4$X..N <- as.numeric(topP4$X..N)
+#topP4$W..C.N <- as.numeric(topP4$W..C.N)
 
-ggplot(subset(topP4_x, !is.na(W..C.N)), aes(x=Category, y=W..C.N))+
+topP4_x <- distinct(iso, Sample.type, W..C.N, Category, .keep_all= TRUE) 
+topP4_y <- distinct(iso, Sample.type, X..C, Category, .keep_all= TRUE) 
+topP4_z <- distinct(iso, Sample.type, X..N, Category, .keep_all= TRUE) 
+
+CN <- ggplot(subset(topP4_x, !is.na(W..C.N)), aes(x=Category, y=W..C.N, fill=Treatmen))+
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  #geom_point(size=3)+
+  #geom_point(size=5)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
+  theme(axis.text.x = element_text(size=13, colour="black", angle = 45, vjust = 1, hjust=1),
+        axis.text.y = element_text(size=11, colour="black"), #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
         axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(size=14, margin = margin(t = 0, r = 20, b = 0, l = 0)),
         strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
+        strip.text.y = element_text(size=13, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  labs(title="W..C.N", ylab="Concentration log(ng/g, w.w.)+10")+
-  facet_grid(Sample.type~., scales="free", space='free_x')
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=14))+
+  ylab("C/N (%w)")+
+  facet_grid(Sample.type~., scales="free", space='free_x')+
+  scale_fill_manual(values = c("darkolivegreen4", "bisque3"))
+
+ggsave("CN.png", CN, width = 9, height = 5.5)
   
-  ggplot(subset(topP4_y, !is.na(Delta.13C)), aes(x=Category, y=Delta.13C))+
-  geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  #geom_point(size=3)+
+dC <- ggplot(subset(topP4_y, !is.na(X..C)), aes(x=Category, y=X..C, fill=Treatmen))+
+   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_point(size=5)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+  theme(axis.text.x = element_text(size=13, colour="black", angle = 45, vjust = 1, hjust=1),
         axis.text.y = element_text(size=11, colour="black"),
         axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(size=14, margin = margin(t = 0, r = 20, b = 0, l = 0)),
         strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
+        strip.text.y = element_text(size=13, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  labs(title="Delta.13C", ylab="Concentration log(ng/g, w.w.)+10")+
-  facet_grid(Sample.type~., scales="free", space='free_x')
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=14))+
+  ylab("??13C")+
+  facet_grid(Sample.type~., scales="free", space='free_x')+
+  scale_fill_manual(values = c("darkolivegreen4", "bisque3"))
   
+ggsave("dC.png", dC, width = 9, height = 5.5)
   
-ggplot(subset(topP4_z, !is.na(Delta.15N)), aes(x=Category, y=Delta.15N))+
-  geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  #geom_point(size=3)+
+dN <- ggplot(subset(topP4_z, !is.na(X..N)), aes(x=Category, y=X..N, fill=Treatmen))+
+     geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_point(size=5)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+  theme(axis.text.x = element_text(angle = 90, size=13, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
         axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(size=14, margin = margin(t = 0, r = 20, b = 0, l = 0)),
         strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
+        strip.text.y = element_text(size=13, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  labs(title="Delta.15N", ylab="Concentration log(ng/g, w.w.)+10")+
-  facet_grid(Sample.type~., scales="free", space='free_x')
+        strip.placement = "bottom",
+        legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=14))+
+  ylab("??15N")+
+  facet_grid(Sample.type~., scales="free", space='free_x')+
+  scale_fill_manual(values = c("darkolivegreen4", "bisque3"))
+  
+
+ggsave("dN.png", dN, width = 9, height = 5.5)
+
+
+
 
 ```
 
