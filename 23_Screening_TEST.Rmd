@@ -73,7 +73,9 @@ df23_longg <- subset(df23_long, !is.na(value)) #usikker om denne tar bort alle v
 - by sample type?
 
 ```{r Groupings}
-gr23 <- read.table("Scre23_Groupings2.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+#gr23 <- read.table("Scre23_Groupings2.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+gr23 <- read.table("Scre23_Groupings4.txt", skip=0, header=TRUE, sep="\t", na.string=c(""))
+
 
 #count substances per group
 gr23x <- gr23 %>%
@@ -88,11 +90,12 @@ setdiff(df23_long$compound,newtable$compound)
 
 (unique(newtable$compound))
 
-newtable$compound <- revalue(newtable$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn"))
+newtable$compound <- revalue(newtable$compound, c("AG"="Ag", "AS"="As", "CD"="Cd", "CR"="Cr", "CU"="Cu", "FE"="Fe", "HG"="Hg", "NI"="Ni", "PB"="Pb", "SB"="Sb", "SE"="Se", "SN"="Sn", "ZN"="Zn", "DMPSHEN"="OTNE"))
 
 newtable$compound <- revalue(newtable$compound, c("BENAZOL.P"="BENAZOL P", "X23BPDT"="23BPDT", "X34DMPZ"="34DMPZ", "X2BBTMP"="2BBTMP", "X34DMPZP"="34DMPZP", "X35DMPZ"="35DMPZ", "X2BDOMP"="2BDOMP", "X4NAS"="4NAS", "B-2ETF"="B-2ETF", "X2BHMPTP"="2BHMPTP", "X2BMPP"="2BMPP", "X2BMTP"="2BMTP", "X22BPDT"="22BPDT", "X2TBCLBEP"="2TBCLBEP", "B.2ETF"="B-2ETF", "X2BDMP"="2BDMP", "F.TOT"="F-TOT" )) #er den siste riktig?
 
 #New column in part2 to separate based on level of predator
+print(unique(newtable$Category))
 newtable$Category <- revalue(newtable$Category, c("H???brann" = "Porbeagle shark", "Piggh???" = "Spiny dogfish", "sperm whale" = "Sperm whale", "H???kjerring"="Greenland shark"))
 
 newtablex = newtable%>%
@@ -112,8 +115,7 @@ Rather calculate mean later, after LOD has been replaced
 part1 <- subset(newtablex, Part == "Part1")
 part2 <- subset(newtablex, Part == "Part2")
 
-length(unique(part1$compound))
-
+#length(unique(part1$compound))
 ```
 
 ```{r Detection frequency}
@@ -147,7 +149,7 @@ part1_filt <- part1_freq %>%
                            value))
 
 # claculate 0.5xLOD 
-part1_filt_X <- cbind(part1_filt[,c(1:45)], apply(part1_filt[,46, drop=F],2, dLimity))
+part1_filt_X <- cbind(part1_filt[,c(1:48)], apply(part1_filt[,49, drop=F],2, dLimity))
 
 
 part2_filt <- part2_freq %>% 
@@ -156,7 +158,7 @@ part2_filt <- part2_freq %>%
                            value))
 
 # claculate 0.5xLOD for those with detection frequency above 30%
-part2_filt_X <- cbind(part2_filt[,c(1:45)], apply(part2_filt[,46, drop=F],2, dLimity))
+part2_filt_X <- cbind(part2_filt[,c(1:48)], apply(part2_filt[,49, drop=F],2, dLimity))
 ```
 
 Calculate mean
@@ -235,6 +237,7 @@ Triazines, DMPTDPP (CAS 178905-31-2) and DMPTTPP (CAS 178905-32-3) suspect scree
 #wwt3 <- subset(wwt2, meanx != "NaN") 
 wwt3x <- subset(wwt2, det_frac != 0) 
 
+
 wwt_long2 <- ggplot(wwt3x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
   #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
@@ -265,7 +268,7 @@ wwt_long2 <- ggplot(wwt3x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0, size=12)) +
-  ggtitle("Wastewater treatment plant (scre23)") + 
+  ggtitle("Wastewater treatment plant") + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
@@ -379,6 +382,8 @@ part2_finalxy24x <- subset(part2_finalxy23x, det_frac != 0)
 part2_finalxy24xx <- subset(part2_finalxy24x, compound !="Fett")
 
 
+ttt <- subset(part2_finalxy24xx, Sample.type=="Muscle (ng/g, w.w.)")
+
 #PLOTTING
 WS_23 <- ggplot(part2_finalxy24xx, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
@@ -410,7 +415,7 @@ WS_23 <- ggplot(part2_finalxy24xx, aes(x=Sample.type, y=fct_rev(compound), fill=
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0, size=12)) +
-  ggtitle("Whales and sharks (scre23)") + 
+  ggtitle("Whales and sharks (emerging)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -433,7 +438,7 @@ part2_extra1 <- part2_extra %>%
 
 part2_UF_1 <- subset(part2_extra1, Group %in% c("CP", "Dechlorane", "nBFR", "OPFR", "OPFR_metabolite"))
 part2_UF_2 <- subset(part2_extra1, Group %in% c("nPFAS", "PBDE", "PCB"))
-part2_UF_3 <- subset(part2_extra1, Group %in%c("PFCA", "PFSA", "QNH4", "UV") | compound=="Hg")
+part2_UF_3 <- subset(part2_extra1, Group %in%c("PFCA", "PFSA", "QAC", "UV") | compound=="Hg")
 
 part2_UF_met <- subset(part2_extra1, compound %in%c("Cr", "Fe", "Ni", "Cu", "Zn", "As", "Se", "Ag", "Cd", "Sn", "Sb", "Pb"))
 
@@ -475,7 +480,7 @@ UF1 <- ggplot(part2_UF_1x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0, size=12)) +
-  ggtitle("Whales and sharks (UF 1/3)") + 
+  ggtitle("Whales and sharks (legacy 1/3)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -512,7 +517,7 @@ UF2 <- ggplot(part2_UF_2x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0, size=12)) +
-  ggtitle("Whales and sharks (UF 2/3)") + 
+  ggtitle("Whales and sharks (legacy 2/3)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -549,7 +554,7 @@ UF3 <- ggplot(part2_UF_3x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
         strip.text.y = element_text(angle = 0, size=12)) +
-  ggtitle("Whales and sharks (UF 3/3)") + 
+  ggtitle("Whales and sharks (legacy 3/3)") + 
   theme(legend.title=element_text(size=12)) + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
@@ -557,7 +562,7 @@ UF3 <- ggplot(part2_UF_3x, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac
   facet_grid(Group~Level, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
 #metals except Hg - for appendix
-part2_UF_metx
+#part2_UF_metx
 
 metx <- ggplot(part2_UF_metx, aes(x=Sample.type, y=fct_rev(compound), fill=det_frac)) +
   geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
@@ -635,7 +640,7 @@ part1_filt_ww <- part1_freq_ww %>%
                            "<LOD", 
                            value))
 
-part1_filt_ww1 <- cbind(part1_filt_ww[,c(1:45)], apply(part1_filt_ww[,46, drop=F],2, dLimity))
+part1_filt_ww1 <- cbind(part1_filt_ww[,c(1:48)], apply(part1_filt_ww[,49, drop=F],2, dLimity))
 
 part1_final_ww2 = part1_filt_ww1 %>%
   group_by(Category, compound, Sample.type, Treatmen) %>%
@@ -671,7 +676,9 @@ part1_final_ww5 <- distinct(part1_final_ww4, meanx, Sample.type, compound, Treat
 #part1_final_ww3<- part1_final_ww2x[!duplicated(part1_final_ww2x), ]
 part1_final_ww5$Treatmen = factor(part1_final_ww5$Treatmen, levels = c("Low purification", "High purification") )
 
-WWT_treatment <- ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fill=Treatmen))+
+part1_final_ww5$compound <- as.character(part1_final_ww5$compound)
+
+WWT_treatment <- ggplot(part1_final_ww5, aes(y=(meanx), x=(compound), fill=Treatmen))+
   #geom_col(position = position_dodge2(preserve = "single")) +
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   #geom_col(position="dodge", width = 0.5)+
@@ -691,7 +698,7 @@ WWT_treatment <- ggplot(part1_final_ww5, aes(y=(meanx), x=fct_rev(compound), fil
         legend.title=element_blank())+
   scale_y_continuous(trans='log10') +
   facet_grid(Sample.type~Group, scales="free", space='free_x')+
-  ylab("Concentration")
+  ylab("log10(concentration)")
 
 ggsave("WWT_treatment.png", WWT_treatment, width = 12, height = 11)
 ```
@@ -713,7 +720,7 @@ dust2 <- dust1 %>%
                            "< LOD", 
                            value))
 
-dust3 <- cbind(dust2[,c(1:45)], apply(dust2[,46, drop=F],2, dLimity))
+dust3 <- cbind(dust2[,c(1:48)], apply(dust2[,49, drop=F],2, dLimity))
 
 dust4 = dust3 %>%
   group_by(compound, Treatmen) %>%
@@ -792,7 +799,7 @@ prod2 <- prod1 %>%
                            "< LOD", 
                            value))
 
-prod3 <- cbind(prod2[,c(1:45)], apply(prod2[,46, drop=F],2, dLimity))
+prod3 <- cbind(prod2[,c(1:48)], apply(prod2[,49, drop=F],2, dLimity))
 
 prod4 = prod3 %>%
   group_by(compound, Treatmen) %>%
@@ -813,7 +820,7 @@ prod4x <- subset(prod4, !compound %in% c("BHPMEBD", "DMPTDPP", "DMPTTPP", "Sus62
 prod5 <- subset(prod4x, meanx != "NaN") 
 
 
-products <- ggplot(prod5, aes(y=(meanx), x=compound, fill=Treatmen))+
+ggplot(prod5, aes(y=(meanx), x=compound, fill=Treatmen))+
   #geom_col(position="dodge")+
   geom_col(position = position_dodge2(width = 0.9, preserve = "single"), colour="darkgrey")+
   theme_bw()+
@@ -937,7 +944,10 @@ topP6 <- subset(topP5, plotting != "NaN")
 topP6z <- subset(topP6, compound !="Fett")
 
 topP6z$compound <- as.character(topP6z$compound)
-ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))+
+
+
+
+whales <- ggplot(topP6z, aes(x=compound, y=plotting, colour=Level, shape=Level))+
   geom_point(size=3.5)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=11, colour="black"),
@@ -1617,7 +1627,7 @@ newtablexx <- subset(newtablex, value != "n.a.")
 newtablexx$value <- as.numeric(newtablexx$value)
 newtablexxx <- newtablexx %>% drop_na(value)
 
-pnec <- subset(newtablexxx, compound %in% c("PF201", "DABPA", "UV310", "UV1164","BEMT","BPAP2","TBPHT","B-2ETF","CUMIN","CBZL","BDPME","TMPID","DPMPE","BZBA","FEFAC","MABT","DMPSHEN","DTBMMP","CB28","CB52","CB101","CB118","CB38","CB153","CB180","BDE17","BDE28","BDE47","BDE49","BDE66","BDE71","BDE77","BDE85","BDE99","BDE100","BDE119","BDE126","BDE138","BDE153","BDE154","BDE156","BDE183","BDE184","BDE191","BDE196","BDE197","BDE202","BDE206","BDE207","SCCP","MCCP","LCCP","TBECHB","TBECHG","BATE","PBEB" ,"QCB","HCB","DDC_DBF","DDC_ANT","DDC_PS","DDC_PA","Cr","Fe","Ni","Cu","Zn","As","Se","Ag","Cd","Sn","Sb","Pb","Hg","TTBPP","DEHPO","DOCDPA","DPGUAN","UV1130","KRYFIO","ETPPBR","ADNP","GBLA","BZDSA","UV329","SG3","UV360","UV234","DTBPPO","UV384","BAC_C12","BAC_C14","DADMAC_C10", "ATAC_C12","ATAC_C14","AAC_C16","ATAC_C18","UV327","OCTOC","PFNA","PFDA","PFUNDA","PFDODA","PFTRDA","PFHXS","PFOS","PFBSA","NMEFBSA","PFOSA"))
+pnec <- subset(newtablexxx, compound %in% c("PF201", "DABPA", "UV310", "UV1164","BEMT","BPAP2","TBPHT","B-2ETF","CUMIN","CBZL","BDPME","TMPID","DPMPE","BZBA","FEFAC","MABT","DMPSHEN","DTBMMP","CB28","CB52","CB101","CB118","CB38","CB153","CB180","BDE17","BDE28","BDE47","BDE49","BDE66","BDE71","BDE77","BDE85","BDE99","BDE100","BDE119","BDE126","BDE138","BDE153","BDE154","BDE156","BDE183","BDE184","BDE191","BDE196","BDE197","BDE202","BDE206","BDE207","SCCP","MCCP","LCCP","TBECHB","TBECHG","BATE","PBEB", "OTNE", "QCB","HCB","DDC_DBF","DDC_ANT","DDC_PS","DDC_PA","Cr","Fe","Ni","Cu","Zn","As","Se","Ag","Cd","Sn","Sb","Pb","Hg","TTBPP","DEHPO","DOCDPA","DPGUAN","UV1130","KRYFIO","ETPPBR","ADNP","GBLA","BZDSA","UV329","SG3","UV360","UV234","DTBPPO","UV384","BAC_C12","BAC_C14","DADMAC_C10", "ATAC_C12","ATAC_C14","AAC_C16","ATAC_C18","UV327","OCTOC","PFNA","PFDA","PFUNDA","PFDODA","PFTRDA","PFHXS","PFOS","PFBSA","NMEFBSA","PFOSA"))
 
 pnec3 <- pnec%>%
   mutate(sample_category = case_when
@@ -1639,6 +1649,7 @@ pnec_max_minx <- pnec3 %>%
 #condition and sample category
 # short and compound
 dx <- read.table("PNECs Screening 23_v2.txt", header=TRUE, sep="\t", na.string=c(""))
+dx$compound <- revalue(dx$compound, c("DMPSHEN"="OTNE"))
 
 #Calculate to the correct abbreviations
 dx$Freshwater <- dx$Freshwater *1000
@@ -1673,8 +1684,6 @@ dx2x <- subset(dx2, !compound %in% c("BHPMEBD", "DMPTDPP", "DMPTTPP", "Sus62", "
 write.csv(dx2x, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/240826_TEST_pnec.csv", row.names=FALSE)
 ```
 
-
-
 ```{r Cleaning up before plotting}
 #remove duplicate rows before plotting
 dx3 <-dx2x %>% 
@@ -1693,6 +1702,9 @@ write.csv(dx5, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Sc
 #dx5 <- as.numeric(dx5$limit)
 
 rfe <- subset(dx5, group=="PBDE")
+
+dx5$Group <- revalue(dx5$Group, c("UV Stabilizer"="UV"))
+kug <- subset(dx5, Group == "Other")
 
 pnecopp <- ggplot(dx5, aes(y=fct_rev(compound), x=value, xmin = Min, xmax=Max, colour = sample_category))+ 
   geom_linerange(aes(colour = sample_category, alpha=1), linewidth=2.5, position = position_dodge2(width = 0.7))+

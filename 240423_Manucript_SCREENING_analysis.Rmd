@@ -46,7 +46,7 @@ lapply(Packages, library, character.only = TRUE)
 ```
 
 
-The file that is now uploaded has no mean or frequency of detection calculated. But only the sompounds of interest are included. 
+The file that is now uploaded has no mean or frequency of detection calculated. But only the compounds of interest are included. 
 
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
@@ -111,12 +111,10 @@ road_slud <- subset(road, Medium_id == c("Sludge (ng/g, d.w.)"))
 #geom_col(position="dodge")
 
 #WATER
-#road_water_dis <- subset(road_water, Comment_location == c("Treated discharge"))
-road_water2 <- subset(road_water, Comment_location != c("Sedimentation pool"))
-road_water2$Comment_location <- revalue(road_water2$Comment_location, c("Pump basin"="Untreated wash water"))
-
-ggplot(road_water2, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
-  geom_boxplot()+
+road_water_dis <- subset(road_water, Comment_location == c("Treated discharge"))
+ggplot(road_water_dis, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+  geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
@@ -127,14 +125,31 @@ ggplot(road_water2, aes(y=as.numeric(value), x=compound, fill=Medium_id))+
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
-  facet_grid(fct_rev(Comment_location)~ ., scales="free", space='free_x')+
-  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
-    
-geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+  #scale_y_continuous(trans='log10') +
+  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')
 
-#SLUDGE
-ggplot(road_slud, aes(y=as.numeric(value), x=compound, colour=Comment_location))+
-  geom_col(position="dodge2", size=5)+
+road_water2 <- subset(road_water, Comment_location != c("Sedimentation pool"))
+road_water2$Comment_location <- revalue(road_water2$Comment_location, c("Pump basin"="Untreated wash water"))
+
+class(road_water2$value)
+road_water2$value2 <- as.numeric(road_water2$value)
+road_water3 <- subset(road_water2, value2 != "NA")
+
+ro_wfo <- road_water3 %>%
+  group_by(compound, Medium_id, Comment_location) %>%
+  select(value2) %>% # select variables to summarise, from and to
+  summarise(across(everything(), .f = list(mean = mean, sd=sd), na.rm = TRUE))
+
+ro_wfo2 <- ro_wfo %>% 
+  mutate(Comment_location = factor(Comment_location, levels = c("Untreated wash water", "Treated discharge")))
+
+
+#WATER FILTRATED AND PARTICULATE - suggest to exclude the particulate
+ggplot(ro_wfo2, aes(y=as.numeric(value2_mean), x=compound, fill=Comment_location))+
+  geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
+  geom_errorbar(aes(x=compound, ymin=pmax(value2_mean-value2_sd, 0), ymax=value2_mean+value2_sd),
+                width=.4,size=0.4, position=position_dodge(width=0.8), col="black")+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
@@ -144,15 +159,51 @@ ggplot(road_slud, aes(y=as.numeric(value), x=compound, colour=Comment_location))
         strip.text.y = element_text(size=10, colour="black"),
         panel.spacing.x = unit(0, "lines"),
         strip.background.x = element_blank(),
-        strip.placement = "bottom")
+        strip.placement = "bottom")+
+  #scale_y_continuous(trans='log10') +
+  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')
+  #stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5) #something on number of observations
+
+
+#Sediment/sludge from tunnel
+road_slud$value2 <- as.numeric(road_slud$value)
+road_slud2 <- subset(road_slud, value2 != "NA")
+
+ro_slu <- road_slud2 %>%
+  group_by(compound, Medium_id, Comment_location) %>%
+  select(value2) %>% # select variables to summarise, from and to
+  summarise(across(everything(), .f = list(mean = mean, sd=sd), na.rm = TRUE))
+
+ro_slu2 <- ro_slu %>% 
+  mutate(Comment_location = factor(Comment_location, levels = c("Sweeping and vacuuming truck", "Sandtrap", "Sedimentation pool")))
+
+
+
+#SLUDGE
+ggplot(ro_slu2, aes(y=as.numeric(value2_mean), x=compound, fill=Comment_location))+
+    geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
+  geom_errorbar(aes(x=compound, ymin=pmax(value2_mean-value2_sd, 0), ymax=value2_mean+value2_sd),
+                width=.4,size=0.4, position=position_dodge(width=0.8), col="black")+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+   scale_y_continuous(trans='log10') 
   #stat_summary(fun.data = get_box_stats, geom = "text", vjust=-5, hjust=0.5)
   #facet_grid(Comment_location~ ., scales="free", space='free_x')
 
-    
-geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
-
 #AIR
-ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
+road_air$value2 <- as.numeric(road_air$value)
+road_air2 <- subset(road_air, value2 != "NA")
+
+ggplot(road_air2, aes(y=as.numeric(value2), x=compound, fill=Comment_season))+
   geom_boxplot()+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
@@ -165,9 +216,34 @@ ggplot(road_air, aes(y=as.numeric(value), x=compound, fill=Comment_condition))+
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
   stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)+
-facet_grid(Site_name~ .,  space='free_x')
-    
-geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
+  scale_y_continuous(trans='log10') 
+#facet_grid(Comment_season~ .,  space='free_x')
+
+#CALCULATE average for barchart with error bars
+ro_air <- road_air2 %>%
+  group_by(compound, Comment_season) %>%
+  select(value2) %>% # select variables to summarise, from and to
+  summarise(across(everything(), .f = list(mean = mean, sd=sd), na.rm = TRUE))
+
+ggplot(ro_air, aes(y=as.numeric(value2_mean), x=compound, fill=Comment_season))+
+  geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
+  geom_errorbar(aes(x=compound, ymin=pmax(value2_mean-value2_sd, 0), ymax=value2_mean+value2_sd),
+  width=.4,size=0.4, position=position_dodge(width=0.8), col="black")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")
+  scale_y_continuous(trans='log10') 
+  stat_summary(fun.data = get_box_stats, geom = "text", vjust=-8, hjust=0.5)
+  
+
+#geom_text(data = road_air, aes(x = variable, y = quant, label = variable), size = 10)
   
     #facet_grid(Site_name~ ., scales="free", space='free_x')
   stat_summary(fun.data = get_box_stats, geom = "text", vjust=0, hjust=0.5)
