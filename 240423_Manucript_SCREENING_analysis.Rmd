@@ -20,6 +20,11 @@ dLimity <- function(v){
   v[isLimit] <- as.numeric(gsub("<(.*)", "\\1", v[isLimit]))/2 #gsub(pattern, replacement, x) for substitution
   as.numeric(v)
 }
+
+#Test to set desired number of digits
+sigfig <- function(vec, digits){
+  return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
+}
 ```
 
 ```{r}
@@ -40,45 +45,559 @@ get_box_stats <- function(y, upper_limit = max(df$mpg) * 1.15) {
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 #install.packages(c("dplyr", "ggplot2", "plyr", "Rmisc", "tidyverse", "lubridate", "stringr"))
-Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats")
+Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats", "magrittr")
 lapply(Packages, library, character.only = TRUE)
 #trengs disse? "Rmisc", "tidyverse", "lubridate", "stringr",
 ```
 
-
 The file that is now uploaded has no mean or frequency of detection calculated. But only the compounds of interest are included. 
-
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
 #df <- read.table("240110_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
 #remember to resave from csv to txt
-df <- read.table("240621_MS_Screening.txt", header=TRUE, sep="\t", na.string=c(""))
-
-length(unique(df$compound)) #should be 22
-#ft <- subset(df, Site_Category=="Artificial grass pitch")
-#ft1 <- subset(ft, Medium_id == "Water, total")
-#ft2 <- subset(ft1, Site_name == "Valle Hovin East")
-
+df1 <- read.table("240621_MS_Screening2.txt", header=TRUE, sep="\t", na.string=c(""))
 ```
 
-To decide on % detection frequency of not
-- is it possible to have the same criteria for the different sites? Perhaps start with the sources
-- Site_Category, compound, and Medium_id
-
-- What do we want for the tables/figures? When only e.g. n=3 it might be best with average of those observed and number of observations?
-```{r Fix}
-#replace tunnel environment with trafficked road
-df$Site_Category <- revalue(df$Site_Category, c("Tunnel environment" = "Trafficked road"))
-unique(df$Site_Category)
-
-#Smestaddammen should not be trafficked road category, but instead recipient
-df1 <- df %>% mutate(Site_Category = replace(Site_Category, which(Site_Category == "Trafficked road" & Site_name == "Smestaddammen"), "Urban pond"))
-
+Select samples to be excluded
+```{r}
 #remove the following sample which was not a true man hole sediment sample
+#kan vi ha Smestaddammen som recipient? eller ta helt bort?
 df2 <- df1 %>% 
-  filter(!(Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)"))
+  filter(!(Site_name == "Valle Hovin East" & Medium_id == "Sludge (ng/g, d.w.)")) %>% 
+  filter(!Site_Category %in% c("Commercial building", "Private home", "Tyre collection site", "Recipient")) %>%  
+  filter(!Comment_location == "Marine") %>% 
+  filter(!(Medium_id %in% c("Water, particles (ng/L)", "Air (ng/m^3)")))
 
 ```
+
+Replace names
+```{r}
+df2$Site_Category <- revalue(df2$Site_Category, c("Tunnel environment" = "Trafficked road"))
+df2$Site_Category <- revalue(df2$Site_Category, c("Trafficked road" = "Road environment"))
+df2$Site_Category <- revalue(df2$Site_Category, c("Artificial grass pitch" = "Artificial football field"))
+
+df2$Comment_location <- revalue(df2$Comment_location, c("Pump basin" = "Untreated wash water"))
+df2$Comment_location <- revalue(df2$Comment_location, c("Treated discharge" = "Treated wash water"))
+df2$Comment_location <- revalue(df2$Comment_location, c("Sandtrap" = "Untreated sediments"))
+df2$Comment_location <- revalue(df2$Comment_location, c("Sedimentation pool" = "Treated sediments"))
+
+df2$Medium_id <- revalue(df2$Medium_id, c("Water, filtered (ng/L)" = "Water (ng/L)"))
+df2$Medium_id <- revalue(df2$Medium_id, c("Water, total (ng/L)" = "Water (ng/L)"))
+
+df2$compound <- revalue(df2$compound, c("TMMAT" = "HMMM", "6PPD-q"="6PPD-Q"))
+
+```
+
+Final selection of tyre related substances, n=15
+```{r selection of substances}
+df2x <- subset(df2, compound %in% c("PhBT", "MTBT", "ABT", "OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
+```
+
+
+## Make heatmap table based on sample types and category
+FROM SCRE23 script
+```{r preparations for heatmap}
+df3 <- subset(df2x, !is.na(value)) #usikker om denne tar bort alle versjoner av na
+
+#remove n.a due to limited sample material. SHould not be included in calculations
+df4 <- subset(df3, value != "n.a.") #not necessary? same as abve?
+
+df4_freq = df4 %>%
+  group_by(Medium_id, compound, Site_Category) %>%
+  mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), 
+            n = (length(value)),
+            det_frac = (100-(lodcount/n)*100))%>%
+  ungroup() 
+
+#avoid plotting zeroes
+df4_filt <- df4_freq %>% 
+  mutate(plotting = ifelse(det_frac == 0, 
+                           "<LOD", 
+                           value))
+
+# claculate 0.5xLOD 
+df4_filt_X <- cbind(df4_filt[,c(1:24)], apply(df4_filt[,25, drop=F],2, dLimity))
+
+#calcualte means
+df4_finalx = df4_filt_X %>%
+  group_by(Medium_id, compound, Site_Category) %>%
+  mutate(meanx = mean(plotting, na.rm = TRUE))%>% 
+  ungroup()
+```
+
+
+```{r save datafile}
+write.csv(df4_finalx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241026_TEST_final.csv", row.names=FALSE)
+```
+
+#set the order of substances to highest levels in water first?
+```{r PLOT heatmap - SOURCES}
+#select only source categories
+aa4x_source <- subset(df4_finalx, Site_Category %in% c("Artificial football field", "Road environment", "Wastewater treatment plant"))
+
+#aa4x_source1 <- subset(aa4x_source, det_frac != 0) 
+
+aa4x_source2 <- aa4x_source %>% 
+  #filter(!(Site_name == "Smestaddammen")) %>% 
+  filter(!(Medium_id == "Granule (ng/g, w.w.)"))
+
+#set order of sample types
+aa4x_source3 <- aa4x_source%>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)", "Granule (ng/g, w.w.)")))
+
+#set order of compounds based on highest levels in water (road environment)
+aa4x_source3x <- aa4x_source3%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
+  
+class(aa4x_source3x$det_frac)
+as.numeric(aa4x_source3x$det_frac)
+is.na(aa4x_source3x$det_frac)
+
+
+ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+ #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
+  geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
+  #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
+  #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
+  scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-50,50,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Overview sources") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+##8aab91
+
+#ggsave("WW_t2.png", wwt_long2, width = 10, height = 12)
+
+```
+
+Adding physiochemical properties
+```{r}
+prop <- read.table("MS22_properties2.txt", header=TRUE, sep="\t", na.string=c(""), quote = "", fill=TRUE)
+
+prop$short <- revalue(prop$short, c("HMMM"="TMMAT"))
+
+print(unique(prop$short))
+print(unique(aa4x_source3$compound))
+
+new_df <- merge(aa4x_source3, prop, by.x = "compound", by.y = "short")
+class(prop$AVERAGE_MASS)
+
+#new_df$AVERAGE_MASS <- as.numeric(new_df$AVERAGE_MASS)
+#is.na(new_df$AVERAGE_MASS)
+```
+
+```{r order by properties}
+a1 <- new_df %>%
+  mutate(name = fct_reorder(compound, WATER_SOLUBILITY_MOLL)) %>%
+  ggplot(aes(x=Site_Category, y=(compound), fill=det_frac)) +
+ #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
+  geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+  #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
+  #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
+  scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-50,50,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Overview sources") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+ggsave("a1.png", a1, width = 10, height = 12)
+```
+
+Molar concentrations
+```{r}
+#remove NAS
+#new_df[!is.na(new_df$meanx),]
+#new_df$AVERAGE_MASS <- as.numeric(new_df$AVERAGE_MASS)
+new_df$meanx2 <- new_df$meanx/new_df$AVERAGE_MASS
+
+class(new_df$AVERAGE_MASS)
+
+a2 <- new_df %>%
+  mutate(name = fct_reorder(compound, WATER_SOLUBILITY_MOLL)) %>%
+  ggplot(aes(x=Site_Category, y=(compound), fill=det_frac)) +
+ #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
+  geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx2), "", sigfig(meanx2, 1))), color = "white", size = 5)+
+  #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
+  #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
+  scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-50,50,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Overview sources") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+ggsave("a1_M.png", a2, width = 10, height = 12)
+```
+
+## Source site charts
+1) Trafficked road - tunnel. Treated versus untreated, water and sediment
+```{r barchart tunnel water and sediment}
+road <- subset(aa4x_source3x, Site_Category == "Road environment")
+roadx <- subset(road, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
+
+roadx$Comment_location
+
+roadx$Comment_location2 <- revalue(roadx$Comment_location, c("Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
+
+roadxy <- subset(roadx, !Comment_location == c("Sweeping and vacuuming truck"))
+nrow(roadxy)
+
+class(roadxy$value)
+
+roadxy$value <- as.numeric(roadxy$value)
+#roadxy$value <- na.omit(roadxy$value)
+
+#roadxyz = roadxy %>%
+#  group_by(compound, Comment_location, Medium_id) %>%
+#  mutate(meany = mean(value, na.rm = TRUE))%>% 
+#  ungroup()
+
+#Fjern alle < LOD
+#roadxyz1 <- subset(roadxyz, meany != "NaN") 
+
+#remove the duplicated values, but value and plotting are different so must first be removed
+#roadxyz2<- distinct(roadxyz1, meany, Comment_location, #compound, .keep_all= TRUE) 
+#, fill=fct_rev(Comment_location)
+
+
+ggplot(roadxy, aes(y=value, x=compound, shape=Comment_location2, colour=Comment_location2))+
+  geom_point()+
+  theme_bw()+
+    facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  #scale_y_continuous(trans='log10') +
+  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
+  scale_y_continuous(trans='log10')
+
+write.csv(roadxyz2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
+
+```
+
+Football fields
+- interesting with granulate and air?
+- indoor outdoor?
+
+```{r football}
+foot <- subset(aa4x_source3x, Site_Category == "Artificial football field")
+footx <- subset(foot, Medium_id == c("Air, particles (ng/m^3)", "Granule (ng/g, w.w.)"))
+footx$value <- as.numeric(footx$value)
+
+ggplot(footx, aes(y=value, x=compound))+
+  geom_point()+
+  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')
+
+
+```
+
+
+2) Wastewater treatment. Treated versus untreated, water and sediment
+```{r barchart tunnel water and sediment}
+wwt <- subset(aa4x_source3x, Site_Category == "Wastewater treatment plant")
+#roadx <- subset(road, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
+
+wwt$value <- as.numeric(wwt$value)
+#roadxy$value <- na.omit(roadxy$value)
+
+#wwtx = wwt %>%
+#  group_by(compound, Comment_condition, Medium_id) %>%
+#  mutate(meany = mean(value, na.rm = TRUE))%>% 
+#  ungroup()
+
+#Fjern alle < LOD
+#wwtxz <- subset(wwtx, meany != "NaN") 
+
+#remove the duplicated values, but value and plotting are different so must first be removed
+#wwtxzy<- distinct(wwtxz, meany, Comment_condition, compound, #.keep_all= TRUE) 
+
+#set order of sample types
+wwt2 <- wwt %>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)")))
+
+
+ggplot(wwt, aes(y=value, x=compound, fill=fct_rev(Comment_condition)))+
+  geom_boxplot()+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  facet_grid((Medium_id)~ ., scales="free", space='free_x')+
+   scale_y_continuous(trans='log10')
+
+write.csv(roadxyz2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
+
+```
+
+## Recipient sites 
+- urban dam, urban river, and urban park
+- bargraphs per sample type?
+
+Testing heatmap
+```{r testing heatmap}
+#select only site categories¨
+aa4x_rec <- subset(df4_finalx, Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
+
+#aa4x_source1 <- subset(aa4x_source, det_frac != 0) 
+
+#aa4x_source2 <- aa4x_source %>% 
+#  #filter(!(Site_name == "Smestaddammen")) %>% 
+#  filter(!(Medium_id == "Granule (ng/g, w.w.)"))
+
+aa4x_rec$Medium_id
+#set order of sample types
+aa4x_rec2 <- aa4x_rec%>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sediment (ng/g, d.w.)", "Air, particles (ng/m^3)")))
+
+#set order of compounds based on highest levels in water (road environment)
+aa4x_rec2x <- aa4x_rec2%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
+  
+class(aa4x_source3x$det_frac)
+as.numeric(aa4x_rec2x$det_frac)
+is.na(aa4x_rec2x$det_frac)
+
+
+ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+ #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
+  geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
+  geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
+  #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
+  #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
+  scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-50,50,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Urban recipients") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+```
+
+
+
+
+```{r barchart}
+aa4x_rec <- subset(df4_finalx, Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
+
+aa4x_rec$value <- as.numeric(aa4x_rec$value)
+#roadxy$value <- na.omit(roadxy$value)
+
+aa4x_rec1 = aa4x_rec %>%
+  group_by(compound, Site_Category, Medium_id) %>%
+  mutate(meany = mean(value, na.rm = TRUE))%>% 
+  ungroup()
+
+#Fjern alle < LOD
+aa4x_rec2 <- subset(aa4x_rec1, meany != "NaN") 
+
+#set order of dample types
+aa4x_source3 <- aa4x_rec2 %>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sediment (ng/g, d.w.)", "Air, particles (ng/m^3)")))
+
+#remove the duplicated values, but value and plotting are different so must first be removed
+aa4x_source4<- distinct(aa4x_source3, meany, Site_Category, compound, Medium_id, .keep_all= TRUE) 
+
+#barchart
+ggplot(aa4x_source4, aes(y=meany, x=compound, fill=fct_rev(Site_Category)))+
+  geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
+  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  scale_y_continuous(trans='log10') +
+  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
+   scale_y_continuous(trans='log10') +
+
+
+
+```
+
+
+
+
+
+```{r PLOT heatmap - RECIPIENTS}
+#select only source categories
+aa4x_rec <- subset(df4_finalx, Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
+
+aa4x_rec1 <- subset(aa4x_rec, det_frac != 0) 
+
+#aa4x_source1 <- aa4x_source%>% 
+#  filter(!(Site_name == "Smestaddammen")) %>% 
+#  filter(!(Medium_id == "Granule (ng/g, w.w.)"))
+
+#set order of dample types
+aa4x_source2 <- aa4x_source1 %>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)")))
+  
+
+ggplot(aa4x_rec1, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+  geom_tile(aes(fill = det_frac), colour="black")+  # background colours are mapped according to the value column
+  #geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 1))), color = "white", size = 5)+
+  geom_text(aes(label= ifelse(is.na(meanx), " ", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
+  scale_fill_gradient2(low = "#74C476", 
+                       mid = "orange", 
+                       high = "red",
+                       midpoint = 50,
+                       breaks=c(0,50,100), limits=c(0,100), na.value = "#8aab91")+  # determine the colour
+   theme(panel.grid.major.x=element_blank(), #no gridlines
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(),
+        panel.background=element_rect(fill="white"), # background=white
+        axis.text.x = element_text(angle=45, hjust = 1,vjust=1,size = 15,colour="black"),
+        plot.title = element_text(size=18,colour="black", vjust = 1, face="bold"),
+        axis.text.y = element_text(size = 12, colour="black"),
+        legend.text=element_text(size=13),
+        axis.line.x = element_line(color="black", linewidth = 1),
+        axis.line.y = element_line(color="black", linewidth = 1),
+        axis.ticks = element_line(color="black", linewidth=1),
+        legend.position =c(0.85, 0.96),
+        legend.direction = "horizontal",
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-50,50,140,10),
+        strip.text.x = element_text(size = 15),
+        panel.spacing.x = unit(0.2, "lines"),
+        legend.title=element_text(size=12), 
+        strip.text.y = element_text(angle = 0, size=12)) +
+  ggtitle("Overview sources") + 
+  scale_x_discrete(name="") +
+  scale_y_discrete(name="") +
+  labs(fill="Detection frequency (%)")+
+  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+
+ggsave("WW_t2.png", wwt_long2, width = 10, height = 12)
+
+```
+
 
 
 ```{r hot spots}
