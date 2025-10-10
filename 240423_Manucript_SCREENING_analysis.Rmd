@@ -84,13 +84,13 @@ df2$Comment_location <- revalue(df2$Comment_location, c("Sedimentation pool" = "
 df2$Medium_id <- revalue(df2$Medium_id, c("Water, filtered (ng/L)" = "Water (ng/L)"))
 df2$Medium_id <- revalue(df2$Medium_id, c("Water, total (ng/L)" = "Water (ng/L)"))
 
-df2$compound <- revalue(df2$compound, c("TMMAT" = "HMMM", "6PPD-q"="6PPD-Q"))
+df2$compound <- revalue(df2$compound, c("TMMAT" = "HMMM", "6PPD-q"="6PPD-Q", "OHBT" ="2-OHBT"))
 
 ```
 
 Final selection of tyre related substances, n=15
 ```{r selection of substances}
-df2x <- subset(df2, compound %in% c("PhBT", "MTBT", "ABT", "OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
+df2x <- subset(df2, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
 ```
 
 
@@ -133,7 +133,7 @@ write.csv(df4_finalx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screeni
 #set the order of substances to highest levels in water first?
 ```{r PLOT heatmap - SOURCES}
 #select only source categories
-aa4x_source <- subset(df4_finalx, Site_Category %in% c("Artificial football field", "Road environment", "Wastewater treatment plant"))
+aa4x_source <- subset(df4_finalx, Site_Category %in% c("Road environment","Artificial football field", "Wastewater treatment plant"))
 
 #aa4x_source1 <- subset(aa4x_source, det_frac != 0) 
 
@@ -143,28 +143,41 @@ aa4x_source2 <- aa4x_source %>%
 
 #set order of sample types
 aa4x_source3 <- aa4x_source%>% 
-  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)", "Granule (ng/g, w.w.)")))
+  mutate(Medium_id = factor(Medium_id, levels = c("Granule (ng/g, w.w.)", "Water (ng/L)", "Sludge (ng/g, d.w.)", "Air, particles (ng/m^3)")))
 
 #set order of compounds based on highest levels in water (road environment)
-aa4x_source3x <- aa4x_source3%>% 
-  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
-  
+#aa4x_source3y <- aa4x_source3%>% 
+#  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "2-OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", #"PhBT", "IPPD", "7PPD", "CPPD")))
+
+#set the order based on molecular groups - revisit!
+aa4x_source3y <- aa4x_source3%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD", "BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT")))
+
+aa4x_source3xy <- aa4x_source3y%>% 
+  mutate(Site_Category = factor(Site_Category, levels =c("Artificial football field", "Road environment","Wastewater treatment plant")))
+
+#add grouping
+aa4x_source3x = aa4x_source3xy%>%
+  mutate(Group = case_when(compound %in% c("DPG", "HMMM", "TMQ") ~ "Various", #skal vi kalle det noe annet?
+                           compound %in% c("6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD") ~ "Substituted para-phenylenediamines",
+                                compound %in% c("BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT") ~ "Benzothiazoles"))
+
 class(aa4x_source3x$det_frac)
 as.numeric(aa4x_source3x$det_frac)
 is.na(aa4x_source3x$det_frac)
 
 
-ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+wwt_long2 <- ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
  #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
   geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
   #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
-  scale_fill_gradient2(low = "#74C476", 
+  scale_fill_steps2(low = "#74C476", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
-                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+                       breaks=c(0,25, 50,75, 100), limits=c(0,100), na.value = "white") +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
@@ -190,17 +203,20 @@ ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+  #facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
 
 ##8aab91
 
-#ggsave("WW_t2.png", wwt_long2, width = 10, height = 12)
+ggsave("WW_t3.png", wwt_long2, width = 10, height = 10)
 
 ```
 
 Adding physiochemical properties
 ```{r}
-prop <- read.table("MS22_properties2.txt", header=TRUE, sep="\t", na.string=c(""), quote = "", fill=TRUE)
+prop <- read.table("MS22_properties3.txt", header=TRUE, sep="\t", na.string=c(""), quote = "", fill=TRUE)
 
 prop$short <- revalue(prop$short, c("HMMM"="TMMAT"))
 
@@ -215,7 +231,7 @@ class(prop$AVERAGE_MASS)
 ```
 
 ```{r order by properties}
-a1 <- new_df %>%
+new_df %>%
   mutate(name = fct_reorder(compound, WATER_SOLUBILITY_MOLL)) %>%
   ggplot(aes(x=Site_Category, y=(compound), fill=det_frac)) +
  #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
@@ -310,6 +326,50 @@ a2 <- new_df %>%
 ggsave("a1_M.png", a2, width = 10, height = 12)
 ```
 
+Can we make correlations based on physiochemical properties?
+```{r}
+#new_df
+
+#skille mello hotspots og receiving
+aa4x_rec <- subset(df4_finalx, !Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
+
+
+print(unique(aa4x_source3x$Medium_id))
+slu <- subset(aa4x_source3x, Medium_id =="Sludge (ng/g, d.w.)")
+wat <- subset(aa4x_rec, Medium_id =="Water (ng/L)")
+colnames(prop)[2] <- "compound"
+
+#properties df from wide to long to append to slu df
+prop_long <- gather(prop, condition, measurement, AVERAGE_MASS:OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, factor_key=TRUE)
+
+prop[14] <- NULL
+prop_long[2] <- NULL
+
+m1 <- merge(x=slu, y=prop, by.x=c("compound"), 
+            by.y=c("compound"), all.x=TRUE, all.y=TRUE)
+
+m2 <- merge(x=wat, y=prop, by.x=c("compound"), 
+            by.y=c("compound"), all.x=TRUE, all.y=TRUE)
+
+
+m1x <- subset(m1, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
+m2x <- subset(m2, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
+
+ggplot(m2x, aes(x=as.numeric(WATER_SOLUBILITY_MOLL), y=(plotting), colour=compound)) + 
+    geom_point()
+  xlim(0, 0.0025)
+
+ggplot(m2x, aes(x=OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, y=plotting, colour=compound)) + 
+    geom_point()
+  xlim(0, 0.05)
+
+  
+  
+
+
+  
+```
+
 ## Source site charts
 1) Trafficked road - tunnel. Treated versus untreated, water and sediment
 ```{r barchart tunnel water and sediment}
@@ -321,12 +381,16 @@ roadx$Comment_location
 roadx$Comment_location2 <- revalue(roadx$Comment_location, c("Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
 
 roadxy <- subset(roadx, !Comment_location == c("Sweeping and vacuuming truck"))
+roadxyz <- subset(roadxy, !compound == c("7PPD"))
+roadxyzz <- subset(roadxyz, !compound == c("CPPD"))
+
 nrow(roadxy)
 
-class(roadxy$value)
+class(roadxyzz$value)
+roadxyzz$value <- as.numeric(roadxyzz$value)
 
-roadxy$value <- as.numeric(roadxy$value)
-#roadxy$value <- na.omit(roadxy$value)
+#roadxy$value <- na.omit(roadxy$value) #not working, instead remove substances 7PPD and CPPD
+
 
 #roadxyz = roadxy %>%
 #  group_by(compound, Comment_location, Medium_id) %>%
@@ -339,12 +403,18 @@ roadxy$value <- as.numeric(roadxy$value)
 #remove the duplicated values, but value and plotting are different so must first be removed
 #roadxyz2<- distinct(roadxyz1, meany, Comment_location, #compound, .keep_all= TRUE) 
 #, fill=fct_rev(Comment_location)
+#set order of sample types
+roadxyzz1 <- roadxyzz%>% 
+  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)")))
 
+#roadxyzz2 <- roadxyzz1%>% 
+#  mutate(Comment_location2 = factor(Comment_location2, levels = c("Untreated", "Treated")))
 
-ggplot(roadxy, aes(y=value, x=compound, shape=Comment_location2, colour=Comment_location2))+
-  geom_point()+
+#PLOTTING
+ggplot(roadxyzz1, aes(y=value, x=compound, fill=Comment_location2, colour=Comment_location2))+
+  geom_boxplot(colour="black")+
   theme_bw()+
-    facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
+    facet_grid((Medium_id)~ ., scales="free", space='free_x')+
   theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
         axis.text.y = element_text(size=11, colour="black"),
         axis.title.x= element_blank(),
@@ -355,25 +425,63 @@ ggplot(roadxy, aes(y=value, x=compound, shape=Comment_location2, colour=Comment_
         strip.background.x = element_blank(),
         strip.placement = "bottom")+
   #scale_y_continuous(trans='log10') +
-  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
+  facet_grid((Medium_id)~ ., scales="free", space='free_x')+
   scale_y_continuous(trans='log10')
 
-write.csv(roadxyz2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
+#lage barplot med kun vann. Se p� variajsoner underveis i vasken
+roadw <- subset(roadxyzz1, Medium_id == "Water (ng/L)")
+
+roadw$Comment_condition <- factor(roadw$Comment_condition, levels = c("Start", "During", "End"))
+roadw$Comment_location2 <- factor(roadw$Comment_location2, levels = c("Untreated", "Treated"))
+
+roadw1 <- subset(roadw, !compound %in% c("ABT", "PhBT", "IPPD"))
+
+roadwMBT <- subset(roadw, compound=="MBT")
+ggplot(roadw1, aes(y=value, x=as.factor(Comment_condition), fill=compound, colour=compound))+
+  geom_bar(stat="identity", position="dodge2")+
+  theme_bw()+
+    facet_grid((Medium_id)~ ., scales="free", space='free_x')+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_blank(),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=10, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  #scale_y_continuous(trans='log10') +
+  facet_grid(compound~Comment_location2, scales="free", space='free_x')+
+  labs(title="Tunnelwater (ng/L) wash")
+  scale_y_continuous(trans='log10')
+
+write.csv(roadxyzz, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
 
 ```
 
 Football fields
 - interesting with granulate and air?
 - indoor outdoor?
-
 ```{r football}
 foot <- subset(aa4x_source3x, Site_Category == "Artificial football field")
-footx <- subset(foot, Medium_id == c("Air, particles (ng/m^3)", "Granule (ng/g, w.w.)"))
+footx <- subset(foot, Medium_id == c("Granule (ng/g, w.w.)"))
+footy <- subset(foot, Medium_id == c("Air, particles (ng/m^3)"))
+                
+                #"Granule (ng/g, w.w.)"))
+
+
 footx$value <- as.numeric(footx$value)
 
-ggplot(footx, aes(y=value, x=compound))+
-  geom_point()+
-  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')
+#set order of compounds based on highest levels in water (road environment)
+footxx <- footx%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "2-OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
+
+
+ggplot(footxx, aes(y=value, x=compound, fill=Comment_location))+
+  geom_point(size=5, aes(shape=Comment_location, colour=Comment_location))+
+  scale_y_continuous(trans='log10')
+  facet_grid(fct_rev(Comment_location)~ ., scales="free", space='free_x')
+  scale_y_continuous(trans='log10')
 
 
 ```
@@ -385,25 +493,31 @@ wwt <- subset(aa4x_source3x, Site_Category == "Wastewater treatment plant")
 #roadx <- subset(road, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
 
 wwt$value <- as.numeric(wwt$value)
+
+#set order of compounds based on highest levels in water (road environment)
+wwtx <- wwt%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "2-OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
 #roadxy$value <- na.omit(roadxy$value)
 
-#wwtx = wwt %>%
-#  group_by(compound, Comment_condition, Medium_id) %>%
-#  mutate(meany = mean(value, na.rm = TRUE))%>% 
-#  ungroup()
-
-#Fjern alle < LOD
-#wwtxz <- subset(wwtx, meany != "NaN") 
 
 #remove the duplicated values, but value and plotting are different so must first be removed
 #wwtxzy<- distinct(wwtxz, meany, Comment_condition, compound, #.keep_all= TRUE) 
 
 #set order of sample types
-wwt2 <- wwt %>% 
+wwt2 <- wwtx %>% 
   mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)")))
 
+#Fjern alle < LOD
+wwtxz <- subset(wwt2, value != "NaN")
 
-ggplot(wwt, aes(y=value, x=compound, fill=fct_rev(Comment_condition)))+
+wwtxz$Comment_condition2 <- revalue(wwtxz$Comment_condition, c("Low" = "Secondary (mechanical)","High" = "Teriary (biological-chemical)"))
+
+#set order of sample types
+wwtxzz <- wwtxz %>% 
+  mutate(Comment_condition2 = factor(Comment_condition2, levels = c("Secondary (mechanical)", "Teriary (biological-chemical)")))
+
+
+ggplot(wwtxzz, aes(y=value, x=compound, fill=(Comment_condition2)))+
   geom_boxplot()+
   #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
   theme_bw()+
@@ -419,9 +533,160 @@ ggplot(wwt, aes(y=value, x=compound, fill=fct_rev(Comment_condition)))+
   facet_grid((Medium_id)~ ., scales="free", space='free_x')+
    scale_y_continuous(trans='log10')
 
-write.csv(roadxyz2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
+write.csv(wwtxzz, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/WasteWater.csv", row.names=FALSE)
 
 ```
+
+## TREATMENt effect
+- statistics only for water due to sample size
+- % removal efficiency water tunnel and WWTP
+```{r}
+treatment <- subset(aa4x_source3x, Site_Category %in% c("Wastewater treatment plant", "Road environment"))
+
+treatment$Comment_location2 <- revalue(treatment$Comment_location, c("Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
+
+write.csv(treatment, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/250805_TEST_treatment.csv", row.names=FALSE)
+#saves the file to fix manually in excel
+```
+
+```{r}
+#upload the manually fixed file
+tst <- read.table("250805_Treatment_test.txt", header=TRUE, sep="\t", na.string=c(""))
+
+#treatment$Comment_location2 <- revalue(treatment$Comment_condition, c("Low" = "Untreated","High" = "Treated"))
+
+#remove unwanted
+treatment2 <- subset(tst, !Comment_location == c("Sweeping and vacuuming truck"))
+treatment3 <- subset(treatment2, !compound == c("7PPD"))
+treatment4 <- subset(treatment3, !compound == c("CPPD"))
+treatment5 <- subset(treatment4, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
+
+treatment6 <- subset(treatment5, Comment_location2 %in% c("Treated", "Untreated"))
+
+#Are these required? or must set na to < lod?
+treatment6$plotting <- as.numeric(treatment6$plotting)
+#Fjern alle < LOD
+treatment6x <- subset(treatment6, plotting != "NaN")
+
+
+#from long to wide, to make the %removal
+treat_wide <- spread(treatment6, Comment_location2, plotting)
+
+#Fix file manually in excel.....
+write.csv(treat_wide, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/250804_for treatment plotting2.csv", row.names=FALSE)
+```
+
+
+```{r}
+sht <- read.table("250805_Treatment_theshit.txt", header=TRUE, sep="\t", na.string=c(""))
+
+#F�rst gjennomsnitt per Comment_condition og Season_condition
+
+
+#Calculate %removal
+sht$treatment <- ((sht$Untreated -sht$Treated)/ sht$Untreated)*100
+#sht$treatment2 <- 1- (sht$Untreated -sht$Treated)/ sht$Untreated
+
+write.csv(sht, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/treatment.csv", row.names=FALSE)
+
+class(sht$treatment2)
+
+sht %>% 
+  group_by(compound, Site_Category) %>% 
+  summarize(m = mean(treatment),
+            sd = sd(treatment)) %>% 
+  ggplot(aes(x = compound, y = (m), fill = m > 0 )) +
+  geom_bar(stat = "identity") +
+  facet_grid(Site_Category~., scales="free")+
+  geom_errorbar(aes(ymin = m - sd, ymax = m + sd))+
+  labs(y = "Removal efficiency (%)")+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
+        axis.text.y = element_text(size=11, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=14),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=14, colour="black"),
+        panel.spacing.x = unit(0, "lines"),
+        strip.background.x = element_blank(),
+        strip.placement = "bottom")+
+  scale_fill_manual(values = c('brown3', 'chartreuse3') ) 
+  
+#scale_y_log10() 
+
+#merge Kow to this file to look for the correlations found by Meland
+
+names(prop)[names(prop) == "short"] <- "compound" 
+
+
+prop1 <- subset(prop, compound %in% c("BTSA",  "MTBT", "2-OHBT", "MBT", "6PPD-Q", "DPPD", "6PPD",  "HMMM", "DPG","TMQ"))
+
+#newdfxx = merge(sht, prop1, by.y="compound", by.x="compound")
+
+print(unique(sht$compound))
+
+merged_df <- merge(prop, sht, by = "compound")
+
+write.csv(newdfxx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/treatmentMP.csv", row.names=FALSE)
+
+
+newdfxx %>% 
+#  group_by(compound, Site_Category) %>% 
+#  summarize(m = mean(treatment),
+#            sd = sd(treatment)) %>% 
+  ggplot(aes(x = OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, y = treatment)) +
+  geom_point() +
+  facet_grid(Site_Category~., scales="free")
+
+  
+  
+  
+  
+  ggplot(merged_df, aes(x=compound, y=treatment))+
+  geom_bar(stat="identity")+
+  facet_grid(Site_Category~., scales="free")+
+  ylim(-20, 1000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#sette sammen road and WWTP
+#"Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
+#Df to be used: roadxyzz
+
+#merge the two
+treatment_df <- merge(roadxyzz, wwtxzz)
+
+colnames(roadxyzz)
+colnames(wwtxzz)
+
+treatment_df_w <- subset(wwtxzz, Medium_id == "Water (ng/L)")
+
+
+
+
+
+#wwtxzz 
+#Comment_condition2, levels = c("Secondary (mechanical)", "Teriary (biological-chemical)")))
+
+
+#make the names the same for both, treated untreated
+#For water, calculate %  treatment
+#PLOT
+
+```
+
 
 ## Recipient sites 
 - urban dam, urban river, and urban park
@@ -444,9 +709,21 @@ aa4x_rec2 <- aa4x_rec%>%
   mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sediment (ng/g, d.w.)", "Air, particles (ng/m^3)")))
 
 #set order of compounds based on highest levels in water (road environment)
-aa4x_rec2x <- aa4x_rec2%>% 
-  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
+#aa4x_rec2x <- aa4x_rec2%>% 
+#  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "2-OHBT", "TMQ", "6PPD-Q", "MTBT", #"MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
   
+#set the order based on molecular groups - revisit!
+aa4x_rec2xz <- aa4x_rec2%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD", "BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT")))
+
+
+#add grouping
+aa4x_rec2x = aa4x_rec2xz%>%
+  mutate(Group = case_when(compound %in% c("DPG", "HMMM", "TMQ") ~ "Various", #skal vi kalle det noe annet?
+                           compound %in% c("6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD") ~ "Substituted para-phenylenediamines",
+                                compound %in% c("BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT") ~ "Benzothiazoles"))
+
+
 class(aa4x_source3x$det_frac)
 as.numeric(aa4x_rec2x$det_frac)
 is.na(aa4x_rec2x$det_frac)
@@ -458,11 +735,11 @@ ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
   #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
-  scale_fill_gradient2(low = "#74C476", 
+  scale_fill_steps2(low = "#74C476", 
                        mid = "orange", 
                        high = "red",
                        midpoint = 50,
-                       breaks=c(0,50,100), limits=c(0,100), na.value = "white") +# determine the colour
+                       breaks=c(0,25, 50,75, 100), limits=c(0,100), na.value = "white") +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
         panel.grid.minor.x=element_blank(), 
         panel.grid.major.y=element_blank(), 
@@ -488,9 +765,183 @@ ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(.~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+  
+
 
 ```
+
+
+PNEC FIGUE
+The following compounds: LCCP, BCPS, isoTAC, TAC, BTSA, OHBT, 6PPD,6PPD-q,DPPD,IPPD,TMQ,TMMAT,DPG, BIS TMC,,DBM,L6,L7,L8,BP_8,4_HBP
+```{r Making the PNEC Figure}
+
+##unique(pnec$compound)  #sjekk at alle er med. Noen endrer navn i R ved lesing
+
+#some problem with catrgorical variables, water turned into na. Here fix:
+df4_finalx$Medium_id2 <- ifelse(df4_finalx$Medium_id == "Water (ng/L)", 'Water',
+                  ifelse(df4_finalx$Medium_id == "Sediment (ng/g, d.w.)", 'Sediment',
+                         ifelse(df4_finalx$Medium_id == "Sludge (ng/g, d.w.)", 'Sediment',
+                                ifelse(df4_finalx$Medium_id == "Air, particles (ng/m^3)", 'Air', "CBG"))))
+
+
+
+#følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
+df4_finalx$value2 <- as.numeric(df4_finalx$value)
+pnec <- df4_finalx %>% drop_na(value2)
+
+#filter out max an min values for each category.
+#Some categories, like tunnel wash water should not be included
+#Remove hot spots?
+pnec1 <- pnec %>% 
+  filter(!Comment_location%in% c("Sweeping and vacuuming truck", "Untreated sediments", "Untreated wash water")) 
+
+print(unique(pnec1$Comment_location))
+pnec_max_minx <- pnec1 %>%
+  group_by(compound, Medium_id2) %>%
+  mutate(Min = min(value2), Max = max(value2))
+unique(pnec$Medium_id2)
+
+#Make new categories to match the PNEC categories of freswater, sediment og biota
+#not using air values here
+pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
+pnec_max_minz <- subset(pnec_max_miny, !Medium_id2=="CBG")
+
+unique(pnec_max_minz$Medium_id2)
+
+pnec_max_min2 <- pnec_max_minz%>%
+  mutate(sample_category = case_when
+         (Medium_id2 %in% c("Water") ~ "Freshwater",
+          Medium_id2 %in% c("Sediment") ~ "Sediment"))
+
+nrow(pnec_max_min2)
+unique(pnec_max_min2$sample_category)
+
+#Laste opp fil med PNEC verdier. Laget fra info i word
+#condition and sample category
+# short and compound
+dx <- read.table("PNEC5.txt", header=TRUE, sep="\t", na.string=c(""))
+
+#Calculate to the correct abbreviations
+dx$Freshwater2 <- dx$Freshwater *1000
+dx$Sediment2 <- dx$Sediment *1
+#dx$Biota2 <- dx$Biota*1
+
+dx_long <- gather(dx, sample_category, limit, Freshwater2:Sediment2, factor_key=TRUE)
+dx_long$compound <- revalue(dx_long$compound, c("6PPDq"="6PPD-Q"))
+dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
+dx_long$compound <- revalue(dx_long$compound, c("TMMAT"="HMMM"))
+dx_long$compound <- revalue(dx_long$compound, c("OHBT"="2-OHBT"))
+
+#one may have wrong class
+pnec_max_min4 <- as.data.frame(pnec_max_min2)
+#subsetting to keep only those with match
+pnec_max_min4$sample_category <- revalue(pnec_max_min4$sample_category, c("Freshwater"="Freshwater2", "Sediment"="Sediment2"))
+
+pnec_max_min5 <- subset(pnec_max_min4, sample_category%in% c("Freshwater2", "Sediment2"))
+
+#MERGE. Til pnec_max_min2 skal vi fra dx legge til alle kolonner ved å matche 
+dx2 <- merge(x=pnec_max_min5,y=dx_long, by=c(as.character("compound"), as.character("sample_category")),
+             all.x=TRUE)
+
+#ARE THRER wrong abbreviations for pnec??
+
+write.csv(dx2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST_pnec.csv", row.names=FALSE)
+```
+
+Må rydde opp i følgende:
+- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
+- sorter stoffene etter stoffgruppe
+- legg til stoffgruppenavn
+
+- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
+
+```{r Cleaning up before plotting}
+#remove duplicate rows before plotting
+dx3 <-dx2 %>% 
+  distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
+
+#sett rekkefølgen til molekylgruppene hvis ikke alle skal med. Altså, dersom kun de med PNEC skal med. Må fjerne de som ikke er med i de 21 i artikkelen. 
+#dx4 <- dx3 %>% 
+#  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "Amitriptyline", "CTC/CTA","Fexofenadine",
+#                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAOT", "TMMAT", "TMQ", #"L6", "L7", "L8", "OP", "4-HBP", "BP-8")))
+
+```
+
+```{r PNEC plot}
+
+#set order of compounds based on highest levels in water (road environment)
+dx3q <- dx3%>% 
+  mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD", "BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT")))
+
+#remove those without available pnecs
+dx3qqq <- dx3q %>% 
+  filter(!compound%in% c("6PPD-Q")) 
+
+dx3qqq$Min2 = dx3qqq$Min/dx3qqq$limit
+dx3qqq$Max2 = dx3qqq$Max/dx3qqq$limit
+
+
+ggplot(dx3qqq, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
+  geom_linerange(size=2, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
+  #geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
+  scale_x_continuous(trans='log10') +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
+        axis.text.y = element_text(size = 15,colour="black"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
+        panel.spacing = unit(0, "lines"), 
+        strip.background = element_blank(),
+        strip.placement = "outside",
+        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
+        legend.title = element_blank(),
+        legend.text = element_text(size=15),
+        plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
+        legend.position = "top")+
+  #facet_grid(m_group~., scales="free_y", space='free')+
+  xlab("RQ")+
+  scale_alpha(guide = 'none')+
+  guides(color=guide_legend("sample_category"), fill = "none")+
+  scale_color_manual(values = c("#00BFC4", "#7CAE00"),
+  labels = c('Freshwater', 'Sediment'))+
+  geom_vline(xintercept = 1, linetype="dotted", 
+                color = "red", size=1.5)
+
+  
+#geom_rect(data=data.frame(xmin=-Inf,xmax=1,ymin=-Inf,ymax=Inf),
+  #          aes(xmin = xmin, xmax =xmax, ymin = ymin, ymax = ymax),
+  #          fill = "red",alpha=0.1)+
+  
+
+ggsave("pnec.png", pnec, width = 7, height = 9.3)
+
+#, values = c("red", "blue", "grey"))
+#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
+  
+  #scale_fill_manual(values = c("red", "blue", "grey"))
+  #scale_colour_manual(values = c("red", "blue", "grey"))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1282,122 +1733,6 @@ ggsave("solidbiota.png", sb, width = 10, height = 8)
 ```
 
 
-PNEC FIGUE
-The following compounds: LCCP, BCPS, isoTAC, TAC, BTSA, OHBT, 6PPD,6PPD-q,DPPD,IPPD,TMQ,TMMAT,DPG, BIS TMC,,DBM,L6,L7,L8,BP_8,4_HBP
-```{r Making the PNEC Figure}
-#df_finalzzc <- df_finalzz %>% 
-#  mutate(compound = factor(compound, levels = c("11112-PFECA", "1112-PFECA", "112-PFECA", #"12-PFECA", "13-PFECA", "4,4-ADP", "44-BPS2", "44-PD", "4-HBP", "6PPD", "6PPD-q", "77PD", "7PPD", #"ABT",  "Amitriptyline", "BCPS", "BIS TC", "BOPA", "BP-8", "BPAE", "BPSE", "BTSA","CCl4", "CPPD", #"CTC/CTA", "Cyhalthrin", "DBM", "DCM", "DNPD", "DPG", "DPPD", "Fexofenadine", "Fipronil", #"Indoxacarb", "IPPD", "isoTAC", "L10", "L6", "L7", "L8", "L9", "LCCP", "MBT", "MPAMS", "MTBT",  #"MTDID", "NDPD", "OH-BPA", "OHBT", "OP", "PCE", "PhBT", "PPPA", "TAC", "TAI", "TAOT", "TCE", #"TCM", "TMBP", "TMMAT", "TMQ")))
-
-#pnec <- subset(df_finalzzc, compound%in% c("LCCP", "CTC/CTA", "BCPS", "isoTAC", "BTSA", "OHBT", #6PPD", "6PPD-q", "DPPD", "IPPD", "TMQ", "TMMAT", "DPG", "44-BPS2", "BIS-TMC", "TAOT", "DCM", #TCE", "PCE", "CCl4", "L6", "L7", "L8",  "BP-8", "4-HBP", "OP", "Amitriptyline", "Fexofenadine"))
-##unique(pnec$compound)  #sjekk at alle er med. Noen endrer navn i R ved lesing
-
-#følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
-df_finalzz$value2 <- as.numeric(df_finalzz$value)
-pnec <- df_finalzz %>% drop_na(value2)
-
-#filter out max an min values for each category. Wich categories to choose? 
-pnec_max_minx <- pnec %>%
-  group_by(compound, Medium_id2) %>%
-  mutate(Min = min(value2), Max = max(value2))
-unique(pnec$Medium_id2)
-
-#Make new categories to match the PNEC categories of freswater, sediment og biota
-#not using air values here
-pnec_max_miny <- subset(pnec_max_minx, !Medium_id2=="Air")
-
-pnec_max_min2 <- pnec_max_miny%>%
-  mutate(sample_category = case_when
-         (Medium_id2 %in% c("Water") ~ "Freshwater",
-          Medium_id2 %in% c("Solids") ~ "Sediment",
-          Medium_id2 %in% c("Biota") ~ "Biota"))
-
-nrow(pnec_max_min2)
-unique(pnec_max_min2$sample_category)
-#Laste opp fil med PNEC verdier. Laget fra info i word
-#condition and sample category
-# short and compound
-dx <- read.table("PNEC3.txt", header=TRUE, sep="\t", na.string=c(""))
-
-
-#Calculate to the correct abbreviations
-dx$Freshwater2 <- dx$Freshwater *1
-dx$Sediment2 <- dx$Sediment *1
-dx$Biota2 <- dx$Biota*1
-
-dx_long <- gather(dx, sample_category, limit, Freshwater2:Biota2, factor_key=TRUE)
-dx_long$compound <- revalue(dx_long$compound, c("6PPDq"="6PPD-q"))
-dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
-
-#one may have wrong class
-pnec_max_min4 <- as.data.frame(pnec_max_min2)
-#subsetting to keep only those with match
-pnec_max_min4$sample_category <- revalue(pnec_max_min4$sample_category, c("Freshwater"="Freshwater2", "Biota"="Biota2", "Sediment"="Sediment2"))
-
-pnec_max_min5 <- subset(pnec_max_min4, sample_category%in% c("Freshwater2", "Sediment2", "Biota2"))
-
-#MERGE. Til pnec_max_min2 skal vi fra dx legge til alle kolonner ved å matche 
-dx2 <- merge(x=pnec_max_min5,y=dx_long, by.x=c(as.character("compound"), as.character("sample_category")),
-             all.x=TRUE)
-
-#ARE THRER wrong abbreviations for pnec??
-
-write.csv(dx2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST_pnec.csv", row.names=FALSE)
-```
-
-Må rydde opp i følgende:
-- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
-- sorter stoffene etter stoffgruppe
-- legg til stoffgruppenavn
-
-- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
-
-```{r Cleaning up before plotting}
-#remove duplicate rows before plotting
-dx3 <-dx2 %>% 
-  distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
-
-#sett rekkefølgen til molekylgruppene hvis ikke alle skal med. Altså, dersom kun de med PNEC skal med. Må fjerne de som ikke er med i de 21 i artikkelen. 
-#dx4 <- dx3 %>% 
-#  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "Amitriptyline", "CTC/CTA","Fexofenadine",
-#                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAOT", "TMMAT", "TMQ", #"L6", "L7", "L8", "OP", "4-HBP", "BP-8")))
-
-```
-
-```{r PNEC plot}
- ggplot(dx3, aes(y=fct_rev(compound), x=value2, xmin = Min, xmax=Max, colour = sample_category))+ 
-  geom_linerange(size=2, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
-  geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
-  scale_x_continuous(trans='log10') +
-  theme_bw()+
-  theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
-        axis.text.y = element_text(size = 15,colour="black"),
-        axis.title.y = element_blank(),
-        axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0), size=15),
-        panel.spacing = unit(0, "lines"), 
-        strip.background = element_blank(),
-        strip.placement = "outside",
-        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
-        legend.title = element_blank(),
-        legend.text = element_text(size=15),
-        plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
-        legend.position = "top")+
-  facet_grid(m_group~., scales="free_y", space='free')+
-  xlab("log10(concentration)")+
-  scale_alpha(guide = 'none')+
-  guides(color=guide_legend("sample_category"), fill = "none")+
-  scale_color_manual(values = c("#C77CFF", "#00BFC4", "#7CAE00"),
-  labels = c('Biota', 'Freshwater', 'Sediment'))
-
-ggsave("pnec.png", pnec, width = 7, height = 9.3)
-
-#, values = c("red", "blue", "grey"))
-#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
-  
-  #scale_fill_manual(values = c("red", "blue", "grey"))
-  #scale_colour_manual(values = c("red", "blue", "grey"))
-
-
-```
 
 
 # Exploring site specific contamination patterns
