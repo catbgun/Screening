@@ -8,7 +8,6 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 *Functions* 
 - Function to replace "<LOD" with 0.5 LOD-value
 - Function to set number of digits
@@ -19,39 +18,31 @@ dLimity <- function(v){
   v <- as.character(v)
   isLimit <- grepl("<", v)  #grepl() is a built-in R function looks for a smaller string of characters
   v[isLimit] <- as.numeric(gsub("<(.*)", "\\1", v[isLimit]))/2 #gsub(pattern, replacement, x) for substitution
-  as.numeric(v)
-}
+  as.numeric(v)}
 
 #Test to set desired number of digits
 sigfig <- function(vec, digits){
-  return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))
-}
+  return(gsub("\\.$", "", formatC(signif(vec,digits=digits), digits=digits, format="fg", flag="#")))}
 
 #For statistics plotting (not used?)
 get_box_stats <- function(y, upper_limit = max(df$mpg) * 1.15) {
   return(data.frame(
     y = 0.95 * upper_limit,
     label = paste(
-      "n =", length(y), "\n"
-      
-    )
-  ))
-}
+      "n =", length(y), "\n")))}
 ```
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
 #install.packages(c("dplyr", "ggplot2", "plyr", "Rmisc", "tidyverse", "lubridate", "stringr"))
-Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats", "magrittr")
+Packages <- c("plyr", "dplyr", "ggplot2",  "tidyr", "egg", "reshape2", "forcats", "magrittr", "FactoMineR", "factoextra", "ggpubr", "ggrepel")
 lapply(Packages, library, character.only = TRUE)
 #"Rmisc", "tidyverse", "lubridate", "stringr",
 ```
-
 File upload 
 ```{r echo = T, results = 'hide'}
 Sys.setlocale(locale="no_NO")
 df1 <- read.table("C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/240621_MS_Screening2.txt", header=TRUE, sep="\t", na.string=c(""))
 ```
-
 Select samples to be excluded, not relevant for MS context
 ```{r sample exclusion}
 df2 <- df1 %>% 
@@ -60,7 +51,6 @@ df2 <- df1 %>%
   filter(!Comment_location == "Marine") %>% 
   filter(!(Medium_id %in% c("Water, particles (ng/L)", "Air (ng/m^3)")))
 ```
-
 Replace names
 ```{r}
 df2$Site_Category <- revalue(df2$Site_Category, c("Tunnel environment" = "Trafficked road"))
@@ -76,26 +66,24 @@ df2$Medium_id <- revalue(df2$Medium_id, c("Granule (ng/g, w.w.)" = "Crumb rubber
 df2$Medium_id <- revalue(df2$Medium_id, c("Air, particles (ng/m^3)" = "PM10 (ng/m^3)"))
 df2$compound <- revalue(df2$compound, c("TMMAT" = "HMMM", "6PPD-q"="6PPD-Q", "OHBT" ="2-OHBT"))
 ```
-
 Final selection of tyre related substances, n=15
 ```{r selection of substances}
 df2x <- subset(df2, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
 ```
-
 ## Make heatmap table based on sample types and category
 ```{r preparations for heatmap}
-df3 <- subset(df2x, !is.na(value)) 
+df3 <- subset(df2x, !is.na(value)) #nothing removed
 
-df4_freq = df3 %>%
-  group_by(Medium_id, compound, Site_Category) %>% #include site category or not, depending on whether this should be included in the PLS or not. 
+df4_freq = df3 %>% #calculate detection frequency
+  group_by(Medium_id, compound, Site_Category) %>% #include site category depending on analysis 
   mutate(lodcount = sum(lengths(regmatches(value, gregexpr("<", value)))), 
             n = (length(value)),
             det_frac = (100-(lodcount/n)*100))%>%
   ungroup() 
 
 #avoid plotting zeroes
-df4_filt <- df4_freq %>% 
-  mutate(plotting = ifelse(det_frac == 0, 
+df4_filt <- df4_freq %>%  #zeroes assigned <LOD
+  mutate(plotting = ifelse(det_frac == 0, #there are no zeroes here
                            "<LOD", 
                            value))
 
@@ -118,11 +106,11 @@ write.csv(df4_finalx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screeni
 #select only hotspot categories
 aa4x_source <- subset(df4_finalx, Site_Category %in% c("Road environment","Artificial football field", "Wastewater treatment plant"))
 
-#aa4x_source1 <- subset(aa4x_source, det_frac != 0) 
+#aa4x_source1 <- subset(aa4x_source, det_frac != 0) #to remove detection frequency = 0, but this is not used for the heatmap. 
 
-aa4x_source2 <- aa4x_source %>% 
+#aa4x_source2 <- aa4x_source %>% 
   #filter(!(Site_name == "Smestaddammen")) %>% 
-  filter(!(Medium_id == "Crumb rubber (ng/g, w.w.)"))
+ # filter(!(Medium_id == "Crumb rubber (ng/g, w.w.)"))
 
 #set order of sample types
 aa4x_source3 <- aa4x_source%>% 
@@ -178,17 +166,14 @@ wwt_long2 <- ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fil
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
   facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
-
   #facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
 
 ggsave("WW_t3.png", wwt_long2, width = 10, height = 10)
-
 ```
 
 ## FIGURE 3 - Recipient sites 
 - urban dam, urban river, and urban park
 - bargraphs per sample type?
-
 ```{r testing heatmap}
 #select only site categories¨
 aa4x_rec <- subset(df4_finalx, Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
@@ -250,26 +235,20 @@ ggsave("rec_sites.png", rec_sites, width = 10, height = 10)
 
 ```
 
-
-
-
-#Create datset for Sondre - long format, <LOD as the LOD numeric, and FALSE/TRUE for <LOD
-```{r}
-# set LOD-value (replaces value)
-#first copy the value-column so it can be replaed without loosing the info
+#Create datset long format for data analysis
+```{r preparation}
+#first copy the value-column so it can be replaed without loosing the info. Using df without "plotting" column
 df4_freq$value2 <- df4_freq$value
-
-df4_LOD_S <- cbind(df4_freq[,c(1:18, 20:25)], apply(df4_freq[,19, drop=F],2, dLimity)) #dLimity setter 0.5*LOD
+df4_LOD_S <- cbind(df4_freq[,c(1:18, 20:25)], apply(df4_freq[,19, drop=F],2, dLimity)) #dLimity function sets 0.5*LOD
 
 #set true or false based on <LOD or not
-df4_LOD_S$Censored <- ifelse(grepl("<", df4_LOD_S$value2), TRUE, FALSE)
+#df4_LOD_S$Censored <- ifelse(grepl("<", df4_LOD_S$value2), TRUE, FALSE)
 
-#remove columns otherwise messing up
-# Define columns to remove
-cols_to_remove <- c("lodcount", "n", "det_frac", "value2")
+#remove columns otherwise messing up. Define columns to remove
+#cols_to_remove <- c("lodcount", "n", "det_frac", "value2")
 
 # Remove columns
-df4_LOD_S_new <- df4_LOD_S[, !(names(df4_LOD_S) %in% cols_to_remove)]
+#df4_LOD_S_new <- df4_LOD_S[, !(names(df4_LOD_S) %in% cols_to_remove)]
 
 #from long to wide
 #df4_LOD_S_wide <- df4_LOD_S_new %>%
@@ -292,6 +271,7 @@ cols_to_remove <- c("lodcount", "n", "det_frac", "Provenr", "value2", "Longitude
 
 df4_new <- df4_LOD_S[, !(names(df4_LOD_S) %in% cols_to_remove)]
 
+#from long to wide
 df_widec <- df4_new %>%
   pivot_wider(
     names_from  = c(Medium_id, Site_Category),   # combine both into column names
@@ -300,9 +280,6 @@ df_widec <- df4_new %>%
   )
 
 #add physiochemical properties
-#raw_lines <- readLines("C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/3251205_Prop2.txt", warn = FALSE)
-#length(raw_lines)
-
 fc <- read.table(
   "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/3251205_Prop2.txt",
   header = TRUE,
@@ -314,8 +291,8 @@ fc <- read.table(
 )
 
 fc$short <- revalue(fc$short, c("OHBT" = "2-OHBT"))
-
 combi <- merge(df_widec, fc, by.x="compound", by.y="short")
+
 nrow(combi)
 
 #fjern luftprøver fotballbane grunnet NAs og granulatprøver
@@ -327,48 +304,8 @@ nrow(df_widec3)
 print(unique(df_widec3$compound))
 ```
 
-#Slette mye her?
 ```{r Correlation plot}
 corry <- subset(df_widec3[,c(6:17, 23, 29, 33)])
-correlation_matrix <- cor(df_widec3[,c(6:17, 23, 29, 33)])
-
-library("PerformanceAnalytics")
-chart.Correlation(corry, histogram=TRUE, pch=19)
-
-# Print the matrix
-plot(correlation_matrix)
-
-corr_simple <- function(data=df,sig=0.5){
-  #convert data to numeric in order to run correlations
-  #convert to factor first to keep the integrity of the data - each value will become a number rather than turn into NA
-  df_cor <- data %>% mutate_if(is.character, as.factor)
-  df_cor <- df_cor %>% mutate_if(is.factor, as.numeric)
-  #run a correlation and drop the insignificant ones
-  corr <- cor(df_cor)
-  #prepare to drop duplicates and correlations of 1     
-  corr[lower.tri(corr,diag=TRUE)] <- NA 
-  #drop perfect correlations
-  corr[corr == 1] <- NA 
-  #turn into a 3-column table
-  corr <- as.data.frame(as.table(corr))
-  #remove the NA values from above 
-  corr <- na.omit(corr) 
-  #select significant values  
-  corr <- subset(corr, abs(Freq) > sig) 
-  #sort by highest correlation
-  corr <- corr[order(-abs(corr$Freq)),] 
-  #print table
-  print(corr)
-  #turn corr back into matrix in order to plot with corrplot
-  mtx_corr <- reshape2::acast(corr, Var1~Var2, value.var="Freq")
-  
-  #plot correlations visually
-  corrplot(mtx_corr, is.corr=FALSE, tl.col="black", na.label=" ")
-}
-
-corr_simple(corry)
-#corr_simple(X_std)
-
 ```
 Test skewness
 Generally, a skewness value between -1 and +1 is considered acceptably close to symmetric/normal for many statistical purposes. Values beyond -2 and +2 suggest substantial non-normality. 
@@ -376,8 +313,7 @@ Generally, a skewness value between -1 and +1 is considered acceptably close to 
 ```{r test skewness}
 library(moments)
 sapply(corry, moments::skewness)
-#visually
-#histograms
+
 par(mfrow = c(2, 3))   # adjust layout for multiple plots
 for (col in names(corry)) {
   hist(corry[[col]], main = col, xlab = "", col = "lightblue")
@@ -392,16 +328,20 @@ for (col in names(corry)) {
 boxplot(corry, main = "Boxplots of variables", col = "lightgreen")
 
 ```
-
 log-transform
 ```{r}
-corry2 <- corry %>%
+corry1 <- corry %>%
   mutate(across(c(1:12, 14), ~ log(.x), .names = "{col}_log"))
 ```
 
-
-#TROR mye kan slettes under her
+#Figure 4 - PCA
+We scaled the supplementary variables by multiplying their coordinates with a constant so their arrow lengths match the scale used for the active variables in the biplot.
+This was needed because fviz_pca_biplot() automatically rescales active variables to fit the spread of the data, while supplementary variables are left unscaled and therefore appear artificially short unless adjusted.
+https://f0nzie.github.io/machine_learning_compilation/detailed-study-of-principal-component-analysis.html
 ```{r PCA}
+# Run PCA on the active variables only; add phys-chem as supplementary
+corry2 <- corry1[,c(13, 15, 28, 16:27)]
+
 #PCA
 #replace names to make nicer plots
 print(colnames(corry2))
@@ -423,122 +363,11 @@ corry3 <- corry2 %>%
         "PM10_Road"="PM10 (ng/m^3)_Road environment_log"
         )
 
-head(corry2)
-#log tranform to reduce skewness, etc. 
-par(mfrow = c(1, 1)) 
 rownames(corry3) <- c("2-OHBT", "6PPD", "6PPD-Q", "ABT", "BTSA", "DPG", "DPPD", "HMMM", "IPPD", "MBT", "MTBT", "PhBT", "TMQ")
 
-pca_result <- prcomp(corry2[,c(16:28, 13, 15)], center = TRUE, scale. = TRUE) 
-pca_result <- prcomp(corry3[,c(16:27)], center = TRUE, scale. = TRUE) #ingen fysiochem
+colnames(corry3)[colnames(corry3) == "Henry's law constant"] <- "Henry's law const." #shorter name for plot
 
-# View summary
-summary(pca_result)
-
-# Scree plot
-screeplot(pca_result, type = "lines", main = "My Scree Plot")
-plot(pca_result, type = "l")
-
-library(factoextra)
-fviz_pca_ind(pca_result,
-             col.ind = "cos2", # Color by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-             )
-
-fviz_pca_var(pca_result,
-             col.var = "contrib", # Color by contributions to the PC
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-                 )
-#biplot 
-fviz_pca_biplot(pca_result, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969"  # Individuals color
-                )
-
-
-fviz_contrib(pca_result, choice = "var", axes = 1, top = 10) # PC1
-fviz_contrib(pca_result, choice = "var", axes = 2, top = 10)
-fviz_cos2(pca_result, choice = "var", axes = 1:2)
-
-#fviz_pca_ind(pca_result, geom.ind = "point", col.ind = group_vector,
-#             palette = "jco", addEllipses = TRUE, ellipse.level = 0.95)
-
-
-#valdition
-library(psych)
-KMO(X)                # Sampling adequacy
-cortest.bartlett(X)   # Bartlett's test of sphericity
-#Interpretation: KMO > 0.6 and Bartlett p < 0.05 indicate PCA is appropriate.
-
-#NY TEST
-# X: matrix/data.frame of variables that define the PCA (active variables)
-# E: data.frame of physico-chemical variables (same rows/samples as in X)
-
-X <- corry3[,c(16:27)]
-E <- corry3[,c(13, 15, 28)]
-X1 <- unlist(X)
-E1 <- unlist(E)
-
-typeof(X1)
-
-library(FactoMineR)
-library(factoextra)
-
-
-# Biplot
-biplot(pca_result)
-
-#devtools::install_github("vqv/ggbiplot")
-
-library(ggbiplot)
-ggbiplot(pca_result) +
-geom_point(aes(colour = df_widec3$compound), size=4) +
-#labs(colour = "Compound", x = "PC1(Size; 44.4%)", y = "PC2 (Shape; 17.7%)") +
-theme_bw()
-
-#sjekker for interpretation av PCA-standardized biplot
-round(pca_result$rotation[, 1:2], 3)  # loadings of matrices on PC1 & PC2
-
-#B) Relate PC scores to physiochemical properties (overlay or correlation)
-# scores for compounds
-scores <- as.data.frame(pca_result$x[,1:2])         # PC1, PC2 for compounds
-scores$compound <- rownames(scores)
-
-# physchem is per compound (logKow, pKa, Henry, Solubility, etc.)
-physchem <- corry3[, c(13, 15, 28)] 
-tmp <- merge(scores, physchem, by="row.names")
-nrow(corry3)
-
-cor(tmp$PC2, tmp$`Octanol-water part. (log Kow)`, use="pairwise.complete.obs")
-#cor(tmp$PC2, tmp$Solubility, use="pairwise.complete.obs")
-
-library(vegan)
-X <- corry3[, c(16:27)] # explanatory variables
-
-ord <- rda(X, scale=TRUE)
-fit <- envfit(ord, physchem, permutations = 999)
-plot(ord, type="n"); points(ord, display="sites", pch=19, col="grey40")
-plot(fit, col="firebrick")
-
-
-
-```
-
-
-THIS RESEMPLES FIGURE IN MS
-We scaled the supplementary variables by multiplying their coordinates with a constant so their arrow lengths match the scale used for the active variables in the biplot.
-This was needed because fviz_pca_biplot() automatically rescales active variables to fit the spread of the data, while supplementary variables are left unscaled and therefore appear artificially short unless adjusted.
-```{r}
-library(FactoMineR)
-library(factoextra)
-
-# Run PCA on the active variables only; add phys-chem as supplementary
-corry4 <- corry3[,c(13, 15, 28, 16:27)]
-
-colnames(corry4)[colnames(corry4) == "Henry's law constant"] <- "Henry's law const." #shorter name for plot
-
-res.pca <- PCA(corry4,
+res.pca <- PCA(corry3,
   scale.unit = TRUE,
   graph = FALSE,
   quanti.sup = c(1:3))    # <- physiochemical variables as supplementary)
@@ -550,7 +379,7 @@ ind <- res.pca$ind$coord
 var <- res.pca$var$coord
 sup <- res.pca$quanti.sup$coord
 
-# ???? Compute scaling based on individuals (this is the missing piece!)
+# Compute scaling
 scale_factor <- min(
   (max(ind[,1]) - min(ind[,1])) / (max(var[,1]) - min(var[,1])),
   (max(ind[,2]) - min(ind[,2])) / (max(var[,2]) - min(var[,2]))
@@ -573,7 +402,7 @@ sup_scaled <- res.pca$quanti.sup$coord * 3.5   # try 3-5
 
 #align label with arrow head
 # scale arrows correctly
-bi <- fviz_add(p, sup_scaled,
+fviz_add(p, sup_scaled,
          geom = c("arrow", "text"),
          color = "firebrick",
          linetype = "dashed",
@@ -581,10 +410,22 @@ bi <- fviz_add(p, sup_scaled,
   theme(
   axis.title = element_text(size = 14),
   axis.text = element_text(size = 12),
-  plot.title = element_text(size = 18))
+  plot.title = element_text(size = 18, face="bold"))
 
 ggsave("PCA_biplot.png", bi, width = 8.5, height = 7.5)
 
+
+fviz_pca_ind(pca_result,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+             )
+
+fviz_pca_var(pca_result,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+                 )
 
 fviz_screeplot(res.pca)
 # variable contributions on axis 1
@@ -606,16 +447,6 @@ round(var$contrib[, 1:2], 2)
 # Quality of representation (cos²) of variables on PC1 & PC2
 round(var$cos2[, 1:2], 3)
 
-
-
-# Quantitative supplementary variables projected in PC space
-# (e.g., physico-chemical properties)
-round(res.pca$quanti.sup$coord[, 1:2], 3)    # their coordinates on PC1-PC2
-round(res.pca$quanti.sup$contrib[, 1:2], 2)  # contributions (if computed)
-round(res.pca$quanti.sup$cos2[, 1:2], 3)     # cos²
-
-
-
 var <- get_pca_var(res.pca)
 
 load_tbl <- data.frame(
@@ -632,619 +463,104 @@ load_tbl <- data.frame(
 # Round numeric columns
 load_tbl[] <- lapply(load_tbl, function(x) if (is.numeric(x)) round(x, 3) else x)
 head(load_tbl)
-
-
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-29-12.2025 - Redundancy analysis (RDA) 
-https://www.geeksforgeeks.org/r-language/redundancy-analysis-using-r/
-
-Transformation is required. 
-- environmental continuous data: log-transform and standardise
-- physiochemical properties: standardize. Also log-.transform is the value span orders of magnitude (I think Henry s law constant)
-```{r RDA}
-library(vegan)
-
-#Firs, follow the log-transformation done for PCA. SHould also standardise?
-Y <- corry2[, c(13, 15, 28)] # response variables 
-X <- corry2[, c(16:27)] # explanatory variables
-
-my_rda <- rda(Y,X)
-summary(my_rda)
-plot(my_rda)
-
-#second, standardise
-X_std <- scale(X)
-Y_std <- scale(Y)
-
-my_rda2 <- rda(Y_std,X_std)
-summary(my_rda2)
-plot(my_rda2) #triplot
-
-RsquareAdj(my_rda2) #explained variance
-anova.cca(my_rda2, permutations = 999) #global signficance
-anova.cca(my_rda2, by = "axis") #axis signfiicance
-anova.cca(my_rda2, by = "terms") #terms significance 
-
-sqrt(vif.cca(my_rda2)) #varify multicollinearity. If higher than 2, some may be redundant
-
-install.packages("packfor", repos = "http://R-Forge.R-project.org")
-library(packfor)
-
-# global R2
-global_r2 <- RsquareAdj(my_rda2)$adj.r.squared
-
-global_r2
-
-#sjekk for årsaken til R2=1
-cor(cbind(Y_std, X_std))
-
-nrow(X_std) 
-ncol(X_std)
-
-apply(Y_std, 2, var) 
-apply(X_std, 2, var)
-
-vif.cca(my_rda2)
-
-pip <- cor(X)
-plot(pip)
-chart.Correlation(X_std, histogram=TRUE, pch=19)
-
-co2 <- corry[,c(1:12, 14)]
-
-cor(co2) 
-vif.cca(co2)
-
-```
-
-
-
-
-
-
-
-
-```{r PLS}
-cols_to_check <- c(29) 
-combi3 <- df_widec2[complete.cases(df_widec2[, cols_to_check]), ]
-#https://www.r-bloggers.com/2013/07/partial-least-squares-regression-in-r/
-library(plsdepot)
-
-#replace names to make nicer plots
-print(colnames(corry2))
-corry3 <- corry2 %>% 
-  rename("Henry's law constant" = "HENRYS_LAW_ATM.M3.MOLE_OPERA_PRED_log", 
-         "Octanol-water part. (log Kow)" = "OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED",
-        "Water_Football field"= "Water (ng/L)_Artificial football field_log",
-        "Sludge_WWTP" ="Sludge (ng/g, d.w.)_Wastewater treatment plant_log",
-        "Sediment_River"="Sediment (ng/g, d.w.)_Urban river_log",
-        "Water_Road"="Water (ng/L)_Road environment_log",
-        "Sediment_Pond"="Sediment (ng/g, d.w.)_Urban pond_log",
-        "Air-particles_Park" ="Air, particles (ng/m^3)_Urban park_log",
-        "Sludge_Football field" ="Sludge (ng/g, d.w.)_Artificial football field_log",
-        "Water_WWTP"="Water (ng/L)_Wastewater treatment plant_log",
-        "Water_River"="Water (ng/L)_Urban river_log",
-        "Sludge_Road environment"="Sludge (ng/g, d.w.)_Road environment_log",
-        "Water_Pond"="Water (ng/L)_Urban pond_log",
-        "Air-particles_Road"="Air, particles (ng/m^3)_Road environment_log"
-        )
-
-#Y = 5, 31, 35
-df.plsdepot <- plsreg2(corry3[,16:27], corry3[, c(15, 28)], crosval=TRUE)
-df.plsdepot <- plsreg2(corry3[, c(15, 28)], corry3[,16:27], crosval=TRUE)
-
-plot(df.plsdepot, comps = c(1, 2), xlab="First principal component (55%)",
-     ylab="Second principal component (45%)", cex.lab=2, col.lab="black")
-
-summary(df.plsdepot)
-
-plot(df.plsdepot)
-df.plsdepot$VIP #Variable Importance for Projection. measure the contribution of each predictor in explaining the response variable in a PLS model. A higher VIP score indicates that a predictor plays a crucial role, while lower scores suggest lesser importance. VIP ??? 1: Important predictor. VIP < 1: Less significant predictor.Eliminating low-VIP predictors simplifies the model while preserving predictive power.
-
-#SCORE PLOT
-#x-scores: components of the predictor variables (also known as T-components)
-#y-scores: components of the response variables (also known as U-components)
-plot(df.plsdepot$x.scores, df.plsdepot$y.scores) #A tight cluster with points near a diagonal line (slope 1, intercept 0) suggests a good model fit, while nonlinear patterns suggest poor prediction.
-
-#LOADS. x.load variables at zero can be removed
-df.plsdepot$x.loads
-df.plsdepot$y.loads
-
-#Correlations between the loads and the variables
-plot(df.plsdepot$cor.xt, df.plsdepot$cor.xu)
-plot(df.plsdepot$cor.yt, df.plsdepot$cor.yu)
-
-#weights to calculate the PLS scores with the deflated matrices of predictor variables
-#not sure what this means but there is an apparent correlation
-plot(df.plsdepot$raw.wgs, df.plsdepot$mod.wgs)
-
-#expvar table with R-squared coefficients
-#Cumulative R2 values are provided according to the retained number of components. These values reflect the explanatory power of the components for all dependent variables (cumulative R2Y) and for all explanatory variables (cumulative R2X)
-df.plsdepot$expvar
-
-
-df.plsdepot$Q2
-
-
-#to have on the plot axes: Axis 1 (t1): R2X = 63.3% Axis 2 (t2): R2X = 21.1%
-#table of Q2 indexes (i.e. leave-one-out cross validation).
-#cross-validation results are calculated for each component
-#With cross-validation, the model with the highest predicted R2 value is preducted?
-df.plsdepot$Q2
-df.plsdepot$Q2cum
-
-#variable selection based on VIP scores. close- to and higher than 0.8 should be included? Or?
-#remove: NO3.TOTP.XNO3.TOTP, peat, max elevation, d.max, 
-
-#her kan du legge til farge for region
-#https://stackoverflow.com/questions/42203802/adding-ellipses-to-a-partial-least-squares-regression-pls-observation-plot
-all_G$Region <- as.numeric(all_G$Region)
-#col.points = all_Gv$Region,
-plot(df.plsdepot, what="observations",  pch=19, where=c("t","t"))
-legend(x = "topleft",
-       col = unique(all_Gv$Region), lty = 1, lwd = 1,
-       legend = unique(all_Gv$Region))
-
-print(unique(al$Region.4))
-
-# VALIDATE https://support.minitab.com/en-us/minitab/21/help-and-how-to/statistical-modeling/regression/how-to/partial-least-squares/interpret-the-results/key-results/
-
-#https://support.minitab.com/en-us/minitab/20/help-and-how-to/statistical-modeling/regression/how-to/partial-least-squares/interpret-the-results/all-statistics-and-graphs/graphs/
-
-
-
-#Regression coefficients
-#signifies the amount by which change in x must be multiplied to give the corresponding average change in y, or the amount y changes for a unit increase in x
-#Regression coefficients are numerical values that represent the strength and direction of the relationship between variables in a regression model.
-df.plsdepot$std.coefs
-#Vector of regression coefficients (used with the original data scale)
-df.plsdepot$reg.coefs
-
-#Vector of predicted valye versus vector of residuals
-plot(df.plsdepot$y.pred, df.plsdepot$y.resid)
-
-
-
-
-
-#is interbat helpful?
-ib = interbat(all_G[,4:31],all_G[, c(1:3)])
-# plot variables
-plot(ib, what="variables")
-# plot observations
-plot(ib, what="observations", comps=c(1,1), where=c("t","u"))
-
-
-```
-
-
-Why these numbers?
-In PLS, t1 and t2 are latent components. Each axis corresponds to one component, so you report the variance explained by that component.
-The R2X columns tell you how much of the X-block variance each component explains. For axis labeling, this is the conventional choice because the axes are defined from the X-space decomposition.
-The cumulative values are ideal for describing overall model fit across the first two components (e.g., in the figure caption), but not for individual axis labels.
-
-
-
-
-
-
-
-
-
-
-
-
-Run PCA/PLS on Sondre dataset?
-
-```{r PCA/PLS}
-# Standardize the data
-data_scaled <- scale(merged_df)
-
-#subset columns relevant
-m_df_sub <- df4_LOD_S_wide[, c(20:34)]
-
-any(is.na(m_df_sub)) # Checks for NA values
-any(is.infinite(m_df_sub)) # Checks for infinite values (Inf or -Inf)
-any(is.nan(m_df_sub)) 
-
-x_clean <- na.omit(m_df_sub) # Removes rows with NA
-
-# Perform PCA
-pca_result <- prcomp(x_clean, center = TRUE, scale. = TRUE)
-
-# View summary
-summary(pca_result)
-
-# Scree plot
-plot(pca_result, type = "l")
-
-# Biplot
-biplot(pca_result)
-
-#create a new column with water/solid/air based on sample type
-
-library(pls)
-ncol(all_G)
-model <- plsr(df4_LOD_S_wide[,20:34],df4_LOD_S_wide[, c(2)], data=df4_LOD_S_wide, scale=TRUE, validation="CV")
-
-```
-
-
-
-05.12.2025 update. Physiochem properties and multivariate analysis
-```{r}
-prop1 <- read.table("251205_Prop.txt", header=TRUE, sep="\t", na.string=c(""), quote = "", fill=TRUE)
-#prop_long <- gather(prop1, parameter, lev, AVERAGE_MASS:WATER_SOLUBILITY_MOL.L_OPERA_PRED, factor_key=TRUE)
-
-print(unique(prop_long$short)) 
-print(unique(df4_finalx$compound))
-
-#merged_df <- merge(prop_long, df4_finalx, by.x = "short", by.y="compound")
-
-# set 0 and 1 depending on nondetect/detect
-merged_df$value2 <- merged_df$value
-merged_df$Censored <- ifelse(grepl("<", merged_df$value2), FALSE, TRUE)
-merged_df$Censored2 <- ifelse(grepl("<", merged_df$value2), 0, 1)
-
-```
-
-PCA needs wide data
-```{r PCA}
-#on log-scaled concentrations? get a global overview
-
-#remove columns otherwise messing up
-# Define columns to remove
-cols_to_remove <- c("lodcount", "n", "det_frac", "value2", "meanx", "value")
-# Remove columns
-df4_finalx_new <- df4_finalx[, !(names(df4_finalx) %in% cols_to_remove)]
-
-
-# 1) Pivot to wide: one row per id, one column per feature
-df4_finalx_wide <- df4_finalx_new2 %>%
-  tidyr::pivot_wider(names_from = compound, values_from =plotting)
-
-# Standardize the data
-data_scaled <- scale(merged_df)
-
-#subset columns relevant
-m_df_sub <- df4_finalx_wide[, c(20:34)]
-
-# Perform PCA
-pca_result <- prcomp(m_df_sub, center = TRUE, scale. = TRUE)
-
-# View summary
-summary(pca_result)
-
-# Scree plot
-plot(pca_result, type = "l")
-
-# Biplot
-biplot(pca_result)
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-Adding physiochemical properties
-```{r}
-prop <- read.table("MS22_properties3.txt", header=TRUE, sep="\t", na.string=c(""), quote = "", fill=TRUE)
-
-prop$short <- revalue(prop$short, c("HMMM"="TMMAT"))
-
-print(unique(prop$short))
-print(unique(aa4x_source3$compound))
-
-new_df <- merge(aa4x_source3, prop, by.x = "compound", by.y = "short")
-class(prop$AVERAGE_MASS)
-
-#new_df$AVERAGE_MASS <- as.numeric(new_df$AVERAGE_MASS)
-#is.na(new_df$AVERAGE_MASS)
-```
-
-
-Can we make correlations based on physiochemical properties?
-```{r}
-#new_df
-
-#skille mello hotspots og receiving
-aa4x_rec <- subset(df4_finalx, !Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
-
-
-print(unique(aa4x_source3x$Medium_id))
-slu <- subset(aa4x_source3x, Medium_id =="Sludge (ng/g, d.w.)")
-wat <- subset(aa4x_rec, Medium_id =="Water (ng/L)")
-colnames(prop)[2] <- "compound"
-
-#properties df from wide to long to append to slu df
-prop_long <- gather(prop, condition, measurement, AVERAGE_MASS:OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, factor_key=TRUE)
-
-prop[14] <- NULL
-prop_long[2] <- NULL
-
-m1 <- merge(x=slu, y=prop, by.x=c("compound"), 
-            by.y=c("compound"), all.x=TRUE, all.y=TRUE)
-
-m2 <- merge(x=wat, y=prop, by.x=c("compound"), 
-            by.y=c("compound"), all.x=TRUE, all.y=TRUE)
-
-
-m1x <- subset(m1, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
-m2x <- subset(m2, compound %in% c("PhBT", "MTBT", "ABT", "2-OHBT", "BTSA", "MBT", "7PPD", "CPPD", "6PPD", "6PPD-Q", "DPPD", "IPPD", "DPG", "HMMM", "TMQ"))
-
-ggplot(m2x, aes(x=as.numeric(WATER_SOLUBILITY_MOLL), y=(plotting), colour=compound)) + 
-    geom_point()
-  xlim(0, 0.0025)
-
-ggplot(m2x, aes(x=OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, y=plotting, colour=compound)) + 
-    geom_point()
-  xlim(0, 0.05)
-
-```
-
-## Source site charts
-1) Trafficked road - tunnel. Treated versus untreated, water and sediment
-```{r barchart tunnel water and sediment}
-road <- subset(aa4x_source3x, Site_Category == "Road environment")
-roadx <- subset(road, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
-
-roadx$Comment_location
-
-roadx$Comment_location2 <- revalue(roadx$Comment_location, c("Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
-
-roadxy <- subset(roadx, !Comment_location == c("Sweeping and vacuuming truck"))
-roadxyz <- subset(roadxy, !compound == c("7PPD"))
-roadxyzz <- subset(roadxyz, !compound == c("CPPD"))
-
-nrow(roadxy)
-
-class(roadxyzz$value)
-roadxyzz$value <- as.numeric(roadxyzz$value)
-
-#roadxy$value <- na.omit(roadxy$value) #not working, instead remove substances 7PPD and CPPD
-
-
-#roadxyz = roadxy %>%
-#  group_by(compound, Comment_location, Medium_id) %>%
-#  mutate(meany = mean(value, na.rm = TRUE))%>% 
-#  ungroup()
-
-#Fjern alle < LOD
-#roadxyz1 <- subset(roadxyz, meany != "NaN") 
-
-#remove the duplicated values, but value and plotting are different so must first be removed
-#roadxyz2<- distinct(roadxyz1, meany, Comment_location, #compound, .keep_all= TRUE) 
-#, fill=fct_rev(Comment_location)
-#set order of sample types
-roadxyzz1 <- roadxyzz%>% 
-  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)")))
-
-#roadxyzz2 <- roadxyzz1%>% 
-#  mutate(Comment_location2 = factor(Comment_location2, levels = c("Untreated", "Treated")))
-
-#PLOTTING
-ggplot(roadxyzz1, aes(y=value, x=compound, fill=Comment_location2, colour=Comment_location2))+
-  geom_boxplot(colour="black")+
-  theme_bw()+
-    facet_grid((Medium_id)~ ., scales="free", space='free_x')+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  #scale_y_continuous(trans='log10') +
-  facet_grid((Medium_id)~ ., scales="free", space='free_x')+
-  scale_y_continuous(trans='log10')
-
-#lage barplot med kun vann. Se på variajsoner underveis i vasken
-roadw <- subset(roadxyzz1, Medium_id == "Water (ng/L)")
-
-roadw$Comment_condition <- factor(roadw$Comment_condition, levels = c("Start", "During", "End"))
-roadw$Comment_location2 <- factor(roadw$Comment_location2, levels = c("Untreated", "Treated"))
-
-roadw1 <- subset(roadw, !compound %in% c("ABT", "PhBT", "IPPD"))
-
-roadwMBT <- subset(roadw, compound=="MBT")
-ggplot(roadw1, aes(y=value, x=as.factor(Comment_condition), fill=compound, colour=compound))+
-  geom_bar(stat="identity", position="dodge2")+
-  theme_bw()+
-    facet_grid((Medium_id)~ ., scales="free", space='free_x')+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  #scale_y_continuous(trans='log10') +
-  facet_grid(compound~Comment_location2, scales="free", space='free_x')+
-  labs(title="Tunnelwater (ng/L) wash")
-  scale_y_continuous(trans='log10')
-
-write.csv(roadxyzz, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241102ROAD.csv", row.names=FALSE)
-
-```
-
-Football fields
-- interesting with granulate and air?
-- indoor outdoor?
-```{r football}
-foot <- subset(aa4x_source3x, Site_Category == "Artificial football field")
-footx <- subset(foot, Medium_id == c("Granule (ng/g, w.w.)"))
-footy <- subset(foot, Medium_id == c("Air, particles (ng/m^3)"))
-                
-                #"Granule (ng/g, w.w.)"))
-
-
-footx$value <- as.numeric(footx$value)
-
-#set order of compounds based on highest levels in water (road environment)
-footxx <- footx%>% 
-  mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD", "BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT")))
-
-
-footxxx <- subset(footxx, !(compound %in%c("IPPD", "7PPD", "CPPD")& Comment_location =="Outdoor"))
-
-
-footxxx %>% 
-  group_by(compound, Comment_location) %>% 
-  summarize(m = mean(plotting),
-            sd = sd(plotting)) %>% 
-  ggplot(aes(x = compound, y = m, fill = Comment_location)) +
-  geom_bar(stat = "identity", position = position_dodge2(width = 0.9, preserve = "single"))+
-  geom_errorbar(aes(ymin = m - sd, ymax = m + sd), position = position_dodge2(width = 0.9, preserve = "single"))+
-  scale_y_continuous(trans='log10')
-  
-#facet_grid(Site_Category~., scales="free")
-  
-#T-test to test difference
-bb <- footxx %>% 
-  group_by(compound, Comment_location) %>% 
-  summarize(m = mean(value)) 
-
-
-t.test(m ~ Comment_location, data = bb, alternative = "greater")
-
-
-#ggplot(footxx, aes(y=value, x=compound, fill=Comment_location))+
-#  geom_histogram(stat="identity", position = position_dodge(width = 0.5))+
-#  #geom_poin(size=5, aes(shape=Comment_location, colour=Comment_location))
-##  scale_y_continuous(trans='log10')
-#  facet_grid(fct_rev(Comment_location)~ ., scales="free", space='free_x')
-#  scale_y_continuous(trans='log10')
-
-
-```
-
-
-2) Wastewater treatment. Treated versus untreated, water and sediment
-```{r barchart tunnel water and sediment}
-wwt <- subset(aa4x_source3x, Site_Category == "Wastewater treatment plant")
-#roadx <- subset(road, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
-
-wwt$value <- as.numeric(wwt$value)
-
-#set order of compounds based on highest levels in water (road environment)
-wwtx <- wwt%>% 
-  mutate(compound = factor(compound, levels = c("DPG", "BTSA", "HMMM", "6PPD", "2-OHBT", "TMQ", "6PPD-Q", "MTBT", "MBT", "DPPD", "ABT", "PhBT", "IPPD", "7PPD", "CPPD")))
-#roadxy$value <- na.omit(roadxy$value)
-
-
-#remove the duplicated values, but value and plotting are different so must first be removed
-#wwtxzy<- distinct(wwtxz, meany, Comment_condition, compound, #.keep_all= TRUE) 
-
-#set order of sample types
-wwt2 <- wwtx %>% 
-  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sludge (ng/g, d.w.)")))
-
-#Fjern alle < LOD
-wwtxz <- subset(wwt2, value != "NaN")
-
-wwtxz$Comment_condition2 <- revalue(wwtxz$Comment_condition, c("Low" = "Secondary (mechanical)","High" = "Teriary (biological-chemical)"))
-
-#set order of sample types
-wwtxzz <- wwtxz %>% 
-  mutate(Comment_condition2 = factor(Comment_condition2, levels = c("Secondary (mechanical)", "Teriary (biological-chemical)")))
-
-
-ggplot(wwtxzz, aes(y=value, x=compound, fill=(Comment_condition2)))+
-  geom_boxplot()+
-  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  facet_grid((Medium_id)~ ., scales="free", space='free_x')+
-   scale_y_continuous(trans='log10')
-
-write.csv(wwtxzz, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/WasteWater.csv", row.names=FALSE)
-
-```
-
-## TREATMENt effect
+#TREATMENT EFFECT
 - statistics only for water due to sample size
 - % removal efficiency water tunnel and WWTP
 ```{r}
-treatment <- subset(aa4x_source3x, Site_Category %in% c("Wastewater treatment plant", "Road environment"))
+treatment <- subset(aa4x_source3x, Site_Category %in% c("Wastewater treatment plant", "Road environment")) #df from figure 1
 
 treatment$Comment_location2 <- revalue(treatment$Comment_location, c("Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
 
 write.csv(treatment, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/250805_TEST_treatment.csv", row.names=FALSE)
-#saves the file to fix manually in excel
 ```
 
 ```{r}
-#upload the manually fixed file
-tst <- read.table("250805_Treatment_test.txt", header=TRUE, sep="\t", na.string=c(""))
-
+#upload the manually fixed file. Fix was to define treatemnt for both site categories. 
+tst <- read.table("250805_Treatment_test_EDITED.txt", header=TRUE, sep="\t", na.string=c(""))
 #treatment$Comment_location2 <- revalue(treatment$Comment_condition, c("Low" = "Untreated","High" = "Treated"))
 
 #remove unwanted
 treatment2 <- subset(tst, !Comment_location == c("Sweeping and vacuuming truck"))
 treatment3 <- subset(treatment2, !compound == c("7PPD"))
 treatment4 <- subset(treatment3, !compound == c("CPPD"))
-treatment5 <- subset(treatment4, Medium_id == c("Water (ng/L)", "Sludge (ng/g, d.w.)"))
+treatment6 <- subset(treatment4, Medium_id == c("Water (ng/L)"))
 
-treatment6 <- subset(treatment5, Comment_location2 %in% c("Treated", "Untreated"))
+#treatment6 <- subset(treatment5, Comment_location2 %in% c("Treated", "Untreated")) #make sure labelling is correct
 
 #Are these required? or must set na to < lod?
 treatment6$plotting <- as.numeric(treatment6$plotting)
 #Fjern alle < LOD
-treatment6x <- subset(treatment6, plotting != "NaN")
-
+#treatment6x <- subset(treatment6, plotting != "NaN")
 
 #from long to wide, to make the %removal
+treatment6$Comment_location3 <- treatment6$Comment_location2
 treat_wide <- spread(treatment6, Comment_location2, plotting)
-
-#Fix file manually in excel.....
+nrow(treat_wide)
+nrow(sht)
+#Fix file manually in excel... (sorted treated and untreated values)
 write.csv(treat_wide, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/250804_for treatment plotting2.csv", row.names=FALSE)
 ```
 
 
 ```{r}
-sht <- read.table("250805_Treatment_theshit.txt", header=TRUE, sep="\t", na.string=c(""))
+#sht <- read.table("250805_Treatment_theshit.txt", header=TRUE, sep="\t", na.string=c(""))
 
-#Først gjennomsnitt per Comment_condition og Season_condition
+#remove 6PPD and TMQ from WWTP due to very low detection frequency, < 10%
+treat_widex <- subset(treat_wide, det_frac >= 10)
 
-#Prior to calculate removal, should have average 
+#replace replicates by mean value
+sht3 <- treat_widex %>%
+  group_by(compound, Site_Category, Comment_location3) %>%
+  mutate(mean_valueU = mean(Untreated, na.rm = TRUE))
+
+sht4 <- sht3 %>%
+  group_by(compound, Site_Category, Comment_location3) %>%
+  mutate(mean_valueT = mean(Treated, na.rm = TRUE))
+
+sht5 <- sht4 %>% 
+  distinct(compound, Site_Category, Comment_location3, mean_valueT, mean_valueU, .keep_all = TRUE)
+
+sht6 <- sht5[, c("compound", "mean_valueT","mean_valueU", "Site_Category", "Comment_location3")]
+
+#remove rows with NA in both treated and untreated
+sht7 <- sht6 %>% 
+  filter(!is.na(mean_valueT) | !is.na(mean_valueU))
+
+
+
+#here we look at the average
+pxp <- ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
+         fill = "Comment_location3", line.color =NA, color = "grey")+
+  facet_grid(Site_Category~., scales="free")+
+  #geom_text(aes(label = compound), vjust = -0.8, hjust=1, check_overlap = FALSE, size = 4)+
+  scale_x_discrete(labels = c("mean_valueU" = "Low treatment", "mean_valueT" = "High treatment"))+
+  labs(y="Concentration (ng/L)", x="") +
+  geom_boxplot(fill = c("skyblue2", "darksalmon", "skyblue2", "darksalmon"), colour="darkgray") +
+  geom_line(aes(group = compound),
+          color = "black",
+          size = 0.4,
+          alpha = 0.6)+
+  theme_bw()+
+  theme(axis.text.x = element_text(size=14, colour="black"),
+        axis.text.y = element_text(size=12, colour="black"),
+        axis.title.x= element_blank(),
+        axis.title.y = element_text(size=16, margin = margin(t = 0, r = 10, b = 5, l = 0)),
+        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
+        strip.text.y = element_text(size=15, colour="black"),
+        panel.spacing.x = unit(0.8, "lines"),
+        legend.title=element_blank(),
+        legend.text=element_blank(),
+        legend.position = "none")+
+  scale_y_continuous(
+  expand = expansion(mult = c(0.17, 0.17))
+)+geom_text_repel(aes(label = compound), 
+                direction = "y",
+                nudge_x = -0.01, vjust = -0.9, hjust=1.1,segment.color = NA, size=4)# single color
+
+
+ggsave("treatment.png", pxp, width = 8, height = 7)
 
 
 #Calculate removal
@@ -1534,48 +850,7 @@ ggsave("pnec.png", pnec, width = 7, height = 9.3)
 
 
 
-```{r barchart}
-aa4x_rec <- subset(df4_finalx, Site_Category %in% c("Urban river", "Urban park", "Urban pond"))
 
-aa4x_rec$value <- as.numeric(aa4x_rec$value)
-#roadxy$value <- na.omit(roadxy$value)
-
-aa4x_rec1 = aa4x_rec %>%
-  group_by(compound, Site_Category, Medium_id) %>%
-  mutate(meany = mean(value, na.rm = TRUE))%>% 
-  ungroup()
-
-#Fjern alle < LOD
-aa4x_rec2 <- subset(aa4x_rec1, meany != "NaN") 
-
-#set order of dample types
-aa4x_source3 <- aa4x_rec2 %>% 
-  mutate(Medium_id = factor(Medium_id, levels = c("Water (ng/L)", "Sediment (ng/g, d.w.)", "Air, particles (ng/m^3)")))
-
-#remove the duplicated values, but value and plotting are different so must first be removed
-aa4x_source4<- distinct(aa4x_source3, meany, Site_Category, compound, Medium_id, .keep_all= TRUE) 
-
-#barchart
-ggplot(aa4x_source4, aes(y=meany, x=compound, fill=fct_rev(Site_Category)))+
-  geom_col( width=0.8, position = position_dodge2(width = 0.9, preserve = "single"))+
-  #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_blank(),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=10, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  scale_y_continuous(trans='log10') +
-  facet_grid(fct_rev(Medium_id)~ ., scales="free", space='free_x')+
-   scale_y_continuous(trans='log10') +
-
-
-
-```
 
 
 
