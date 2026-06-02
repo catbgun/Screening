@@ -562,118 +562,7 @@ pxp <- ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
 
 ggsave("treatment.png", pxp, width = 8, height = 7)
 
-
-#Calculate removal
-sht$treatment <- ((sht$Untreated -sht$Treated)/ sht$Untreated)*100
-sht$treatment3 <- sht$Untreated -sht$Treated
-#sht$treatment2 <- 1- (sht$Untreated -sht$Treated)/ sht$Untreated
-
-write.csv(sht, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/treatment.csv", row.names=FALSE)
-
-class(sht$treatment2)
-
-#set the order based on molecular groups - revisit!
-shty <- sht%>% 
-  mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD",  "BTSA", "2-OHBT", "MTBT", "MBT")))
-
-
-shty %>% 
-  group_by(compound, Site_Category) %>% 
-  summarize(m = mean(treatment3),
-            sd = sd(treatment)) %>% 
-  ggplot(aes(x = compound, y = (m), fill = m > 0 )) +
-  geom_bar(stat = "identity") +
-  facet_grid(Site_Category~., scales="free")+
-  geom_errorbar(aes(ymin = m - sd, ymax = m + sd))+
-  labs(y = "Removal efficiency")+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 90, size=12, colour="black"),
-        axis.text.y = element_text(size=11, colour="black"),
-        axis.title.x= element_blank(),
-        axis.title.y = element_text(size=14),
-        strip.text.x = element_text(angle = 90, hjust=0, size=11, colour="black"),
-        strip.text.y = element_text(size=14, colour="black"),
-        panel.spacing.x = unit(0, "lines"),
-        strip.background.x = element_blank(),
-        strip.placement = "bottom")+
-  scale_fill_manual(values = c('brown3', 'chartreuse3') ) 
-  scale_y_log10() 
-
-#merge Kow to this file to look for the correlations found by Meland
-
-names(prop)[names(prop) == "short"] <- "compound" 
-
-
-prop1 <- subset(prop, compound %in% c("BTSA",  "MTBT", "2-OHBT", "MBT", "6PPD-Q", "DPPD", "6PPD",  "HMMM", "DPG","TMQ"))
-
-#newdfxx = merge(sht, prop1, by.y="compound", by.x="compound")
-
-print(unique(sht$compound))
-
-merged_df <- merge(prop, sht, by = "compound")
-
-write.csv(newdfxx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/treatmentMP.csv", row.names=FALSE)
-
-
-newdfxx %>% 
-#  group_by(compound, Site_Category) %>% 
-#  summarize(m = mean(treatment),
-#            sd = sd(treatment)) %>% 
-  ggplot(aes(x = OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED, y = treatment)) +
-  geom_point() +
-  facet_grid(Site_Category~., scales="free")
-
-  
-  
-  
-  
-  ggplot(merged_df, aes(x=compound, y=treatment))+
-  geom_bar(stat="identity")+
-  facet_grid(Site_Category~., scales="free")+
-  ylim(-20, 1000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#sette sammen road and WWTP
-#"Treated sediments" = "Treated","Treated wash water" = "Treated","Untreated sediments" = "Untreated","Untreated wash water" = "Untreated"))
-#Df to be used: roadxyzz
-
-#merge the two
-treatment_df <- merge(roadxyzz, wwtxzz)
-
-colnames(roadxyzz)
-colnames(wwtxzz)
-
-treatment_df_w <- subset(wwtxzz, Medium_id == "Water (ng/L)")
-
-
-
-
-
-#wwtxzz 
-#Comment_condition2, levels = c("Secondary (mechanical)", "Teriary (biological-chemical)")))
-
-
-#make the names the same for both, treated untreated
-#For water, calculate %  treatment
-#PLOT
-
 ```
-
-
-
 
 
 PNEC FIGUE
@@ -786,12 +675,25 @@ dx3qqq <- dx3q %>%
 dx3qqq$Min2 = dx3qqq$Min/dx3qqq$limit
 dx3qqq$Max2 = dx3qqq$Max/dx3qqq$limit
 
+#add grouping
+dx3qqqx= dx3qqq%>%
+  mutate(Group = case_when(compound %in% c("DPG", "HMMM", "TMQ") ~ "Various others", 
+                           compound %in% c("6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD") ~ "Substituted para-phenylenediamines",
+                                compound %in% c("BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT") ~ "Benzothiazoles"))
 
-ggplot(dx3qqq, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
-  geom_linerange(size=2, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
+
+dx3qqqx$sample_category[dx3qqqx$sample_category == "Freshwater2"] <- "Freshwater"
+dx3qqqx$sample_category[dx3qqqx$sample_category == "Sediment2"] <- "Sediment"
+
+dx3qqqx<- dx3qqqx %>%
+  filter(compound != "IPPD")
+
+
+pnec <- ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
+  geom_linerange(size=2.8, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
   #geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
   scale_x_continuous(trans='log10') +
-  theme_bw()+
+  theme_article()+
   theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
         axis.text.y = element_text(size = 15,colour="black"),
         axis.title.y = element_blank(),
@@ -799,34 +701,23 @@ ggplot(dx3qqq, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour
         panel.spacing = unit(0, "lines"), 
         strip.background = element_blank(),
         strip.placement = "outside",
-        strip.text.y = element_text(size = 14, angle = 0, hjust=0),
+        strip.text.y = element_text(size = 12, angle = 0, hjust=0),
+        strip.text.x=element_text(size=16),
         legend.title = element_blank(),
-        legend.text = element_text(size=15),
+        legend.text = element_text(size=16),
         plot.margin = margin(0.8, 0.15, 1.2, 0.15, "cm"),
-        legend.position = "top")+
+        legend.position = "")+
   #facet_grid(m_group~., scales="free_y", space='free')+
-  xlab("RQ")+
+  xlab("Range of risk quotients (log scale)")+
   scale_alpha(guide = 'none')+
   guides(color=guide_legend("sample_category"), fill = "none")+
-  scale_color_manual(values = c("#00BFC4", "#7CAE00"),
+  scale_color_manual(values = c("#00BFC4", "#D55E00"),
   labels = c('Freshwater', 'Sediment'))+
   geom_vline(xintercept = 1, linetype="dotted", 
-                color = "red", size=1.5)
+                color = "red", size=1.8)+
+  facet_grid(Group~sample_category, scales="free_y", space="free_y", labeller = label_wrap_gen(width=2))
 
-  
-#geom_rect(data=data.frame(xmin=-Inf,xmax=1,ymin=-Inf,ymax=Inf),
-  #          aes(xmin = xmin, xmax =xmax, ymin = ymin, ymax = ymax),
-  #          fill = "red",alpha=0.1)+
-  
-
-ggsave("pnec.png", pnec, width = 7, height = 9.3)
-
-#, values = c("red", "blue", "grey"))
-#  scale_colour_manual(labels = c("Biota", "Freshwater", "Sediment"), values = c("red", "blue", "grey"))
-  
-  #scale_fill_manual(values = c("red", "blue", "grey"))
-  #scale_colour_manual(values = c("red", "blue", "grey"))
-
+ggsave("pnec.png", pnec, width = 10, height = 9.3)
 
 ```
 
