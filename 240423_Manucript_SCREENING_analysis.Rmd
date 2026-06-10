@@ -101,6 +101,64 @@ df4_finalx = df4_filt_X %>%
 write.csv(df4_finalx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/241026_TEST_final.csv", row.names=FALSE)
 ```
 
+Create summary table
+## Sumamry table
+```{r create summary table}
+
+
+sum <- df4_finalx %>% 
+  group_by(Medium_id, compound, Site_Category) %>% 
+  summarise(
+    mean = mean(plotting, na.rm = TRUE),
+    min  = min(plotting, na.rm = TRUE),
+    max  = max(plotting, na.rm = TRUE),
+    sd   = sd(plotting, na.rm = TRUE),
+    median  = median(plotting, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+sum_n <- df4_finalx %>% 
+  group_by(Medium_id, compound, Site_Category) %>%
+  summarise(
+    n = sum(!is.na(plotting)),
+    .groups = "drop"
+  )
+
+nrow(df4_finalx)
+
+summary_tb <- merge(sum, sum_n, by = c("Medium_id", "compound", "Site_Category"))
+
+#to also include n and detection frequency
+df_unique <- df4_finalx %>% distinct(Medium_id, compound, Site_Category, .keep_all = TRUE)
+
+#merge
+summary_tbx <- merge(summary_tb, df_unique, by = c("Medium_id", "compound", "Site_Category"))
+
+
+write.csv(summary_tbx, "260610_Scr22_MS_summary table.csv", row.names=FALSE)
+
+
+
+table<- df4_finalx %>% 
+  group_by(Medium_id, compound, Site_Category) %>% 
+  summarise(plotting, .f = list(mean = mean, min = min, max = max, sd = sd, median=median), na.rm = TRUE)
+
+sum_n <- dx_sum %>% 
+group_by(Station, month) %>%
+  summarise(
+    across(
+      where(is.numeric),
+      ~ sum(!is.na(.x)),
+      .names = "n_{.col}"
+    ),
+    .groups = "drop"
+  )
+
+write.csv(sum, "summary monitoing.csv")
+```
+
+
+
 ## FIGURE 1 - hotspot sites
 ```{r PLOT heatmap - HOTSPOT}
 #select only hotspot categories
@@ -241,23 +299,6 @@ ggsave("rec_sites.png", rec_sites, width = 10, height = 10)
 df4_freq$value2 <- df4_freq$value
 df4_LOD_S <- cbind(df4_freq[,c(1:18, 20:25)], apply(df4_freq[,19, drop=F],2, dLimity)) #dLimity function sets 0.5*LOD
 
-#set true or false based on <LOD or not
-#df4_LOD_S$Censored <- ifelse(grepl("<", df4_LOD_S$value2), TRUE, FALSE)
-
-#remove columns otherwise messing up. Define columns to remove
-#cols_to_remove <- c("lodcount", "n", "det_frac", "value2")
-
-# Remove columns
-#df4_LOD_S_new <- df4_LOD_S[, !(names(df4_LOD_S) %in% cols_to_remove)]
-
-#from long to wide
-#df4_LOD_S_wide <- df4_LOD_S_new %>%
-#      pivot_wider(names_from = compound, values_from =c(value, Censored))
-
-#from long to wide, to make the %removal
-#df4_LOD_S_wide2 <- spread(df4_LOD_S, compound, value)
-
-#write.csv(df4_LOD_S_wide, "C:/Users/CBG/OneDrive - NIVA/1 #Projects/Screening/Screening_R/Screening/Output/241026_TEST_final_SONDRE2.csv", row.names=FALSE)
 ```
 
 #Use the long format dataset to create wide with compounds in focus
@@ -528,10 +569,8 @@ sht6 <- sht5[, c("compound", "mean_valueT","mean_valueU", "Site_Category", "Comm
 sht7 <- sht6 %>% 
   filter(!is.na(mean_valueT) | !is.na(mean_valueU))
 
-
-
 #here we look at the average
-pxp <- ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
+ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
          fill = "Comment_location3", line.color =NA, color = "grey")+
   facet_grid(Site_Category~., scales="free")+
   #geom_text(aes(label = compound), vjust = -0.8, hjust=1, check_overlap = FALSE, size = 4)+
@@ -564,106 +603,72 @@ ggsave("treatment.png", pxp, width = 8, height = 7)
 
 ```
 
-
 PNEC FIGUE
-The following compounds: LCCP, BCPS, isoTAC, TAC, BTSA, OHBT, 6PPD,6PPD-q,DPPD,IPPD,TMQ,TMMAT,DPG, BIS TMC,,DBM,L6,L7,L8,BP_8,4_HBP
 ```{r Making the PNEC Figure}
-##unique(pnec$compound)  #sjekk at alle er med. Noen endrer navn i R ved lesing
-
-#some problem with catrgorical variables, water turned into na. Here fix:
-df4_finalx$Medium_id2 <- ifelse(df4_finalx$Medium_id == "Water (ng/L)", 'Water',
+#unique(pnec$compound)  
+print(unique(df4_finalx$Medium_id))
+#some problem with categorical variables, water turned into na. Here fix:
+df4_finalx$Medium_id2 <- ifelse(df4_finalx$Medium_id == "Water (ng/L)", 'Freshwater',
                   ifelse(df4_finalx$Medium_id == "Sediment (ng/g, d.w.)", 'Sediment',
                          ifelse(df4_finalx$Medium_id == "Sludge (ng/g, d.w.)", 'Sediment',
-                                ifelse(df4_finalx$Medium_id == "Air, particles (ng/m^3)", 'Air', "CBG"))))
+                                ifelse(df4_finalx$Medium_id == "PM10 (ng/m^3)", 'Air', "CBG"))))
 
-
-
-#følgende gjør om alle "< LOD" observasjoner til NA slik at de ikke inkluderes som minimumsverdi
+#All "< LOD" converted to NA to avoid these from being included
 df4_finalx$value2 <- as.numeric(df4_finalx$value)
 pnec <- df4_finalx %>% drop_na(value2)
 
-#filter out max an min values for each category.
-#Some categories, like tunnel wash water should not be included
-#Remove hot spots?
+#remove irrelevant sample category and sample types without PNEC
 pnec1 <- pnec %>% 
-  filter(!Comment_location%in% c("Sweeping and vacuuming truck", "Untreated sediments", "Untreated wash water")) 
-
-print(unique(pnec1$Comment_location))
-
-#Make new categories to match the PNEC categories of freswater, sediment og biota
-#not using air values here
+  filter(!Comment_location%in% c("Sweeping and vacuuming truck")) #, "Untreated sediments", "Untreated wash water"
 pnec2 <- subset(pnec1, !Medium_id2=="Air")
-pnec3 <- subset(pnec2, !Medium_id2=="CBG")
+pnec3 <- subset(pnec2, !Medium_id2=="CBG") #CBG covers air-particles and crumb rubber
 
+#get min and max measured values by each sample type and compound
 pnec_max_minx <- pnec3 %>%
   group_by(compound, Medium_id2) %>%
   mutate(Min = min(value2), Max = max(value2))
-unique(pnec$Medium_id2)
 
-unique(pnec_max_minz$Medium_id2)
-
+#change names to match pnec df
 pnec_max_min2 <- pnec_max_minx%>%
   mutate(sample_category = case_when
-         (Medium_id2 %in% c("Water") ~ "Freshwater",
+         (Medium_id2 %in% c("Freshwater") ~ "Freshwater",
           Medium_id2 %in% c("Sediment") ~ "Sediment"))
 
-nrow(pnec_max_min2)
-unique(pnec_max_min2$sample_category)
-
-#Laste opp fil med PNEC verdier. Laget fra info i word
-#condition and sample category
-# short and compound
+#upload PNEC values
 dx <- read.table("PNEC5.txt", header=TRUE, sep="\t", na.string=c(""))
 
 #Calculate to the correct abbreviations
 dx$Freshwater2 <- dx$Freshwater *1000
 dx$Sediment2 <- dx$Sediment *1
-#dx$Biota2 <- dx$Biota*1
 
 dx_long <- gather(dx, sample_category, limit, Freshwater2:Sediment2, factor_key=TRUE)
-dx_long$compound <- revalue(dx_long$compound, c("6PPDq"="6PPD-Q"))
-dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
-dx_long$compound <- revalue(dx_long$compound, c("TMMAT"="HMMM"))
+#dx_long$compound <- revalue(dx_long$compound, c("6PPDq"="6PPD-Q"))
+#dx_long$compound <- revalue(dx_long$compound, c("BIS_TMC"="BIS TMC"))
+#dx_long$compound <- revalue(dx_long$compound, c("TMMAT"="HMMM"))
 dx_long$compound <- revalue(dx_long$compound, c("OHBT"="2-OHBT"))
 
 #one may have wrong class
 pnec_max_min4 <- as.data.frame(pnec_max_min2)
 #subsetting to keep only those with match
 pnec_max_min4$sample_category <- revalue(pnec_max_min4$sample_category, c("Freshwater"="Freshwater2", "Sediment"="Sediment2"))
-
 pnec_max_min5 <- subset(pnec_max_min4, sample_category%in% c("Freshwater2", "Sediment2"))
 
-#MERGE. Til pnec_max_min2 skal vi fra dx legge til alle kolonner ved å matche 
+#MERGE.  
 dx2 <- merge(x=pnec_max_min5,y=dx_long, by=c(as.character("compound"), as.character("sample_category")),
              all.x=TRUE)
-
-#ARE THRER wrong abbreviations for pnec??
 
 write.csv(dx2, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/231003_TEST_pnec2.csv", row.names=FALSE)
 ```
 
-Må rydde opp i følgende:
-- fjern de som enten ikke har måling eller PNEC i gjeldende prøvetamtriks
-- sorter stoffene etter stoffgruppe
-- legg til stoffgruppenavn
-
-- i figuren ser det ut som at vi mister noen prøvetyper, f eks sediment og biota. 
 
 ```{r Cleaning up before plotting}
 #remove duplicate rows before plotting
 dx3 <-dx2 %>% 
   distinct(Min, Max, compound, sample_category, .keep_all = TRUE)
-
-#sett rekkefølgen til molekylgruppene hvis ikke alle skal med. Altså, dersom kun de med PNEC skal med. Må fjerne de som ikke er med i de 21 i artikkelen. 
-#dx4 <- dx3 %>% 
-#  mutate(compound = factor(compound, levels = c("44-BPS2", "BCPS", "DCM", "PCE", "TCM", "LCCP", "Amitriptyline", "CTC/CTA","Fexofenadine",
-#                                                "6PPD", "6PPD-q", "BTSA", "DPG", "DPPD", "IPPD", "isoTAC", "OHBT", "TAOT", "TMMAT", "TMQ", #"L6", "L7", "L8", "OP", "4-HBP", "BP-8")))
-
 ```
 
 ```{r PNEC plot}
 #set order of compounds based on highest levels in water (road environment)
-print(unique(dx3$compound))
 dx3q <- dx3%>% 
   mutate(compound = factor(compound, levels = c("BTSA","2-OHBT","MTBT","MBT","ABT", "PhBT",
     "6PPD", "6PPD-Q", "DPPD", "IPPD","DPG", "HMMM","TMQ")))
@@ -688,8 +693,7 @@ dx3qqqx$sample_category[dx3qqqx$sample_category == "Sediment2"] <- "Sediment"
 dx3qqqx<- dx3qqqx %>%
   filter(compound != "IPPD")
 
-
-pnec <- ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
+ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
   geom_linerange(size=2.8, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
   #geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
   scale_x_continuous(trans='log10') +
@@ -712,12 +716,12 @@ pnec <- ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max
   scale_alpha(guide = 'none')+
   guides(color=guide_legend("sample_category"), fill = "none")+
   scale_color_manual(values = c("#00BFC4", "#D55E00"),
-  labels = c('Freshwater', 'Sediment'))+
+  labels = c('Water', 'Sediment'))+
   geom_vline(xintercept = 1, linetype="dotted", 
                 color = "red", size=1.8)+
   facet_grid(Group~sample_category, scales="free_y", space="free_y", labeller = label_wrap_gen(width=2))
 
-ggsave("pnec.png", pnec, width = 10, height = 9.3)
+ggsave("pnec.png", pnec, width = 8, height = 7.3)
 
 ```
 
