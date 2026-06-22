@@ -55,7 +55,7 @@ Replace names
 ```{r}
 df2$Site_Category <- revalue(df2$Site_Category, c("Tunnel environment" = "Trafficked road"))
 df2$Site_Category <- revalue(df2$Site_Category, c("Trafficked road" = "Road environment"))
-df2$Site_Category <- revalue(df2$Site_Category, c("Artificial grass pitch" = "Artificial football field"))
+df2$Site_Category <- revalue(df2$Site_Category, c("Artificial grass pitch" = "Artificial football pitch"))
 df2$Comment_location <- revalue(df2$Comment_location, c("Pump basin" = "Untreated wash water"))
 df2$Comment_location <- revalue(df2$Comment_location, c("Treated discharge" = "Treated wash water"))
 df2$Comment_location <- revalue(df2$Comment_location, c("Sandtrap" = "Untreated sediments"))
@@ -104,8 +104,6 @@ write.csv(df4_finalx, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screeni
 Create summary table
 ## Sumamry table
 ```{r create summary table}
-
-
 sum <- df4_finalx %>% 
   group_by(Medium_id, compound, Site_Category) %>% 
   summarise(
@@ -157,12 +155,10 @@ group_by(Station, month) %>%
 write.csv(sum, "summary monitoing.csv")
 ```
 
-
-
 ## FIGURE 1 - hotspot sites
 ```{r PLOT heatmap - HOTSPOT}
 #select only hotspot categories
-aa4x_source <- subset(df4_finalx, Site_Category %in% c("Road environment","Artificial football field", "Wastewater treatment plant"))
+aa4x_source <- subset(df4_finalx, Site_Category %in% c("Road environment","Artificial football pitch", "Wastewater treatment plant"))
 
 #aa4x_source1 <- subset(aa4x_source, det_frac != 0) #to remove detection frequency = 0, but this is not used for the heatmap. 
 
@@ -179,7 +175,7 @@ aa4x_source3y <- aa4x_source3%>%
   mutate(compound = factor(compound, levels = c("DPG", "HMMM", "TMQ", "6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD", "BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT")))
 
 aa4x_source3xy <- aa4x_source3y%>% 
-  mutate(Site_Category = factor(Site_Category, levels =c("Artificial football field", "Road environment","Wastewater treatment plant")))
+  mutate(Site_Category = factor(Site_Category, levels =c("Artificial football pitch", "Road environment","Wastewater treatment plant")))
 
 #add grouping
 aa4x_source3x = aa4x_source3xy%>%
@@ -187,15 +183,42 @@ aa4x_source3x = aa4x_source3xy%>%
                            compound %in% c("6PPD", "6PPD-Q", "DPPD", "IPPD", "7PPD", "CPPD") ~ "Substituted para-phenylenediamines",
                                 compound %in% c("BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT") ~ "Benzothiazoles"))
 
-wwt_long2 <- ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+
+
+#print(unique(aa4x_source3x$Group))
+
+aa4x_source3x$Medium_id <- factor(
+  aa4x_source3x$Medium_id,
+  levels = c("Crumb rubber (ng/g, w.w.)", "Water (ng/L)", "Sludge (ng/g, d.w.)", "PM10 (ng/m^3)"),
+  labels = c(
+    "Crumb rubber\n(ng/g, w.w.)",
+    "Water\n(ng/L)",
+    "Sludge\n(ng/g, d.w.)",
+    "PM10\n(ng/m^3)"
+  )
+)
+
+aa4x_source3x$Group <- factor(
+  aa4x_source3x$Group,
+  levels = c("Benzothiazoles", "Substituted para-phenylenediamines", "Various others"),
+  labels = c(
+    "Benzothiazoles", 
+    "Substituted\npara-phenylenediamines", 
+    "Various others")
+)
+
+
+wwt_long2 <- 
+  ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
  #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
   geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
   #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
-  scale_fill_steps2(low = "#74C476", 
-                       mid = "orange", 
-                       high = "red",
+  scale_fill_steps2(
+low  = "#5A86B6",
+mid  = "#BDBDBD",
+high = "#C44E52",
                        midpoint = 50,
                        breaks=c(0,25, 50,75, 100), limits=c(0,100), na.value = "white") +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
@@ -212,21 +235,49 @@ wwt_long2 <- ggplot(aa4x_source3x, aes(x=Site_Category, y=fct_rev(compound), fil
         axis.ticks = element_line(color="black", linewidth=1),
         legend.position =c(0.85, 0.96),
         legend.direction = "horizontal",
-        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm")plot.margin = margin(1.3, 0.2, 2.8, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(-50,50,140,10),
+        legend.box.margin=margin(-40,-210,140,10), #top, right, bottom, left
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
-        strip.text.y = element_text(angle = 0, size=12)) +
+        strip.text.y = element_text(angle = 0, size=13)) +
   ggtitle("Hotspot locations") + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
-  #facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_value)
+  
 
-ggsave("WW_t3.png", wwt_long2, width = 10, height = 10)
+#facet_grid(Group~., scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+
+# --- PARAMETERS (tune once) ---
+cell_h <- 0.7   # height per compound
+cell_w <- 1.4    # width per x cell
+
+# --- HEIGHT: only depends on compounds ---
+n_compounds <- length(unique(aa4x_source3x$compound))
+plot_height <- n_compounds * cell_h
+
+# --- WIDTH: depends on x structure + facets ---
+n_x_total <- sum(
+  tapply(aa4x_source3x$Site_Category,
+         aa4x_source3x$Medium_id,
+         function(x) length(unique(x)))
+)
+
+plot_width <- n_x_total * cell_w
+
+# --- SAVE ---
+ggsave(
+  "WW_t3.pngX.tiff",
+  wwt_long2,
+  width  = plot_width,
+  height = plot_height,
+  units = "in"
+)
+
+#ggsave("WW_t3.png", wwt_long2, width = 10, height = 10)
 ```
 
 ## FIGURE 3 - Recipient sites 
@@ -251,15 +302,38 @@ aa4x_rec2x = aa4x_rec2xz%>%
                                 compound %in% c("BTSA", "2-OHBT", "MTBT", "MBT", "ABT", "PhBT") ~ "Benzothiazoles"))
 
 
-rec_sites <- ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
+#print(unique(aa4x_rec2x$Medium_id))
+aa4x_rec2x$Medium_id <- factor(
+  aa4x_rec2x$Medium_id,
+  levels = c("Water (ng/L)", "Sediment (ng/g, d.w.)", "PM10 (ng/m^3)"),
+  labels = c(
+   "Water\n(ng/L)", 
+   "Sediment\n(ng/g, d.w.)", 
+   "PM10\n(ng/m^3)"
+  )
+)
+
+
+aa4x_rec2x$Group <- factor(
+  aa4x_rec2x$Group,
+  levels = c("Benzothiazoles", "Substituted para-phenylenediamines", "Various others"),
+  labels = c(
+    "Benzothiazoles", 
+    "Substituted\npara-phenylenediamines", 
+    "Various others")
+)
+
+
+rec_sites <- 
+ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=det_frac)) +
  #geom_tile(aes(fill = if.else(is.na(det_frac), "grey", det_frac), colour="black"))+
   geom_tile(aes(fill = det_frac), colour="black")+ # background colours are mapped according to the value column
   geom_text(aes(label=ifelse(is.na(meanx), "", sigfig(meanx, 2))), color = "white", size = 5)+
   #geom_text(aes(label= ifelse(is.na(meanx), "<LOD", as.numeric(sigfig(meanx, 1)))), color = "white", size = 5)+
   #scale_fill_gradientn(colours = c("white", "green", "red"), values = c(0,1,100))
-  scale_fill_steps2(low = "#74C476", 
-                       mid = "orange", 
-                       high = "red",
+  scale_fill_steps2(low  = "#5A86B6",
+mid  = "#BDBDBD",
+high = "#C44E52",
                        midpoint = 50,
                        breaks=c(0,25, 50,75, 100), limits=c(0,100), na.value = "white") +# determine the colour
    theme(panel.grid.major.x=element_blank(), #no gridlines
@@ -276,20 +350,48 @@ rec_sites <- ggplot(aa4x_rec2x, aes(x=Site_Category, y=fct_rev(compound), fill=d
         axis.ticks = element_line(color="black", linewidth=1),
         legend.position =c(0.85, 0.96),
         legend.direction = "horizontal",
-        plot.margin = margin(1.3, 0.2, 0.15, 0.15, "cm"), #top, right, bottom, left
+        plot.margin = margin(1.3, 0.2, 2.8, 0.15, "cm"), #top, right, bottom, left
         legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(-50,50,140,10),
+        legend.box.margin=margin(-40,-210,140,10),
         strip.text.x = element_text(size = 15),
         panel.spacing.x = unit(0.2, "lines"),
         legend.title=element_text(size=12), 
-        strip.text.y = element_text(angle = 0, size=12)) +
+        strip.text.y = element_text(angle = 0, size=13)) +
   ggtitle("Recipient locations") + 
   scale_x_discrete(name="") +
   scale_y_discrete(name="") +
   labs(fill="Detection frequency (%)")+
-  facet_grid(Group~Medium_id, scales="free", space="free_y", labeller = label_wrap_gen(width=2))
+  facet_grid(Group~Medium_id,  space="free_y", scales="free", labeller = label_value) #scales="free",
+ 
 
-ggsave("rec_sites.png", rec_sites, width = 10, height = 10)
+
+# --- PARAMETERS (tune once) ---
+cell_h <- 0.7   # height per compound
+cell_w <- 1.4    # width per x cell
+
+# --- HEIGHT: only depends on compounds ---
+n_compounds <- length(unique(aa4x_rec2x$compound))
+plot_height <- n_compounds * cell_h
+
+# --- WIDTH: depends on x structure + facets ---
+n_x_total <- sum(
+  tapply(aa4x_source3x$Site_Category,
+         aa4x_source3x$Medium_id,
+         function(x) length(unique(x)))
+)
+
+plot_width <- n_x_total * cell_w
+
+# --- SAVE ---
+ggsave(
+  "rec_sitesX.tiff",
+  rec_sites,
+  width  = plot_width,
+  height = plot_height,
+  units = "in"
+)
+
+#ggsave("rec_sites.png", rec_sites, width = 6, height = 8)
 
 ```
 
@@ -298,7 +400,6 @@ ggsave("rec_sites.png", rec_sites, width = 10, height = 10)
 #first copy the value-column so it can be replaed without loosing the info. Using df without "plotting" column
 df4_freq$value2 <- df4_freq$value
 df4_LOD_S <- cbind(df4_freq[,c(1:18, 20:25)], apply(df4_freq[,19, drop=F],2, dLimity)) #dLimity function sets 0.5*LOD
-
 ```
 
 #Use the long format dataset to create wide with compounds in focus
@@ -367,7 +468,6 @@ for (col in names(corry)) {
 }
 
 boxplot(corry, main = "Boxplots of variables", col = "lightgreen")
-
 ```
 log-transform
 ```{r}
@@ -390,13 +490,13 @@ corry3 <- corry2 %>%
   rename("Henry's law constant" = "HENRYS_LAW_ATM.M3.MOLE_OPERA_PRED_log", 
          "Octanol-water part." = "OCTANOL_WATER_PARTITION_LOGP_OPERA_PRED",
         "Molar mass" = "AVERAGE_MASS",
-        "Water_Football"= "Water (ng/L)_Artificial football field_log",
+        "Water_Football"= "Water (ng/L)_Artificial football pitch_log",
         "Sludge_WWTP" ="Sludge (ng/g, d.w.)_Wastewater treatment plant_log",
         "Sediment_River"="Sediment (ng/g, d.w.)_Urban river_log",
         "Water_Road"="Water (ng/L)_Road environment_log",
         "Sediment_Pond"="Sediment (ng/g, d.w.)_Urban pond_log",
         "PM10_Park" ="PM10 (ng/m^3)_Urban park_log",
-        "Sludge_Football" ="Sludge (ng/g, d.w.)_Artificial football field_log",
+        "Sludge_Football" ="Sludge (ng/g, d.w.)_Artificial football pitch_log",
         "Water_WWTP"="Water (ng/L)_Wastewater treatment plant_log",
         "Water_River"="Water (ng/L)_Urban river_log",
         "Sludge_Road"="Sludge (ng/g, d.w.)_Road environment_log",
@@ -443,7 +543,7 @@ sup_scaled <- res.pca$quanti.sup$coord * 3.5   # try 3-5
 
 #align label with arrow head
 # scale arrows correctly
-fviz_add(p, sup_scaled,
+bi <- fviz_add(p, sup_scaled,
          geom = c("arrow", "text"),
          color = "firebrick",
          linetype = "dashed",
@@ -453,7 +553,7 @@ fviz_add(p, sup_scaled,
   axis.text = element_text(size = 12),
   plot.title = element_text(size = 18, face="bold"))
 
-ggsave("PCA_biplot.png", bi, width = 8.5, height = 7.5)
+ggsave("PCA_biplot.tiff", bi, width = 8.5, height = 7.5)
 
 
 fviz_pca_ind(pca_result,
@@ -544,10 +644,8 @@ nrow(sht)
 write.csv(treat_wide, "C:/Users/CBG/OneDrive - NIVA/1 Projects/Screening/Screening_R/Screening/Output/250804_for treatment plotting2.csv", row.names=FALSE)
 ```
 
-
 ```{r}
 #sht <- read.table("250805_Treatment_theshit.txt", header=TRUE, sep="\t", na.string=c(""))
-
 #remove 6PPD and TMQ from WWTP due to very low detection frequency, < 10%
 treat_widex <- subset(treat_wide, det_frac >= 10)
 
@@ -570,13 +668,13 @@ sht7 <- sht6 %>%
   filter(!is.na(mean_valueT) | !is.na(mean_valueU))
 
 #here we look at the average
-ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
+pxp <- ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
          fill = "Comment_location3", line.color =NA, color = "grey")+
   facet_grid(Site_Category~., scales="free")+
   #geom_text(aes(label = compound), vjust = -0.8, hjust=1, check_overlap = FALSE, size = 4)+
   scale_x_discrete(labels = c("mean_valueU" = "Low treatment", "mean_valueT" = "High treatment"))+
   labs(y="Concentration (ng/L)", x="") +
-  geom_boxplot(fill = c("skyblue2", "darksalmon", "skyblue2", "darksalmon"), colour="darkgray") +
+  geom_boxplot(fill = c("lightblue3", "darksalmon", "lightblue3", "darksalmon"), colour="darkgray") +
   geom_line(aes(group = compound),
           color = "black",
           size = 0.4,
@@ -599,7 +697,7 @@ ggpaired(sht7, cond1 = "mean_valueU", cond2 = "mean_valueT",
                 nudge_x = -0.01, vjust = -0.9, hjust=1.1,segment.color = NA, size=4)# single color
 
 
-ggsave("treatment.png", pxp, width = 8, height = 7)
+ggsave("treatment.png", pxp, width = 7, height = 7)
 
 ```
 
@@ -693,11 +791,11 @@ dx3qqqx$sample_category[dx3qqqx$sample_category == "Sediment2"] <- "Sediment"
 dx3qqqx<- dx3qqqx %>%
   filter(compound != "IPPD")
 
-ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
-  geom_linerange(size=2.8, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
+pnec <- ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colour = sample_category))+ 
+  geom_linerange(size=3, aes(colour = sample_category, alpha=1), position = position_dodge2(width = 0.7))+
   #geom_point(aes(x=limit, fill = sample_category),  size=5, shape=18, position = position_dodge2(width = 0.7))+
   scale_x_continuous(trans='log10') +
-  theme_article()+
+  theme_bw()+
   theme(axis.text.x = element_text(hjust = 1,vjust=1,size = 14,colour="black"),
         axis.text.y = element_text(size = 15,colour="black"),
         axis.title.y = element_blank(),
@@ -715,13 +813,13 @@ ggplot(dx3qqqx, aes(y=fct_rev(compound), x=value2, xmin = Min2, xmax=Max2, colou
   xlab("Range of risk quotients (log scale)")+
   scale_alpha(guide = 'none')+
   guides(color=guide_legend("sample_category"), fill = "none")+
-  scale_color_manual(values = c("#00BFC4", "#D55E00"),
+  scale_color_manual(values = c("dodgerblue3", "darkred"),
   labels = c('Water', 'Sediment'))+
   geom_vline(xintercept = 1, linetype="dotted", 
                 color = "red", size=1.8)+
   facet_grid(Group~sample_category, scales="free_y", space="free_y", labeller = label_wrap_gen(width=2))
 
-ggsave("pnec.png", pnec, width = 8, height = 7.3)
+ggsave("pnec.tiff", pnec, width = 8, height = 6.5)
 
 ```
 
